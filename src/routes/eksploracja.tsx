@@ -1,23 +1,513 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Backpack,
+  Flame,
+  Ghost,
+  Leaf,
+  Mountain,
+  MountainSnow,
+  Pickaxe,
+  Shield,
+  Skull,
+  Swords,
+  Trees,
+  Waves,
+  Wind,
+  Zap,
+} from "lucide-react";
+import { toast } from "sonner";
 
-import { ComingSoon, GamePage } from "@/components/game/GamePage";
+import { Button } from "@/components/ui/button";
+import { GamePage } from "@/components/game/GamePage";
+import { useSession } from "@/hooks/useSession";
+import { BIOMES, findBiome } from "@/lib/biomes";
+import { artworkUrl } from "@/lib/game-data";
+import {
+  dismissEncounter,
+  getExplorationState,
+  resolveBotBattle,
+  throwBall,
+  travel,
+  type EncounterView,
+  type ExplorationState,
+} from "@/lib/exploration.functions";
 
 export const Route = createFileRoute("/eksploracja")({
   head: () => ({
     meta: [
       { title: "Eksploracja — Catch Zone" },
-      { name: "description", content: "Wybierz biom i ruszaj na spotkania z dzikimi Pokémonami. Każdy krok kosztuje Energię." },
+      {
+        name: "description",
+        content:
+          "Wybierz biom i ruszaj na spotkania z dzikimi Pokémonami. Każdy krok kosztuje Energię.",
+      },
       { property: "og:title", content: "Eksploracja — Catch Zone" },
-      { property: "og:description", content: "Wybierz biom i ruszaj na spotkania z dzikimi Pokémonami. Każdy krok kosztuje Energię." },
+      {
+        property: "og:description",
+        content: "Wybierz biom i ruszaj na spotkania z dzikimi Pokémonami. Każdy krok kosztuje Energię.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: EksploracjaPage,
 });
 
+const EXPLORATION_QUERY_KEY = "exploration";
+
 function EksploracjaPage() {
+  const { session, loading, userId } = useSession();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !session) {
+      void navigate({ to: "/" });
+    }
+  }, [loading, session, navigate]);
+
+  const fetchState = useServerFn(getExplorationState);
+  const travelFn = useServerFn(travel);
+  const throwBallFn = useServerFn(throwBall);
+  const resolveBotFn = useServerFn(resolveBotBattle);
+  const dismissFn = useServerFn(dismissEncounter);
+
+  const { data: state, isLoading } = useQuery<ExplorationState>({
+    queryKey: [EXPLORATION_QUERY_KEY, userId],
+    queryFn: () => fetchState(),
+    enabled: !!userId,
+    staleTime: 0,
+  });
+
+  const updateState = (next: ExplorationState | undefined) => {
+    if (!next) return;
+    queryClient.setQueryData([EXPLORATION_QUERY_KEY, userId], next);
+  };
+
+  const handleTravel = async (biomeSlug: string) => {
+    if (!userId || busy) return;
+    setBusy(true);
+    try {
+      const result = await travelFn({ data: { biome: biomeSlug } });
+      if (!result.ok) {
+        toast.error(result.reason);
+      } else {
+        const biome = findBiome(biomeSlug);
+        toast.success(`Dotarłeś do biomu ${biome?.name ?? biomeSlug}`);
+      }
+      updateState(result.state);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Błąd eksploracji");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleThrowBall = async (encounterId: string) => {
+    if (!userId || busy) return;
+    setBusy(true);
+    try {
+      const result = await throwBallFn({ data: { encounterId } });
+      if (!result.ok) {
+        toast.error(result.reason);
+      } else if (result.caught) {
+        toast.success(`Złapano! (szansa ${Math.round(result.chance * 100)}%)`);
+      } else if (result.fled) {
+        toast.warning(`Pokémon uciekł (szansa ${Math.round(result.chance * 100)}%).`);
+      } else {
+        toast.info(`Chybiłeś (szansa ${Math.round(result.chance * 100)}%).`);
+      }
+      updateState(result.state);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Błąd rzutu");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleBattle = async (encounterId: string) => {
+    if (!userId || busy) return;
+    setBusy(true);
+    try {
+      const result = await resolveBotFn({ data: { encounterId } });
+      toast.success("Walka zakończona zwycięstwem!");
+      updateState(result.state);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Błąd walki");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDismiss = async (encounterId: string) => {
+    if (!userId || busy) return;
+    setBusy(true);
+    try {
+      const result = await dismissFn({ data: { encounterId } });
+      toast.info("Spotkanie opuszczone.");
+      updateState(result.state);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Błąd zamykania spotkania");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading || isLoading) {
+    return (
+      <GamePage title="Eksploracja" subtitle="Ładowanie stanu eksploracji...">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="glass-panel h-32 animate-pulse rounded-2xl" />
+          ))}
+        </div>
+      </GamePage>
+    );
+  }
+
+  if (!session) return null;
+
   return (
-    <GamePage title="Eksploracja" subtitle={"Wybierz biom i ruszaj na spotkania z dzikimi Pokémonami. Każdy krok kosztuje Energię."}>
-      <ComingSoon note={"Moduł biomów i Catch Zone przygotowujemy w kolejnym etapie."} />
+    <GamePage
+      title="Eksploracja"
+      subtitle="Wybierz biom i ruszaj na spotkania z dzikimi Pokémonami. Każdy krok kosztuje Energię."
+    >
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="space-y-6 lg:col-span-2">
+          <ResourcesPanel state={state} />
+          {state?.active ? (
+            <EncounterCard
+              encounter={state.active}
+              pokeBalls={state.poke_balls}
+              onThrowBall={handleThrowBall}
+              onBattle={handleBattle}
+              onDismiss={handleDismiss}
+              busy={busy}
+            />
+          ) : (
+            <BiomeGrid onTravel={handleTravel} energy={state?.energy ?? 0} busy={busy} />
+          )}
+        </section>
+
+        <aside className="space-y-6">
+          <LogPanel state={state} />
+          <TrainerLevelPanel state={state} />
+        </aside>
+      </div>
     </GamePage>
+  );
+}
+
+function ResourcesPanel({ state }: { state: ExplorationState | undefined }) {
+  const energy = state?.energy ?? 0;
+  const max = state?.energy_max ?? 100;
+  const pct = Math.round((energy / max) * 100);
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      <div className="glass-panel rounded-2xl p-4 sm:col-span-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Energia</span>
+          <span className="font-display text-2xl">
+            {energy} / {max}
+          </span>
+        </div>
+        <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-secondary">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">+1 pkt co 3 minuty</p>
+      </div>
+      <div className="glass-panel rounded-2xl p-4 text-center">
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Poké Balle</p>
+        <p className="mt-1 font-display text-3xl">{state?.poke_balls ?? 0}</p>
+      </div>
+      <div className="glass-panel rounded-2xl p-4 text-center">
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Catch Coins</p>
+        <p className="mt-1 font-display text-3xl">{state?.catch_coins ?? 0}</p>
+      </div>
+      <div className="glass-panel rounded-2xl p-4 text-center">
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Drużyna</p>
+        <p className="mt-1 font-display text-3xl">{state?.party_size ?? 0} / 6</p>
+      </div>
+    </div>
+  );
+}
+
+function BiomeGrid({
+  onTravel,
+  energy,
+  busy,
+}: {
+  onTravel: (slug: string) => void;
+  energy: number;
+  busy: boolean;
+}) {
+  const minCost = 2;
+  return (
+    <div className="glass-panel rounded-2xl p-5">
+      <h2 className="text-2xl">Wybierz biom</h2>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {BIOMES.map((biome) => {
+          const disabled = energy < minCost || busy;
+          const Icon = BIOME_ICONS[biome.slug] ?? Trees;
+          return (
+            <button
+              key={biome.slug}
+              disabled={disabled}
+              onClick={() => onTravel(biome.slug)}
+              className="tile-hover glass-panel flex flex-col items-start gap-3 rounded-2xl p-4 text-left disabled:opacity-50 disabled:hover:transform-none"
+            >
+              <Icon className="h-6 w-6 text-aurora" aria-hidden />
+              <div>
+                <p className="font-display text-xl">{biome.name}</p>
+                <p className="text-xs text-muted-foreground">{biome.element}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{biome.tagline}</p>
+              </div>
+              <span className="mt-auto text-xs font-medium text-ice">2–5 Energii</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function EncounterCard({
+  encounter,
+  pokeBalls,
+  onThrowBall,
+  onBattle,
+  onDismiss,
+  busy,
+}: {
+  encounter: EncounterView;
+  pokeBalls: number;
+  onThrowBall: (id: string) => void;
+  onBattle: (id: string) => void;
+  onDismiss: (id: string) => void;
+  busy: boolean;
+}) {
+  return (
+    <div className="glass-panel rounded-2xl p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Aktywne spotkanie · {encounter.biome}
+          </p>
+          <h2 className="mt-1 text-3xl">{encounterTitle(encounter)}</h2>
+        </div>
+        <span
+          className={`rounded-full px-2 py-1 text-xs font-medium uppercase tracking-wider ${
+            kindStyles(encounter.kind)
+          }`}
+        >
+          {encounter.kind}
+        </span>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-6 md:flex-row">
+        {encounter.kind === "wild" && encounter.species_id && (
+          <img
+            src={artworkUrl(encounter.species_id)}
+            alt={encounter.species_name ?? "Pokémon"}
+            width={220}
+            height={220}
+            className="mx-auto h-40 w-40 object-contain md:mx-0"
+          />
+        )}
+        {encounter.kind === "bot" && (
+          <div className="flex flex-wrap gap-2">
+            {(encounter.bot_team ?? []).map((member, idx) => (
+              <div key={idx} className="glass-panel rounded-xl p-2 text-center">
+                <img
+                  src={artworkUrl(member.species_id)}
+                  alt={member.species_name}
+                  width={80}
+                  height={80}
+                  className="mx-auto h-16 w-16 object-contain"
+                />
+                <p className="mt-1 text-xs font-medium">{member.species_name}</p>
+                <p className="text-xs text-muted-foreground">Lvl {member.level}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        {encounter.kind === "pvp" && (
+          <div className="flex h-40 items-center justify-center rounded-2xl bg-secondary/50">
+            <Swords className="h-12 w-12 text-muted-foreground" aria-hidden />
+          </div>
+        )}
+
+        <div className="flex-1">
+          {encounter.kind === "wild" && (
+            <>
+              <p className="font-display text-2xl">{encounter.species_name}</p>
+              <p className="text-sm text-muted-foreground">
+                Typ {encounter.species_type} · Lvl {encounter.level}
+              </p>
+              <HpBar current={encounter.hp_current} max={encounter.hp_max} className="mt-4" />
+            </>
+          )}
+          {encounter.kind === "bot" && (
+            <>
+              <p className="font-display text-2xl">Trener-Bot</p>
+              <p className="text-sm text-muted-foreground">
+                Drużyna {encounter.bot_team?.length ?? 0} Pokémonów · średni Lvl {encounter.level}
+              </p>
+              <p className="mt-2 text-sm text-aurora">
+                Nagroda: +{encounter.reward_exp} EXP, +{encounter.reward_coins} CC
+              </p>
+            </>
+          )}
+          {encounter.kind === "pvp" && (
+            <p className="text-sm text-muted-foreground">
+              PvP jest w fazie przygotowań. Możesz teraz tylko opuścić to spotkanie.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        {encounter.kind === "wild" && (
+          <Button onClick={() => onThrowBall(encounter.id)} disabled={busy || pokeBalls <= 0}>
+            <Backpack className="h-4 w-4" aria-hidden />
+            Rzut Poké Ball ({pokeBalls})
+          </Button>
+        )}
+        {encounter.kind === "bot" && (
+          <Button onClick={() => onBattle(encounter.id)} disabled={busy}>
+            <Swords className="h-4 w-4" aria-hidden />
+            Walcz z botem
+          </Button>
+        )}
+        <Button variant="outline" onClick={() => onDismiss(encounter.id)} disabled={busy}>
+          {encounter.kind === "pvp" ? "Opuść" : "Uciekaj"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function LogPanel({ state }: { state: ExplorationState | undefined }) {
+  const entries = useMemo(() => {
+    const list: { id: string; text: string; time: string }[] = [];
+    if (state?.active?.log.length) {
+      state.active.log.forEach((line, idx) =>
+        list.push({ id: `active-${idx}`, text: line, time: state.active!.created_at }),
+      );
+    }
+    (state?.history ?? []).forEach((enc) => {
+      enc.log.forEach((line, idx) =>
+        list.push({ id: `${enc.id}-${idx}`, text: line, time: enc.created_at }),
+      );
+    });
+    return list.slice(0, 20);
+  }, [state]);
+
+  return (
+    <div className="glass-panel rounded-2xl p-5">
+      <h2 className="text-2xl">Dziennik</h2>
+      {entries.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">Jeszcze nic się nie wydarzyło. Wybierz biom!</p>
+      ) : (
+        <ul className="mt-4 space-y-3">
+          {entries.map((entry) => (
+            <li key={entry.id} className="flex gap-3 text-sm">
+              <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-aurora" />
+              <span className="text-muted-foreground">{entry.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function TrainerLevelPanel({ state }: { state: ExplorationState | undefined }) {
+  const level = state?.trainer_level ?? 1;
+  const exp = state?.trainer_exp ?? 0;
+  const next = state?.trainer_exp_next ?? 100;
+  const pct = Math.min(100, Math.round((exp / next) * 100));
+  return (
+    <div className="glass-panel rounded-2xl p-5">
+      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Poziom trenera</p>
+      <p className="mt-1 font-display text-3xl">{level}</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        EXP {exp} / {next}
+      </p>
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
+        <div className="h-full rounded-full bg-ember" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function HpBar({ current, max, className }: { current: number; max: number; className?: string }) {
+  const pct = Math.max(0, Math.min(100, Math.round((current / max) * 100)));
+  return (
+    <div className={className}>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>HP</span>
+        <span>
+          {current} / {max}
+        </span>
+      </div>
+      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-secondary">
+        <div
+          className="h-full rounded-full bg-destructive transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function encounterTitle(encounter: EncounterView) {
+  if (encounter.kind === "wild") return encounter.species_name ?? "Dziki Pokémon";
+  if (encounter.kind === "bot") return "Trener-Bot";
+  return "Pojedynek PvP";
+}
+
+function kindStyles(kind: EncounterView["kind"]) {
+  if (kind === "wild") return "bg-aurora/20 text-aurora";
+  if (kind === "bot") return "bg-ice/20 text-ice";
+  return "bg-ember/20 text-ember";
+}
+
+const BIOME_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  las: Trees,
+  jaskinia: Pickaxe,
+  ocean: Waves,
+  gory: Mountain,
+  rowniny: Wind,
+  pustynia: SunIcon,
+  snieg: MountainSnow,
+  bagno: Skull,
+  wulkan: Flame,
+  "cyber-lab": Zap,
+  niebo: Wind,
+  otchlan: Ghost,
+};
+
+function SunIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="5" />
+      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    </svg>
   );
 }
