@@ -349,8 +349,8 @@ export const throwBall = createServerFn({ method: "POST" })
         .eq("in_party", true);
       await supabase.from("player_pokemon").insert({
         owner_id: userId,
-        species_id: row.species_id,
-        species_name: row.species_name,
+        species_id: row.species_id ?? 0,
+        species_name: row.species_name ?? "Nieznany Pokémon",
         level: row.level,
         hp_current: row.hp_max,
         hp_max: row.hp_max,
