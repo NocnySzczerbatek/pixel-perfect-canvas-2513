@@ -226,7 +226,7 @@ export const travel = createServerFn({ method: "POST" })
     const levelFor = () =>
       Math.max(1, Math.min(trainerLevel + 5, trainerLevel + randInt(-2, 2)));
 
-    let payload: Record<string, unknown>;
+    let payload: { kind: "wild" | "bot" | "pvp" } & Record<string, unknown>;
     if (kind === "wild") {
       const species: BiomeSpecies = pick(biome.species);
       const level = levelFor();
