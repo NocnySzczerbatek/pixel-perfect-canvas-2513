@@ -1,4 +1,18 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  Backpack,
+  Boxes,
+  Compass,
+  Landmark,
+  Medal,
+  Repeat,
+  Shield,
+  ShoppingBag,
+  Swords,
+  Trophy,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -151,9 +165,40 @@ function TrainerDashboard() {
           walki z botami, PvP i Sale — dochodzą w następnych etapach.
         </div>
       </section>
+
+      <section className="mt-10">
+        <h2 className="text-2xl">Nawigacja</h2>
+        <nav className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {NAV_TILES.map(({ to, label, Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className="tile-hover glass-panel flex flex-col items-start gap-3 rounded-2xl p-4"
+            >
+              <Icon className="h-6 w-6 text-muted-foreground" aria-hidden />
+              <span className="font-display text-xl">{label}</span>
+            </Link>
+          ))}
+        </nav>
+      </section>
     </main>
   );
 }
+
+const NAV_TILES = [
+  { to: "/eksploracja", label: "Eksploracja", Icon: Compass },
+  { to: "/pvp", label: "PvP", Icon: Swords },
+  { to: "/trenerzy", label: "Trenerzy", Icon: Users },
+  { to: "/ekwipunek", label: "Ekwipunek", Icon: Backpack },
+  { to: "/druzyna", label: "Drużyna", Icon: Shield },
+  { to: "/pc-box", label: "PC Box", Icon: Boxes },
+  { to: "/odznaki", label: "Odznaki", Icon: Medal },
+  { to: "/sale", label: "Sale", Icon: Landmark },
+  { to: "/ranking", label: "Ranking", Icon: Trophy },
+  { to: "/profil", label: "Profil", Icon: UserRound },
+  { to: "/sklep", label: "Sklep", Icon: ShoppingBag },
+  { to: "/gts", label: "GTS", Icon: Repeat },
+] as const;
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
