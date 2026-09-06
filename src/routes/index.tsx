@@ -295,7 +295,7 @@ function IntroCard({ loading }: { loading: boolean }) {
         zdobywaj odznaki ośmiu Sal w każdym regionie.
       </p>
       <p className="mt-6 text-xs uppercase tracking-[0.25em] text-primary">
-        {loading ? "Ładowanie…" : "Zaloguj się w panelu w prawym górnym roku"}
+        {loading ? "Ładowanie…" : "Zaloguj się w panelu w prawym górnym rogu"}
       </p>
     </div>
   );
