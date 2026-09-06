@@ -226,7 +226,7 @@ export const travel = createServerFn({ method: "POST" })
     const levelFor = () =>
       Math.max(1, Math.min(trainerLevel + 5, trainerLevel + randInt(-2, 2)));
 
-    let payload: Record<string, unknown>;
+    let payload: { kind: "wild" | "bot" | "pvp" } & Record<string, unknown>;
     if (kind === "wild") {
       const species: BiomeSpecies = pick(biome.species);
       const level = levelFor();
@@ -288,6 +288,7 @@ export const travel = createServerFn({ method: "POST" })
         status: "active",
         energy_cost: cost,
         ...payload,
+        kind: payload.kind,
       })
       .select("*")
       .single();
@@ -348,8 +349,8 @@ export const throwBall = createServerFn({ method: "POST" })
         .eq("in_party", true);
       await supabase.from("player_pokemon").insert({
         owner_id: userId,
-        species_id: row.species_id,
-        species_name: row.species_name,
+        species_id: row.species_id ?? 0,
+        species_name: row.species_name ?? "Nieznany Pokémon",
         level: row.level,
         hp_current: row.hp_max,
         hp_max: row.hp_max,
