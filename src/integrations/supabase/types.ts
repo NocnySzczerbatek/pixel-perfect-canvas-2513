@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      encounters: {
+        Row: {
+          biome: string
+          bot_team: Json | null
+          created_at: string
+          energy_cost: number
+          hp_current: number
+          hp_max: number
+          id: string
+          kind: string
+          level: number
+          log: Json
+          owner_id: string
+          reward_coins: number
+          reward_exp: number
+          species_id: number | null
+          species_name: string | null
+          species_type: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          biome: string
+          bot_team?: Json | null
+          created_at?: string
+          energy_cost?: number
+          hp_current?: number
+          hp_max?: number
+          id?: string
+          kind: string
+          level?: number
+          log?: Json
+          owner_id: string
+          reward_coins?: number
+          reward_exp?: number
+          species_id?: number | null
+          species_name?: string | null
+          species_type?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          biome?: string
+          bot_team?: Json | null
+          created_at?: string
+          energy_cost?: number
+          hp_current?: number
+          hp_max?: number
+          id?: string
+          kind?: string
+          level?: number
+          log?: Json
+          owner_id?: string
+          reward_coins?: number
+          reward_exp?: number
+          species_id?: number | null
+          species_name?: string | null
+          species_type?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "encounters_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_pokemon: {
         Row: {
           caught_at: string
@@ -76,6 +147,7 @@ export type Database = {
           created_at: string
           energy: number
           energy_bottles: number
+          energy_updated_at: string
           featured_badge: string | null
           id: string
           poke_balls: number
@@ -91,6 +163,7 @@ export type Database = {
           created_at?: string
           energy?: number
           energy_bottles?: number
+          energy_updated_at?: string
           featured_badge?: string | null
           id: string
           poke_balls?: number
@@ -106,6 +179,7 @@ export type Database = {
           created_at?: string
           energy?: number
           energy_bottles?: number
+          energy_updated_at?: string
           featured_badge?: string | null
           id?: string
           poke_balls?: number
