@@ -288,6 +288,7 @@ export const travel = createServerFn({ method: "POST" })
         status: "active",
         energy_cost: cost,
         ...payload,
+        kind: payload.kind,
       })
       .select("*")
       .single();
