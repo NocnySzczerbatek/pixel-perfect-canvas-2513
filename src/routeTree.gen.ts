@@ -10,11 +10,38 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DruzynaRouteImport } from './routes/druzyna'
+import { Route as EksploracjaRouteImport } from './routes/eksploracja'
+import { Route as EkwipunekRouteImport } from './routes/ekwipunek'
 import { Route as GraRouteImport } from './routes/gra'
+import { Route as GtsRouteImport } from './routes/gts'
+import { Route as OdznakiRouteImport } from './routes/odznaki'
+import { Route as PcBoxRouteImport } from './routes/pc-box'
+import { Route as ProfilRouteImport } from './routes/profil'
+import { Route as PvpRouteImport } from './routes/pvp'
+import { Route as RankingRouteImport } from './routes/ranking'
+import { Route as SaleRouteImport } from './routes/sale'
+import { Route as SklepRouteImport } from './routes/sklep'
+import { Route as TrenerzyRouteImport } from './routes/trenerzy'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DruzynaRoute = DruzynaRouteImport.update({
+  id: '/druzyna',
+  path: '/druzyna',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EksploracjaRoute = EksploracjaRouteImport.update({
+  id: '/eksploracja',
+  path: '/eksploracja',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EkwipunekRoute = EkwipunekRouteImport.update({
+  id: '/ekwipunek',
+  path: '/ekwipunek',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GraRoute = GraRouteImport.update({
@@ -22,31 +49,167 @@ const GraRoute = GraRouteImport.update({
   path: '/gra',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GtsRoute = GtsRouteImport.update({
+  id: '/gts',
+  path: '/gts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OdznakiRoute = OdznakiRouteImport.update({
+  id: '/odznaki',
+  path: '/odznaki',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PcBoxRoute = PcBoxRouteImport.update({
+  id: '/pc-box',
+  path: '/pc-box',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfilRoute = ProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PvpRoute = PvpRouteImport.update({
+  id: '/pvp',
+  path: '/pvp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingRoute = RankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SaleRoute = SaleRouteImport.update({
+  id: '/sale',
+  path: '/sale',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SklepRoute = SklepRouteImport.update({
+  id: '/sklep',
+  path: '/sklep',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrenerzyRoute = TrenerzyRouteImport.update({
+  id: '/trenerzy',
+  path: '/trenerzy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/druzyna': typeof DruzynaRoute
+  '/eksploracja': typeof EksploracjaRoute
+  '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
+  '/gts': typeof GtsRoute
+  '/odznaki': typeof OdznakiRoute
+  '/pc-box': typeof PcBoxRoute
+  '/profil': typeof ProfilRoute
+  '/pvp': typeof PvpRoute
+  '/ranking': typeof RankingRoute
+  '/sale': typeof SaleRoute
+  '/sklep': typeof SklepRoute
+  '/trenerzy': typeof TrenerzyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/druzyna': typeof DruzynaRoute
+  '/eksploracja': typeof EksploracjaRoute
+  '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
+  '/gts': typeof GtsRoute
+  '/odznaki': typeof OdznakiRoute
+  '/pc-box': typeof PcBoxRoute
+  '/profil': typeof ProfilRoute
+  '/pvp': typeof PvpRoute
+  '/ranking': typeof RankingRoute
+  '/sale': typeof SaleRoute
+  '/sklep': typeof SklepRoute
+  '/trenerzy': typeof TrenerzyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/druzyna': typeof DruzynaRoute
+  '/eksploracja': typeof EksploracjaRoute
+  '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
+  '/gts': typeof GtsRoute
+  '/odznaki': typeof OdznakiRoute
+  '/pc-box': typeof PcBoxRoute
+  '/profil': typeof ProfilRoute
+  '/pvp': typeof PvpRoute
+  '/ranking': typeof RankingRoute
+  '/sale': typeof SaleRoute
+  '/sklep': typeof SklepRoute
+  '/trenerzy': typeof TrenerzyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/gra'
+  fullPaths:
+    | '/'
+    | '/druzyna'
+    | '/eksploracja'
+    | '/ekwipunek'
+    | '/gra'
+    | '/gts'
+    | '/odznaki'
+    | '/pc-box'
+    | '/profil'
+    | '/pvp'
+    | '/ranking'
+    | '/sale'
+    | '/sklep'
+    | '/trenerzy'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/gra'
-  id: '__root__' | '/' | '/gra'
+  to:
+    | '/'
+    | '/druzyna'
+    | '/eksploracja'
+    | '/ekwipunek'
+    | '/gra'
+    | '/gts'
+    | '/odznaki'
+    | '/pc-box'
+    | '/profil'
+    | '/pvp'
+    | '/ranking'
+    | '/sale'
+    | '/sklep'
+    | '/trenerzy'
+  id:
+    | '__root__'
+    | '/'
+    | '/druzyna'
+    | '/eksploracja'
+    | '/ekwipunek'
+    | '/gra'
+    | '/gts'
+    | '/odznaki'
+    | '/pc-box'
+    | '/profil'
+    | '/pvp'
+    | '/ranking'
+    | '/sale'
+    | '/sklep'
+    | '/trenerzy'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DruzynaRoute: typeof DruzynaRoute
+  EksploracjaRoute: typeof EksploracjaRoute
+  EkwipunekRoute: typeof EkwipunekRoute
   GraRoute: typeof GraRoute
+  GtsRoute: typeof GtsRoute
+  OdznakiRoute: typeof OdznakiRoute
+  PcBoxRoute: typeof PcBoxRoute
+  ProfilRoute: typeof ProfilRoute
+  PvpRoute: typeof PvpRoute
+  RankingRoute: typeof RankingRoute
+  SaleRoute: typeof SaleRoute
+  SklepRoute: typeof SklepRoute
+  TrenerzyRoute: typeof TrenerzyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +221,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/druzyna': {
+      id: '/druzyna'
+      path: '/druzyna'
+      fullPath: '/druzyna'
+      preLoaderRoute: typeof DruzynaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eksploracja': {
+      id: '/eksploracja'
+      path: '/eksploracja'
+      fullPath: '/eksploracja'
+      preLoaderRoute: typeof EksploracjaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ekwipunek': {
+      id: '/ekwipunek'
+      path: '/ekwipunek'
+      fullPath: '/ekwipunek'
+      preLoaderRoute: typeof EkwipunekRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gra': {
       id: '/gra'
       path: '/gra'
@@ -65,12 +249,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GraRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gts': {
+      id: '/gts'
+      path: '/gts'
+      fullPath: '/gts'
+      preLoaderRoute: typeof GtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/odznaki': {
+      id: '/odznaki'
+      path: '/odznaki'
+      fullPath: '/odznaki'
+      preLoaderRoute: typeof OdznakiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pc-box': {
+      id: '/pc-box'
+      path: '/pc-box'
+      fullPath: '/pc-box'
+      preLoaderRoute: typeof PcBoxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profil': {
+      id: '/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof ProfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pvp': {
+      id: '/pvp'
+      path: '/pvp'
+      fullPath: '/pvp'
+      preLoaderRoute: typeof PvpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranking': {
+      id: '/ranking'
+      path: '/ranking'
+      fullPath: '/ranking'
+      preLoaderRoute: typeof RankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sale': {
+      id: '/sale'
+      path: '/sale'
+      fullPath: '/sale'
+      preLoaderRoute: typeof SaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sklep': {
+      id: '/sklep'
+      path: '/sklep'
+      fullPath: '/sklep'
+      preLoaderRoute: typeof SklepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trenerzy': {
+      id: '/trenerzy'
+      path: '/trenerzy'
+      fullPath: '/trenerzy'
+      preLoaderRoute: typeof TrenerzyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DruzynaRoute: DruzynaRoute,
+  EksploracjaRoute: EksploracjaRoute,
+  EkwipunekRoute: EkwipunekRoute,
   GraRoute: GraRoute,
+  GtsRoute: GtsRoute,
+  OdznakiRoute: OdznakiRoute,
+  PcBoxRoute: PcBoxRoute,
+  ProfilRoute: ProfilRoute,
+  PvpRoute: PvpRoute,
+  RankingRoute: RankingRoute,
+  SaleRoute: SaleRoute,
+  SklepRoute: SklepRoute,
+  TrenerzyRoute: TrenerzyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
