@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
+import { CHANGELOG, GAME_LOOP } from "@/lib/changelog";
 import { artworkUrl, findRegion } from "@/lib/game-data";
 
 export const Route = createFileRoute("/gra")({
@@ -234,6 +235,46 @@ function TrainerDashboard() {
               ))}
             </ul>
           )}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-2xl">Jak się gra</h2>
+        <p className="text-xs text-muted-foreground">Pętla rozgrywki w pięciu krokach.</p>
+        <ol className="glass-panel mt-4 space-y-2 rounded-2xl p-5 text-sm text-muted-foreground">
+          {GAME_LOOP.map((step, index) => (
+            <li key={step} className="flex gap-3">
+              <span className="font-display text-primary">{index + 1}.</span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-2xl">Co nowego w grze</h2>
+        <p className="text-xs text-muted-foreground">Lista dodanych i zmienionych rzeczy.</p>
+        <div className="mt-4 space-y-4">
+          {CHANGELOG.map((entry) => (
+            <article key={entry.version} className="glass-panel rounded-2xl p-5">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="font-display text-xl">Aktualizacja {entry.version}</p>
+                <p className="text-xs text-muted-foreground">{entry.date}</p>
+              </div>
+              <p className="mt-4 text-xs uppercase tracking-[0.2em] text-aurora">Dodane</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                {entry.added.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <p className="mt-4 text-xs uppercase tracking-[0.2em] text-primary">Zmienione</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                {entry.changed.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+          ))}
         </div>
       </section>
 
