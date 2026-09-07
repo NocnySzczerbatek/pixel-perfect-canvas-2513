@@ -9,7 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
 import { REGIONS, artworkUrl, findRegion, type Region, type Starter } from "@/lib/game-data";
-import { NATURES, abilitiesFor } from "@/lib/pokedex";
+import { completeTutorial, createTrainer as createTrainerServerFn } from "@/lib/onboarding.functions";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
