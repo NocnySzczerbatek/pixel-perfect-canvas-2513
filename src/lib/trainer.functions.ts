@@ -44,6 +44,16 @@ export type TrainerData = {
     great_balls: number;
     ultra_balls: number;
     master_balls: number;
+    premier_balls: number;
+    net_balls: number;
+    dive_balls: number;
+    dusk_balls: number;
+    quick_balls: number;
+    timer_balls: number;
+    repeat_balls: number;
+    luxury_balls: number;
+    travel_tickets: number;
+    master_ball_bought_at: string | null;
     razz_berries: number;
     potions: number;
     super_potions: number;
@@ -84,7 +94,7 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
     supabase
       .from("profiles")
       .select(
-        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, great_balls, ultra_balls, master_balls, razz_berries, potions, super_potions, revives, mega_stones, shield_until, pvp_wins, pvp_losses, catch_coins, candy_normal, candy_xl, region, featured_badge, created_at",
+        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, great_balls, ultra_balls, master_balls, premier_balls, net_balls, dive_balls, dusk_balls, quick_balls, timer_balls, repeat_balls, luxury_balls, travel_tickets, master_ball_bought_at, razz_berries, potions, super_potions, revives, mega_stones, shield_until, pvp_wins, pvp_losses, catch_coins, candy_normal, candy_xl, region, featured_badge, created_at",
       )
       .eq("id", userId)
       .maybeSingle(),
@@ -114,6 +124,16 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
       great_balls: profile.great_balls ?? 0,
       ultra_balls: profile.ultra_balls ?? 0,
       master_balls: profile.master_balls ?? 0,
+      premier_balls: profile.premier_balls ?? 0,
+      net_balls: profile.net_balls ?? 0,
+      dive_balls: profile.dive_balls ?? 0,
+      dusk_balls: profile.dusk_balls ?? 0,
+      quick_balls: profile.quick_balls ?? 0,
+      timer_balls: profile.timer_balls ?? 0,
+      repeat_balls: profile.repeat_balls ?? 0,
+      luxury_balls: profile.luxury_balls ?? 0,
+      travel_tickets: profile.travel_tickets ?? 0,
+      master_ball_bought_at: profile.master_ball_bought_at ?? null,
       razz_berries: profile.razz_berries ?? 0,
       potions: profile.potions ?? 0,
       super_potions: profile.super_potions ?? 0,
