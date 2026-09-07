@@ -452,7 +452,7 @@ export const travel = createServerFn({ method: "POST" })
           species_id: species.id,
           species_name: species.name,
           species_type: species.type,
-          level: levelFor(2),
+          level: Math.max(1, trainerLevel + randInt(-2, 2)),
         };
       });
       const avg = Math.round(team.reduce((sum, m) => sum + m.level, 0) / team.length);
