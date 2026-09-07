@@ -31,6 +31,71 @@ const TYPE_STYLE: Record<string, { gradient: string; accent: string }> = {
   Wróżka: { gradient: "linear-gradient(135deg,#ffb3e6,#8a2f6d)", accent: "#ffdaf3" },
 };
 
+
+/** Kształty odznak (clip-path) — jak w grach: głaz, kropla, piorun, kwiat itd. */
+export const BADGE_SHAPES: Record<string, string> = {
+  boulder:
+    "polygon(20% 0%, 80% 0%, 100% 30%, 88% 100%, 12% 100%, 0% 30%)",
+  drop: "polygon(50% 0%, 78% 26%, 100% 62%, 78% 96%, 22% 96%, 0% 62%, 22% 26%)",
+  bolt: "polygon(42% 0%, 100% 0%, 62% 38%, 96% 38%, 20% 100%, 38% 52%, 0% 52%)",
+  flower:
+    "polygon(50% 0%, 62% 24%, 88% 12%, 80% 40%, 100% 55%, 76% 68%, 82% 96%, 50% 82%, 18% 96%, 24% 68%, 0% 55%, 20% 40%, 12% 12%, 38% 24%)",
+  heart:
+    "polygon(50% 100%, 8% 56%, 0% 30%, 16% 8%, 36% 10%, 50% 28%, 64% 10%, 84% 8%, 100% 30%, 92% 56%)",
+  hex: "polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%)",
+  flame:
+    "polygon(50% 0%, 70% 22%, 66% 44%, 92% 40%, 82% 74%, 50% 100%, 18% 74%, 8% 40%, 34% 44%, 30% 22%)",
+  star: "polygon(50% 0%, 62% 32%, 98% 34%, 70% 56%, 80% 92%, 50% 72%, 20% 92%, 30% 56%, 2% 34%, 38% 32%)",
+  wing: "polygon(50% 4%, 96% 16%, 74% 48%, 100% 62%, 50% 100%, 0% 62%, 26% 48%, 4% 16%)",
+  shield: "polygon(50% 0%, 100% 14%, 92% 68%, 50% 100%, 8% 68%, 0% 14%)",
+  gear: "polygon(38% 0%, 62% 0%, 70% 14%, 88% 12%, 88% 32%, 100% 44%, 100% 60%, 86% 70%, 88% 88%, 66% 90%, 56% 100%, 40% 100%, 30% 88%, 12% 88%, 12% 68%, 0% 58%, 0% 42%, 14% 30%, 12% 12%, 30% 14%)",
+  crystal: "polygon(50% 0%, 84% 22%, 100% 62%, 50% 100%, 0% 62%, 16% 22%)",
+  fang: "polygon(50% 0%, 100% 26%, 82% 60%, 50% 100%, 18% 60%, 0% 26%)",
+  leaf: "polygon(50% 0%, 84% 18%, 96% 52%, 70% 86%, 50% 100%, 30% 86%, 4% 52%, 16% 18%)",
+  diamond: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+};
+
+/** Domyślny kształt dla danego typu Sali. */
+const TYPE_SHAPE: Record<string, string> = {
+  Skała: "boulder",
+  Ziemia: "boulder",
+  Woda: "drop",
+  Elektryczny: "bolt",
+  Trawa: "leaf",
+  Trucizna: "hex",
+  Psychiczny: "star",
+  Ogień: "flame",
+  Lot: "wing",
+  Robak: "fang",
+  Normalny: "shield",
+  Duch: "hex",
+  Walka: "shield",
+  Stal: "gear",
+  Lód: "crystal",
+  Smok: "fang",
+  Wróżka: "flower",
+};
+
+/** Ręczne kształty odznak Kanto, żeby były rozpoznawalne jak w grach. */
+const BADGE_SHAPE_OVERRIDE: Record<string, string> = {
+  kanto_boulder: "boulder",
+  kanto_cascade: "drop",
+  kanto_thunder: "bolt",
+  kanto_rainbow: "flower",
+  kanto_soul: "heart",
+  kanto_marsh: "diamond",
+  kanto_volcano: "flame",
+  kanto_earth: "star",
+  johto_zephyr: "wing",
+  johto_hive: "hex",
+  johto_plain: "shield",
+  johto_fog: "diamond",
+  johto_storm: "star",
+  johto_mineral: "gear",
+  johto_glacier: "crystal",
+  johto_rising: "fang",
+};
+
 function m(species_id: number, species_name: string, level: number): GymMember {
   return { species_id, species_name, level };
 }
@@ -131,6 +196,8 @@ export const REGION_GYMS: Record<string, GymSpec[]> = {
 export type Gym = GymSpec & {
   gradient: string;
   accent: string;
+  /** clip-path kształtu odznaki. */
+  shape: string;
   /** Najwyższy poziom w drużynie Lidera. */
   level: number;
   teamSize: number;
@@ -141,10 +208,13 @@ export type Gym = GymSpec & {
 function decorate(spec: GymSpec): Gym {
   const style = TYPE_STYLE[spec.type] ?? TYPE_STYLE["Normalny"]!;
   const level = Math.max(...spec.team.map((member) => member.level));
+  const shapeKey =
+    BADGE_SHAPE_OVERRIDE[spec.badgeKey] ?? TYPE_SHAPE[spec.type] ?? "shield";
   return {
     ...spec,
     gradient: style.gradient,
     accent: style.accent,
+    shape: BADGE_SHAPES[shapeKey] ?? BADGE_SHAPES["shield"]!,
     level,
     teamSize: spec.team.length,
     rewardExp: 80 + (spec.index - 1) * 60,

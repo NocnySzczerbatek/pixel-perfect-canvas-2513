@@ -122,6 +122,8 @@ function TrainerDashboard() {
 
   const region = findRegion(profile?.region);
 
+  const trainerExpNext = Math.round(100 * Math.pow(profile?.trainer_level ?? 1, 1.8));
+
   return (
     <main className="min-h-screen px-5 py-8 md:px-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -146,7 +148,18 @@ function TrainerDashboard() {
       </header>
 
       <section className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Stat label="Poziom trenera" value={profile?.trainer_level ?? "—"} />
+        <Stat
+          label="Poziom trenera"
+          value={profile?.trainer_level ?? "—"}
+          hint={
+            profile
+              ? `${profile.trainer_exp} / ${trainerExpNext} EXP · brakuje ${Math.max(
+                  0,
+                  trainerExpNext - profile.trainer_exp,
+                )}`
+              : undefined
+          }
+        />
         <Stat
           label="Energia"
           value={`${energyNow ?? profile?.energy ?? "—"} / ${MAX_ENERGY}`}

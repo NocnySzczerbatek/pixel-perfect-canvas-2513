@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BIOMES, findBiome, type BiomeSpecies } from "@/lib/biomes";
 import { RAZZ, ballByKey, healByKey } from "@/lib/items";
+import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
 import {
   hpFromIv,
   simulateTeamBattle,
@@ -553,6 +554,11 @@ export const fightWildMove = createServerFn({ method: "POST" })
       );
     } else {
       log.push(`${foe.name} pada! Możesz rzucić Poké Ballem albo iść dalej.`);
+      log.push(
+        ...(await awardPokemonExp(supabase, userId, [
+          { id: mine.id, exp: expForDefeat(row.level, "wild") },
+        ])),
+      );
     }
 
     if (allyHp === 0) log.push(`${me.name} jest Zemdlony — ulecz go w zakładce Drużyna.`);
@@ -762,6 +768,14 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
         `Nagroda: +${row.reward_exp} EXP trenera, +${row.reward_coins} Catch Coins.`,
       );
       await applyTrainerReward(supabase, userId, row.reward_exp, row.reward_coins);
+      const foeLevel = Math.max(1, ...team.map((f) => f.level));
+      log.push(
+        ...(await awardPokemonExp(
+          supabase,
+          userId,
+          Object.keys(result.allyHp).map((id) => ({ id, exp: expForDefeat(foeLevel, "bot") })),
+        )),
+      );
     } else {
       log.push(`${label} wygrywa. Bez nagrody — ulecz drużynę i wróć silniejszy.`);
     }
