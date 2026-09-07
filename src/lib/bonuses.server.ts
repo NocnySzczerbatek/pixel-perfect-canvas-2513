@@ -3,6 +3,7 @@ import {
   chanceText,
   multiplierFromPct,
   PERMANENT_BONUS_PCT,
+  PERMANENT_CAP_PCT,
   type BonusRow,
   type BonusState,
   type BuffRow,
