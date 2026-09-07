@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
 import { CHANGELOG, GAME_LOOP } from "@/lib/changelog";
 import { artworkUrl, findRegion } from "@/lib/game-data";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 export const Route = createFileRoute("/gra")({
   head: () => ({
@@ -147,13 +148,24 @@ function TrainerDashboard() {
   return (
     <main className="min-h-screen px-5 py-8 md:px-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
-            {region ? region.name : "Catch Zone"}
-          </p>
-          <h1 className="aurora-text text-4xl">
-            {profile?.trainer_name ?? "Panel trenera"}
-          </h1>
+        <div className="flex items-end gap-3">
+          <Link to="/">
+            <img
+              src={logoAsset.url}
+              alt="Catch Zone"
+              width={56}
+              height={56}
+              className="h-12 w-12 object-contain"
+            />
+          </Link>
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+              {region ? region.name : "Catch Zone"}
+            </p>
+            <h1 className="aurora-text text-4xl">
+              {profile?.trainer_name ?? "Panel trenera"}
+            </h1>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setTourOpen(true)}>
