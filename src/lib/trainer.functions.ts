@@ -405,16 +405,35 @@ export const deleteAccount = createServerFn({ method: "POST" })
 /** Koszt jednego punktu treningu danego staty (rośnie wykładniczo z poziomem treningu). */
 export const TRAINING_LEVEL_STEP = 5; // co 5 punktów treningu = +1 poziom
 export const MAX_IV = 31;
+/** Maksymalna liczba kupionych punktów treningu na jedną statystykę. */
+export const MAX_TRAIN = 31;
 export const TRAINING_DISPLAY_MAX = 1000; // gracz widzi skalę 0–1000
 export const MAX_FRIENDSHIP = 255;
 
-export function trainingCost(currentIv: number) {
-  return Math.round(25 + Math.pow(currentIv, 1.85) * 4);
+/**
+ * Koszt kolejnego punktu treningu — zależy WYŁĄCZNIE od liczby punktów, które gracz
+ * już kupił dla tej statystyki (0 → 25 CC, 2 → 39 CC, 20 → ~1000 CC, 30 → ~2250 CC).
+ * Krzywa jest ściśle rosnąca, więc następny punkt nigdy nie jest tańszy od poprzedniego.
+ */
+export function trainingCost(trainedPoints: number) {
+  const points = Math.max(0, Math.min(MAX_TRAIN, trainedPoints));
+  return Math.round(25 + Math.pow(points, 1.85) * 4);
 }
 
-/** Przelicza wewnętrzne IV (0–31) na "Poziom Treningu" widoczny dla gracza (0–1000). */
-export function trainingLevel(iv: number) {
-  return Math.round((Math.min(MAX_IV, Math.max(0, iv)) / MAX_IV) * TRAINING_DISPLAY_MAX);
+/** Suma Catch Coins zainwestowanych już w daną statystykę. */
+export function trainingInvested(trainedPoints: number) {
+  let total = 0;
+  for (let i = 0; i < Math.max(0, Math.min(MAX_TRAIN, trainedPoints)); i += 1) {
+    total += trainingCost(i);
+  }
+  return total;
+}
+
+/** Przelicza kupione punkty treningu (0–31) na "Poziom Treningu" widoczny dla gracza (0–1000). */
+export function trainingLevel(trainedPoints: number) {
+  return Math.round(
+    (Math.min(MAX_TRAIN, Math.max(0, trainedPoints)) / MAX_TRAIN) * TRAINING_DISPLAY_MAX,
+  );
 }
 
 /** Rodzaje Cukierków znajdowanych podczas eksploracji (przyjaźń). */
