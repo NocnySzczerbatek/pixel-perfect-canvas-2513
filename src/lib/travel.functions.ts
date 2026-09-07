@@ -4,6 +4,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { REGIONS } from "@/lib/game-data";
 import { TRAVEL_TICKET_PRICE, effectiveRegion, travelWindowState } from "@/lib/travel";
 
+async function writeDb(): Promise<any> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
 async function buildTravelState(supabase: any, userId: string) {
   const { data: profile } = await supabase
     .from("profiles")
@@ -13,7 +18,7 @@ async function buildTravelState(supabase: any, userId: string) {
   if (!profile) throw new Error("Nie znaleziono profilu trenera.");
   const activeRegion = effectiveRegion(profile.region, profile.travel_region, profile.travel_until);
   if (profile.travel_region && activeRegion === profile.region) {
-    await supabase.from("profiles").update({ travel_region: null, travel_until: null }).eq("id", userId);
+    await (await writeDb()).from("profiles").update({ travel_region: null, travel_until: null }).eq("id", userId);
   }
   return {
     home_region: profile.region,
@@ -50,7 +55,7 @@ export const flyToRegion = createServerFn({ method: "POST" })
     const window = travelWindowState(data.region);
     if (!window?.open) return { ok: false as const, reason: "Okno tego regionu jest teraz zamknięte.", state: await buildTravelState(supabase, userId) };
     const until = new Date(Date.now() + window.msUntilClose).toISOString();
-    await supabase.from("profiles").update({
+    await (await writeDb()).from("profiles").update({
       travel_tickets: profile.travel_tickets - 1,
       travel_region: data.region,
       travel_until: until,

@@ -3,6 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { speciesType } from "@/lib/pokedex";
 
+async function writeDb(): Promise<any> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
 export const GTS_FEE = 0.05; // 5% prowizji giełdy
 export const MIN_PRICE = 50;
 export const MAX_PRICE = 50000;
@@ -164,7 +169,7 @@ export const createListing = createServerFn({ method: "POST" })
       };
     }
 
-    await supabase.from("gts_listings").insert({
+    await (await writeDb()).from("gts_listings").insert({
       seller_id: userId,
       pokemon_id: mon.id,
       species_id: mon.species_id,
@@ -186,7 +191,7 @@ export const cancelListing = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await supabase
+    await (await writeDb())
       .from("gts_listings")
       .update({ status: "cancelled" })
       .eq("id", data.listingId)
@@ -274,7 +279,7 @@ export const buyListing = createServerFn({ method: "POST" })
       })
       .eq("id", mon.id);
 
-    await supabase
+    await (await writeDb())
       .from("profiles")
       .update({ catch_coins: buyer.catch_coins - listing.price })
       .eq("id", userId);
@@ -336,14 +341,14 @@ export const sellToNpc = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!profile) throw new Error("Nie znaleziono profilu trenera.");
 
-    await supabase
+    await (await writeDb())
       .from("gts_listings")
       .update({ status: "cancelled" })
       .eq("pokemon_id", mon.id as string)
       .eq("seller_id", userId)
       .eq("status", "active");
-    await supabase.from("player_pokemon").delete().eq("id", mon.id).eq("owner_id", userId);
-    await supabase
+    await (await writeDb()).from("player_pokemon").delete().eq("id", mon.id).eq("owner_id", userId);
+    await (await writeDb())
       .from("profiles")
       .update({ catch_coins: profile.catch_coins + price })
       .eq("id", userId);

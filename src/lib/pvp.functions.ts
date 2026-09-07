@@ -4,6 +4,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
 import { speciesType } from "@/lib/pokedex";
 
+async function writeDb(): Promise<any> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
 const RAID_ENERGY = 8;
 
 export type Rival = {
@@ -215,7 +220,7 @@ export const raidTrainer = createServerFn({ method: "POST" })
     const percent = 5 + Math.floor(Math.random() * 6); // 5–10%
 
     for (const [id, hp] of Object.entries(result.allyHp)) {
-      await supabase
+      await (await writeDb())
         .from("player_pokemon")
         .update({ hp_current: hp, fainted: hp <= 0 })
         .eq("id", id)
@@ -232,7 +237,7 @@ export const raidTrainer = createServerFn({ method: "POST" })
           pvp_losses: (rival.pvp_losses ?? 0) + 1,
         })
         .eq("id", rival.id);
-      await supabase
+      await (await writeDb())
         .from("profiles")
         .update({
           catch_coins: me.catch_coins + stolen,
@@ -242,7 +247,7 @@ export const raidTrainer = createServerFn({ method: "POST" })
         .eq("id", userId);
     } else {
       stolen = Math.max(1, Math.floor((me.catch_coins * percent) / 100));
-      await supabase
+      await (await writeDb())
         .from("profiles")
         .update({
           catch_coins: Math.max(0, me.catch_coins - stolen),

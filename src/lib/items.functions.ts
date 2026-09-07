@@ -4,6 +4,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BALLS, HEAL_ITEMS, RAZZ, SHIELD_COST, SHIELD_HOURS, ballByKey, healByKey } from "@/lib/items";
 import { TRAVEL_TICKET_PRICE } from "@/lib/travel";
 
+async function writeDb(): Promise<any> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
 /** Master Ball da się też kupić za monety — bardzo drogo. */
 export const MASTER_BALL_CC = 2500;
 export const MASTER_BALL_COOLDOWN_MS = 24 * 60 * 60 * 1000;
@@ -38,7 +43,7 @@ export const buyItem = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const item = resolve(data.kind)!;
-    const { data: profile } = await (supabase.from("profiles") as any)
+    const { data: profile } = await ((await writeDb()).from("profiles") as any)
       .select(`catch_coins, master_ball_bought_at, ${item.field}`)
       .eq("id", userId)
       .maybeSingle();
@@ -54,7 +59,7 @@ export const buyItem = createServerFn({ method: "POST" })
         reason: `Brakuje Catch Coins — potrzebujesz ${cost}, masz ${profile.catch_coins}.`,
       };
     }
-    await (supabase.from("profiles") as any)
+    await ((await writeDb()).from("profiles") as any)
       .update({
         catch_coins: profile.catch_coins - cost,
         [item.field]: (profile[item.field] ?? 0) + data.amount,
@@ -82,7 +87,7 @@ export const buyShield = createServerFn({ method: "POST" })
     const base = profile.shield_until ? new Date(profile.shield_until).getTime() : 0;
     const from = Math.max(now, base);
     const until = new Date(from + SHIELD_HOURS * 3600 * 1000).toISOString();
-    await supabase
+    await (await writeDb())
       .from("profiles")
       .update({ catch_coins: profile.catch_coins - SHIELD_COST, shield_until: until })
       .eq("id", userId);

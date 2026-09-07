@@ -26,6 +26,11 @@ import {
   speciesType,
 } from "@/lib/pokedex";
 
+async function writeDb(): Promise<any> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
 
 const MAX_ENERGY = 100;
 const ENERGY_TICK_MS = 3 * 60 * 1000; // +1 Energii co 3 minuty
@@ -179,7 +184,7 @@ async function syncEnergy(supabase: any, userId: string): Promise<ProfileRow> {
   const now = Date.now();
   if (profile.energy >= MAX_ENERGY) {
     if (now - last >= ENERGY_TICK_MS) {
-      await supabase
+      await (await writeDb())
         .from("profiles")
         .update({ energy_updated_at: new Date(now).toISOString() })
         .eq("id", userId);
@@ -194,7 +199,7 @@ async function syncEnergy(supabase: any, userId: string): Promise<ProfileRow> {
   const energy = Math.min(MAX_ENERGY, profile.energy + ticks);
   const consumed = energy - profile.energy;
   const stamp = new Date(last + consumed * ENERGY_TICK_MS).toISOString();
-  await supabase
+  await (await writeDb())
     .from("profiles")
     .update({ energy, energy_updated_at: stamp })
     .eq("id", userId);
@@ -386,7 +391,7 @@ export const travel = createServerFn({ method: "POST" })
     const foundCandy =
       candyRoll < 0.05 ? ("xl" as const) : candyRoll < 0.2 ? ("normal" as const) : null;
 
-    await (supabase.from("profiles") as any)
+    await ((await writeDb()).from("profiles") as any)
       .update({
         energy: Math.max(0, profile.energy - cost),
         energy_updated_at: new Date().toISOString(),
@@ -407,8 +412,8 @@ export const travel = createServerFn({ method: "POST" })
     if (foundMegaSpecies) {
       const itemKey = `mega_shard_${foundMegaSpecies}`;
       const { data: owned } = await supabase.from("player_items").select("id, quantity").eq("owner_id", userId).eq("item_key", itemKey).maybeSingle();
-      if (owned) await supabase.from("player_items").update({ quantity: owned.quantity + 1 }).eq("id", owned.id).eq("owner_id", userId);
-      else await supabase.from("player_items").insert({ owner_id: userId, item_key: itemKey, quantity: 1, metadata: { species_id: foundMegaSpecies, kind: "mega_shard" } });
+      if (owned) await (await writeDb()).from("player_items").update({ quantity: owned.quantity + 1 }).eq("id", owned.id).eq("owner_id", userId);
+      else await (await writeDb()).from("player_items").insert({ owner_id: userId, item_key: itemKey, quantity: 1, metadata: { species_id: foundMegaSpecies, kind: "mega_shard" } });
     }
     await progressActivities(supabase, userId, "battle", 1, "exploration");
 
@@ -473,7 +478,7 @@ export const travel = createServerFn({ method: "POST" })
     }
 
 
-    const { data: created, error } = await supabase
+    const { data: created, error } = await (await writeDb())
       .from("encounters")
       .insert({
         owner_id: userId,
@@ -593,14 +598,14 @@ export const fightWildMove = createServerFn({ method: "POST" })
 
     if (allyHp === 0) log.push(`${me.name} jest Zemdlony — ulecz go w zakładce Drużyna.`);
 
-    await supabase
+    await (await writeDb())
       .from("player_pokemon")
       .update({ hp_current: allyHp, fainted: allyHp === 0 })
       .eq("id", mine.id)
       .eq("owner_id", userId);
 
     const lost = allyHp === 0 && wildHp > 0;
-    await supabase
+    await (await writeDb())
       .from("encounters")
       .update({
         hp_current: wildHp,
@@ -680,7 +685,7 @@ export const throwBall = createServerFn({ method: "POST" })
     const spend: Record<string, number> = { [ball.field]: owned - 1 };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (useRazz) spend[RAZZ.field] = (profile.razz_berries ?? 0) - 1;
-    await (supabase.from("profiles") as any).update(spend).eq("id", userId);
+    await ((await writeDb()).from("profiles") as any).update(spend).eq("id", userId);
 
 
     if (success) {
@@ -702,7 +707,7 @@ export const throwBall = createServerFn({ method: "POST" })
       const hpMax = hpFromIv(row.level, ivs.iv_hp);
       const nature = pick(NATURES);
       const ability = pick(abilitiesFor(type));
-      await supabase.from("player_pokemon").insert({
+      await (await writeDb()).from("player_pokemon").insert({
         owner_id: userId,
         species_id: speciesId,
         species_name: row.species_name ?? "Nieznany Pokémon",
@@ -719,7 +724,7 @@ export const throwBall = createServerFn({ method: "POST" })
       const gainedExp = 8 + row.level * 5;
       await applyTrainerReward(supabase, userId, gainedExp, 0);
       await progressActivities(supabase, userId, "catch", 1, String(speciesId));
-      await supabase
+      await (await writeDb())
         .from("encounters")
         .update({ status: "caught", log, reward_exp: gainedExp })
         .eq("id", row.id);
@@ -733,7 +738,7 @@ export const throwBall = createServerFn({ method: "POST" })
 
     const fled = Math.random() < (useRazz ? 0.05 : 0.15);
     log.push(fled ? `${row.species_name} uciekł.` : "Ball chybił — Pokémon nadal tu jest.");
-    await supabase
+    await (await writeDb())
       .from("encounters")
       .update({ status: fled ? "fled" : "active", log })
       .eq("id", row.id);
@@ -772,7 +777,7 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
 
     if (allies.length === 0) {
       log.push("Nie masz zdolnego do walki Pokémona — ulecz drużynę.");
-      await supabase.from("encounters").update({ status: "lost", log }).eq("id", row.id);
+      await (await writeDb()).from("encounters").update({ status: "lost", log }).eq("id", row.id);
       return {
         ok: false as const,
         won: false,
@@ -798,7 +803,7 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
     log.push(...result.log);
 
     for (const [id, hp] of Object.entries(result.allyHp)) {
-      await supabase
+      await (await writeDb())
         .from("player_pokemon")
         .update({ hp_current: hp, fainted: hp <= 0 })
         .eq("id", id)
@@ -823,7 +828,7 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
       log.push(`${label} wygrywa. Bez nagrody — ulecz drużynę i wróć silniejszy.`);
     }
 
-    await supabase
+    await (await writeDb())
       .from("encounters")
       .update({ status: result.won ? "resolved" : "lost", log: log.slice(-40) })
       .eq("id", row.id);
@@ -845,7 +850,7 @@ export const dismissEncounter = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await supabase
+    await (await writeDb())
       .from("encounters")
       .update({ status: "skipped" })
       .eq("id", data.encounterId)
@@ -881,7 +886,7 @@ async function applyTrainerReward(
     updates['ultra_balls'] = data.ultra_balls + gainedLevels * Math.floor(level / 10);
     updates['energy_bottles'] = data.energy_bottles + gainedLevels * Math.max(1, Math.floor(level / 10));
   }
-  await supabase
+  await (await writeDb())
     .from("profiles")
     .update(updates)
     .eq("id", userId);
@@ -949,12 +954,12 @@ export const useHealItem = createServerFn({ method: "POST" })
       ? Math.max(1, Math.round(mon.hp_max / 2))
       : Math.min(mon.hp_max, mon.hp_current + item.heal);
 
-    await supabase
+    await (await writeDb())
       .from("player_pokemon")
       .update({ hp_current: healed, fainted: false })
       .eq("id", mon.id)
       .eq("owner_id", userId);
-    await (supabase.from("profiles") as any)
+    await ((await writeDb()).from("profiles") as any)
       .update({ [item.field]: owned - 1 })
       .eq("id", userId);
 
@@ -971,7 +976,7 @@ export const useHealItem = createServerFn({ method: "POST" })
         .maybeSingle();
       if (row && row.status === "active") {
         const log = [...(((row.log as string[]) ?? [])), line];
-        await supabase.from("encounters").update({ log: log.slice(-30) }).eq("id", row.id);
+        await (await writeDb()).from("encounters").update({ log: log.slice(-30) }).eq("id", row.id);
       }
     }
 
