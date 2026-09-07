@@ -5,6 +5,7 @@ import { ArrowLeft, Coins, Dumbbell, Heart } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { pokemonExpToNext } from "@/lib/leveling";
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
@@ -170,6 +171,28 @@ function PokemonDetailPage() {
           <p className="text-sm text-muted-foreground">
             HP {pokemon.hp_current}/{pokemon.hp_max}
           </p>
+          <div className="mt-4 text-left">
+            <div className="flex items-baseline justify-between text-xs">
+              <span className="text-muted-foreground">
+                Doświadczenie do Lvl {pokemon.level + 1}
+              </span>
+              <span>
+                {pokemon.exp} / {pokemonExpToNext(pokemon.level)} EXP
+              </span>
+            </div>
+            <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full bg-ice"
+                style={{
+                  width: `${Math.min(100, Math.round((pokemon.exp / pokemonExpToNext(pokemon.level)) * 100))}%`,
+                }}
+              />
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Brakuje {Math.max(0, pokemonExpToNext(pokemon.level) - pokemon.exp)} EXP. EXP zdobywasz
+              w walkach: dziki Pokémon, Trener-Bot (x1,4) i Lider Sali (x2,2).
+            </p>
+          </div>
           <dl className="mt-4 space-y-1 text-left text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Natura</dt>
