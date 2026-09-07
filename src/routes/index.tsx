@@ -192,7 +192,9 @@ function StartScreen() {
             onSignIn={signIn}
             onSignOut={async () => {
               await supabase.auth.signOut();
-              setStep("region");
+              setStep("name");
+              setTrainerName("");
+              setNameError(null);
               setRegion(null);
               setStarter(null);
               setTutorialStage(0);
@@ -205,6 +207,14 @@ function StartScreen() {
             <IntroCard loading={loading} />
           ) : checkingProfile ? (
             <p className="text-center text-sm text-muted-foreground">Wczytywanie profilu…</p>
+          ) : step === "name" ? (
+            <NameStep
+              value={trainerName}
+              error={nameError}
+              busy={busy}
+              onChange={setTrainerName}
+              onSubmit={submitName}
+            />
           ) : step === "region" ? (
             <RegionGrid
               onPick={(picked) => {
