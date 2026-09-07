@@ -39,7 +39,7 @@ function pool(region: string | null, type: string) {
   const all = [...BIOMES.flatMap((b) => b.species), ...Object.values(REGION_SPECIES).flat()];
   const regional = all.filter((s) => inRegion(s.id, region));
   const typed = regional.filter((s) => s.type === type);
-  const base = typed.length >= 2 ? typed : regional.length > 0 ? regional : all;
+  const base = [...typed, ...(regional.length > 0 ? regional : all)];
   const unique = new Map(base.map((s) => [s.id, s]));
   return [...unique.values()];
 }
