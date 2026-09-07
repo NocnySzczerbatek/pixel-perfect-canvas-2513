@@ -160,7 +160,9 @@ function EksploracjaPage() {
     if (!userId || busy) return;
     setBusy(true);
     try {
-      const result = await healFn({ data: { pokemonId, item, encounterId } });
+      const result = await healFn({
+        data: encounterId ? { pokemonId, item, encounterId } : { pokemonId, item },
+      });
       if (!result.ok) toast.error(result.reason);
       else toast.success(result.message);
       updateState(result.state);
