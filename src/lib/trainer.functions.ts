@@ -491,6 +491,7 @@ export const useCandy = createServerFn({ method: "POST" })
   });
 
 
+/** Wrodzona moc gatunku (losowana przy złapaniu) — wpływa na walkę, nie na pasek treningu. */
 const IV_FIELDS = {
   hp: "iv_hp",
   atk: "iv_atk",
@@ -500,17 +501,28 @@ const IV_FIELDS = {
   spe: "iv_spe",
 } as const;
 
-/** Trening: 1 punkt = +1 IV wybranego staty; co 5 punktów Pokémon zyskuje poziom. */
+/** Kupione punkty treningu (0–31 na statystykę) — TYLKO to widać na pasku Poziomu Treningu. */
+export const TRAIN_FIELDS = {
+  hp: "train_hp",
+  atk: "train_atk",
+  def: "train_def",
+  spa: "train_spa",
+  spd: "train_spd",
+  spe: "train_spe",
+} as const;
+
+/** Trening: 1 kupiony punkt = +1 do statystyki; co 5 punktów Pokémon zyskuje poziom. */
 export const trainPokemon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { id: string; stat: keyof typeof IV_FIELDS }) => {
+  .inputValidator((input: { id: string; stat: keyof typeof TRAIN_FIELDS }) => {
     if (!input?.id) throw new Error("Brak Pokémona.");
-    if (!(input.stat in IV_FIELDS)) throw new Error("Nieznana statystyka.");
+    if (!(input.stat in TRAIN_FIELDS)) throw new Error("Nieznana statystyka.");
     return { id: input.id, stat: input.stat };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const field = IV_FIELDS[data.stat];
+    const ivField = IV_FIELDS[data.stat];
+    const trainField = TRAIN_FIELDS[data.stat];
     const { data: row } = await supabase
       .from("player_pokemon")
       .select(POKEMON_COLUMNS)
@@ -519,12 +531,13 @@ export const trainPokemon = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Nie znaleziono Pokémona.");
     const pokemon = row as PokemonRow;
-    const currentIv = pokemon[field as keyof PokemonRow] as number;
+    const currentIv = pokemon[ivField as keyof PokemonRow] as number;
+    const currentTrain = (pokemon[trainField as keyof PokemonRow] as number) ?? 0;
 
-    if (currentIv >= 31) {
+    if (currentTrain >= MAX_TRAIN) {
       return {
         ok: false as const,
-        reason: "Ta statystyka jest już na maksimum (31).",
+        reason: `Poziom Treningu tej statystyki jest już maksymalny (${TRAINING_DISPLAY_MAX}/${TRAINING_DISPLAY_MAX}).`,
         data: await buildTrainerData(supabase, userId),
       };
     }
@@ -535,7 +548,7 @@ export const trainPokemon = createServerFn({ method: "POST" })
       .eq("id", userId)
       .maybeSingle();
     if (!profile) throw new Error("Nie znaleziono profilu trenera.");
-    const cost = trainingCost(currentIv);
+    const cost = trainingCost(currentTrain);
     if (profile.catch_coins < cost) {
       return {
         ok: false as const,
@@ -550,12 +563,14 @@ export const trainPokemon = createServerFn({ method: "POST" })
       Math.floor(pokemon.training_points / TRAINING_LEVEL_STEP);
     const maxLevel = (profile.trainer_level as number) + 5;
     const level = Math.min(maxLevel, pokemon.level + gainedLevels);
-    const newIvHp = data.stat === "hp" ? currentIv + 1 : pokemon.iv_hp;
+    const newIvHp = data.stat === "hp" ? pokemon.iv_hp + 1 : pokemon.iv_hp;
     const hpMax = Math.round(20 + level * 4 + newIvHp * 0.8);
 
     await ((await writeDb()).from("player_pokemon") as any)
       .update({
-        [field]: currentIv + 1,
+        [trainField]: currentTrain + 1,
+        // Wrodzona moc + kupiony punkt trafia do statystyk używanych w walce.
+        [ivField]: currentIv + 1,
         training_points: points,
         level,
         hp_max: hpMax,
