@@ -59,6 +59,8 @@ const MON_COLUMNS =
   "id, species_id, species_name, nickname, level, hp_current, hp_max, is_starter, in_party, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, nature, ability, training_points, friendship";
 
 async function buildState(supabase: any, userId: string): Promise<GtsState> {
+  // Nicki sprzedających pochodzą z listy publicznej — pełne profile są prywatne (RLS).
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const [{ data: profile }, { data: listings }, { data: mons }, { data: names }] =
     await Promise.all([
       supabase.from("profiles").select("catch_coins").eq("id", userId).maybeSingle(),
@@ -69,7 +71,7 @@ async function buildState(supabase: any, userId: string): Promise<GtsState> {
         .order("created_at", { ascending: false })
         .limit(60),
       supabase.from("player_pokemon").select(MON_COLUMNS).eq("owner_id", userId),
-      supabase.from("profiles").select("id, trainer_name"),
+      (supabaseAdmin as any).rpc("public_trainers"),
     ]);
   if (!profile) throw new Error("Nie znaleziono profilu trenera.");
 
