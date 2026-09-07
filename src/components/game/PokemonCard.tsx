@@ -35,7 +35,7 @@ export function PokemonCard({
       </p>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-[hsl(var(--ice))] transition-all"
+          className="h-full rounded-full bg-ice transition-all"
           style={{ width: `${hpPercent}%` }}
         />
       </div>
