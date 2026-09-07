@@ -48,13 +48,14 @@ export const Route = createFileRoute("/pokemon/$id")({
   component: PokemonDetailPage,
 });
 
-const IV_OF: Record<StatKey, keyof PokemonRow> = {
-  hp: "iv_hp",
-  atk: "iv_atk",
-  def: "iv_def",
-  spa: "iv_spa",
-  spd: "iv_spd",
-  spe: "iv_spe",
+/** Pasek pokazuje wyłącznie punkty kupione przez gracza — nie wrodzoną moc gatunku. */
+const TRAIN_OF: Record<StatKey, keyof PokemonRow> = {
+  hp: "train_hp",
+  atk: "train_atk",
+  def: "train_def",
+  spa: "train_spa",
+  spd: "train_spd",
+  spe: "train_spe",
 };
 
 function PokemonDetailPage() {
