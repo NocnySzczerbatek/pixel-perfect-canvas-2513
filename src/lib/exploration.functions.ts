@@ -432,7 +432,15 @@ export const travel = createServerFn({ method: "POST" })
       const species: BiomeSpecies = pick(pool);
       const level = levelFor();
       const hpMax = hpFromIv(level, 16);
-      const isShiny = Math.random() < SHINY_CHANCE;
+      // Shiny Charm (nagroda za 1. miejsce w turnieju) podwaja szansę na shiny.
+      const { data: charm } = await supabase
+        .from("player_items")
+        .select("quantity")
+        .eq("owner_id", userId)
+        .eq("item_key", "shiny_charm")
+        .maybeSingle();
+      const shinyChance = charm && (charm.quantity ?? 0) > 0 ? SHINY_CHANCE * 2 : SHINY_CHANCE;
+      const isShiny = Math.random() < shinyChance;
       payload = {
         kind,
         species_id: species.id,

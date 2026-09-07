@@ -92,6 +92,20 @@ function EkwipunekPage() {
             return <div key={item.item_key} className="glass-panel rounded-2xl p-5"><ItemIcon name="key-stone" label="Fragment Mega" /><p className="mt-3 font-display text-3xl">{item.quantity}/5</p><p className="text-sm text-muted-foreground">Fragmenty Mega · gatunek #{speciesId}</p><Button className="mt-4" size="sm" disabled={busy || item.quantity < 5} onClick={() => void run(() => craftStone({ data: { speciesId } }), "Utworzono gatunkowy Kamień Mega.")}>Utwórz Kamień</Button></div>;
           })}
           {(data.items ?? []).filter((item) => item.item_key.startsWith("mega_stone_")).map((item) => <div key={item.item_key} className="glass-panel rounded-2xl p-5"><ItemIcon name="key-stone" label="Kamień Mega" /><p className="mt-3 font-display text-3xl">{item.quantity}</p><p className="text-sm text-muted-foreground">Kamień Mega · gatunek #{item.item_key.replace("mega_stone_", "")}</p></div>)}
+          {(data.items ?? [])
+            .filter((item) => item.item_key === "shiny_charm" && item.quantity > 0)
+            .map((item) => (
+              <div key={item.item_key} className="glass-panel rounded-2xl p-5">
+                <ItemIcon name="shiny-charm" label="Shiny Charm" />
+                <p className="mt-3 font-display text-3xl">{item.quantity}</p>
+                <p className="text-sm text-muted-foreground">
+                  Shiny Charm · podwaja szansę na shiny w eksploracji
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Nagroda za 1. miejsce w turnieju tygodniowym. Działa automatycznie.
+                </p>
+              </div>
+            ))}
 
           <div className="glass-panel rounded-2xl p-5">
             <ItemIcon name="max-elixir" label="Flakon Energii" />
