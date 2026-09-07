@@ -91,6 +91,110 @@ export type Database = {
           },
         ]
       }
+      gts_listings: {
+        Row: {
+          buyer_id: string | null
+          created_at: string
+          id: string
+          level: number
+          pokemon_id: string | null
+          price: number
+          seller_id: string
+          snapshot: Json | null
+          sold_at: string | null
+          species_id: number
+          species_name: string
+          species_type: string | null
+          status: string
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          level?: number
+          pokemon_id?: string | null
+          price: number
+          seller_id: string
+          snapshot?: Json | null
+          sold_at?: string | null
+          species_id: number
+          species_name: string
+          species_type?: string | null
+          status?: string
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          level?: number
+          pokemon_id?: string | null
+          price?: number
+          seller_id?: string
+          snapshot?: Json | null
+          sold_at?: string | null
+          species_id?: number
+          species_name?: string
+          species_type?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gts_listings_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gts_listings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_badges: {
+        Row: {
+          badge_key: string
+          badge_name: string
+          earned_at: string
+          gym_index: number
+          id: string
+          leader_name: string
+          owner_id: string
+          region: string
+        }
+        Insert: {
+          badge_key: string
+          badge_name: string
+          earned_at?: string
+          gym_index: number
+          id?: string
+          leader_name: string
+          owner_id: string
+          region: string
+        }
+        Update: {
+          badge_key?: string
+          badge_name?: string
+          earned_at?: string
+          gym_index?: number
+          id?: string
+          leader_name?: string
+          owner_id?: string
+          region?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_badges_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_pokemon: {
         Row: {
           ability: string | null
@@ -187,13 +291,21 @@ export type Database = {
           energy_bottles: number
           energy_updated_at: string
           featured_badge: string | null
+          great_balls: number
           id: string
+          master_balls: number
+          mega_stones: number
           poke_balls: number
+          pvp_losses: number
+          pvp_wins: number
+          razz_berries: number
           region: string | null
+          shield_until: string | null
           trainer_exp: number
           trainer_level: number
           trainer_name: string
           tutorial_completed: boolean
+          ultra_balls: number
           updated_at: string
         }
         Insert: {
@@ -205,13 +317,21 @@ export type Database = {
           energy_bottles?: number
           energy_updated_at?: string
           featured_badge?: string | null
+          great_balls?: number
           id: string
+          master_balls?: number
+          mega_stones?: number
           poke_balls?: number
+          pvp_losses?: number
+          pvp_wins?: number
+          razz_berries?: number
           region?: string | null
+          shield_until?: string | null
           trainer_exp?: number
           trainer_level?: number
           trainer_name: string
           tutorial_completed?: boolean
+          ultra_balls?: number
           updated_at?: string
         }
         Update: {
@@ -223,13 +343,21 @@ export type Database = {
           energy_bottles?: number
           energy_updated_at?: string
           featured_badge?: string | null
+          great_balls?: number
           id?: string
+          master_balls?: number
+          mega_stones?: number
           poke_balls?: number
+          pvp_losses?: number
+          pvp_wins?: number
+          razz_berries?: number
           region?: string | null
+          shield_until?: string | null
           trainer_exp?: number
           trainer_level?: number
           trainer_name?: string
           tutorial_completed?: boolean
+          ultra_balls?: number
           updated_at?: string
         }
         Relationships: []

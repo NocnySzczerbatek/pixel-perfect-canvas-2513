@@ -41,13 +41,29 @@ export type TrainerData = {
     energy_max: number;
     energy_bottles: number;
     poke_balls: number;
+    great_balls: number;
+    ultra_balls: number;
+    master_balls: number;
+    razz_berries: number;
+    mega_stones: number;
+    shield_until: string | null;
+    pvp_wins: number;
+    pvp_losses: number;
     catch_coins: number;
     candy_normal: number;
     candy_xl: number;
     region: string | null;
+    featured_badge: string | null;
     created_at: string;
   };
   pokemon: PokemonRow[];
+  badges: {
+    region: string;
+    gym_index: number;
+    badge_key: string;
+    badge_name: string;
+    leader_name: string;
+  }[];
   ball_price: number;
   bottle_energy: number;
 };
@@ -61,11 +77,11 @@ function expThreshold(level: number) {
 }
 
 async function buildTrainerData(supabase: any, userId: string): Promise<TrainerData> {
-  const [{ data: profile }, { data: pokemon }] = await Promise.all([
+  const [{ data: profile }, { data: pokemon }, { data: badges }] = await Promise.all([
     supabase
       .from("profiles")
       .select(
-        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, catch_coins, candy_normal, candy_xl, region, created_at",
+        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, great_balls, ultra_balls, master_balls, razz_berries, mega_stones, shield_until, pvp_wins, pvp_losses, catch_coins, candy_normal, candy_xl, region, featured_badge, created_at",
       )
       .eq("id", userId)
       .maybeSingle(),
@@ -74,6 +90,11 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
       .select(POKEMON_COLUMNS)
       .eq("owner_id", userId)
       .order("caught_at", { ascending: true }),
+    supabase
+      .from("gym_badges")
+      .select("region, gym_index, badge_key, badge_name, leader_name")
+      .eq("owner_id", userId)
+      .order("gym_index", { ascending: true }),
   ]);
   if (!profile) throw new Error("Nie znaleziono profilu trenera.");
 
@@ -87,17 +108,28 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
       energy_max: MAX_ENERGY,
       energy_bottles: profile.energy_bottles,
       poke_balls: profile.poke_balls,
+      great_balls: profile.great_balls ?? 0,
+      ultra_balls: profile.ultra_balls ?? 0,
+      master_balls: profile.master_balls ?? 0,
+      razz_berries: profile.razz_berries ?? 0,
+      mega_stones: profile.mega_stones ?? 0,
+      shield_until: profile.shield_until ?? null,
+      pvp_wins: profile.pvp_wins ?? 0,
+      pvp_losses: profile.pvp_losses ?? 0,
       catch_coins: profile.catch_coins,
       candy_normal: profile.candy_normal ?? 0,
       candy_xl: profile.candy_xl ?? 0,
       region: profile.region,
+      featured_badge: profile.featured_badge ?? null,
       created_at: profile.created_at,
     },
     pokemon: (pokemon ?? []) as PokemonRow[],
+    badges: (badges ?? []) as TrainerData["badges"],
     ball_price: BALL_PRICE,
     bottle_energy: BOTTLE_ENERGY,
   };
 }
+
 
 
 /** Profil trenera + wszystkie Pokémony (drużyna i PC Box). */

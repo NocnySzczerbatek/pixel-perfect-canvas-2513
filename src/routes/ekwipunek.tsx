@@ -105,6 +105,23 @@ function EkwipunekPage() {
             </p>
           </div>
 
+          {[
+            { label: "Great Balle", sprite: "great-ball", count: profile.great_balls },
+            { label: "Ultra Balle", sprite: "ultra-ball", count: profile.ultra_balls },
+            { label: "Master Balle", sprite: "master-ball", count: profile.master_balls },
+            { label: "Razz Berry", sprite: "razz-berry", count: profile.razz_berries },
+            { label: "Kamienie Mega", sprite: "key-stone", count: profile.mega_stones },
+          ].map((item) => (
+            <div key={item.label} className="glass-panel rounded-2xl p-5">
+              <ItemIcon name={item.sprite} label={item.label} />
+              <p className="mt-3 font-display text-3xl">{item.count}</p>
+              <p className="text-sm text-muted-foreground">{item.label}</p>
+              <p className="mt-4 text-xs text-muted-foreground">
+                Dokupisz w Sklepie za Catch Coins.
+              </p>
+            </div>
+          ))}
+
           <div className="glass-panel rounded-2xl p-5">
             <ItemIcon name="coin-case" label="Catch Coins" />
             <p className="mt-3 font-display text-3xl">{profile.catch_coins}</p>

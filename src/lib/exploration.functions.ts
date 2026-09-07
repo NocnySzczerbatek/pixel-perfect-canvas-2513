@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BIOMES, findBiome, type BiomeSpecies } from "@/lib/biomes";
+import { RAZZ, ballByKey } from "@/lib/items";
 import {
   hpFromIv,
   simulateTeamBattle,
@@ -71,6 +72,11 @@ export type ExplorationState = {
   energy: number;
   energy_max: number;
   poke_balls: number;
+  great_balls: number;
+  ultra_balls: number;
+  master_balls: number;
+  razz_berries: number;
+
   catch_coins: number;
   candy_normal: number;
   candy_xl: number;
@@ -101,6 +107,10 @@ type ProfileRow = {
   energy: number;
   energy_updated_at: string;
   poke_balls: number;
+  great_balls: number;
+  ultra_balls: number;
+  master_balls: number;
+  razz_berries: number;
   catch_coins: number;
   candy_normal: number;
   candy_xl: number;
@@ -110,7 +120,8 @@ type ProfileRow = {
 };
 
 const PROFILE_COLUMNS =
-  "energy, energy_updated_at, poke_balls, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region";
+  "energy, energy_updated_at, poke_balls, great_balls, ultra_balls, master_balls, razz_berries, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region";
+
 
 
 /** Pula gatunków biomu ograniczona do regionu wybranego przez gracza. */
@@ -270,6 +281,11 @@ async function buildState(supabase: any, userId: string): Promise<ExplorationSta
     energy: profile.energy,
     energy_max: MAX_ENERGY,
     poke_balls: profile.poke_balls,
+    great_balls: profile.great_balls ?? 0,
+    ultra_balls: profile.ultra_balls ?? 0,
+    master_balls: profile.master_balls ?? 0,
+    razz_berries: profile.razz_berries ?? 0,
+
     catch_coins: profile.catch_coins,
     candy_normal: profile.candy_normal ?? 0,
     candy_xl: profile.candy_xl ?? 0,
@@ -554,9 +570,10 @@ export const fightWildMove = createServerFn({ method: "POST" })
 /** Rzut Poké Ballem — szansa złapania liczona serwerowo z aktualnego HP. */
 export const throwBall = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { encounterId: string }) => {
+  .inputValidator((input: { encounterId: string; ball?: string; razz?: boolean }) => {
     if (!input?.encounterId) throw new Error("Brak spotkania.");
-    return { encounterId: input.encounterId };
+    const ball = ballByKey(String(input?.ball ?? "poke")) ? String(input!.ball ?? "poke") : "poke";
+    return { encounterId: input.encounterId, ball, razz: Boolean(input?.razz) };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -570,26 +587,37 @@ export const throwBall = createServerFn({ method: "POST" })
       throw new Error("To spotkanie już się zakończyło.");
     }
     const profile = await syncEnergy(supabase, userId);
-    if (profile.poke_balls <= 0) {
+    const ball = ballByKey(data.ball)!;
+    const owned = (profile as any)[ball.field] ?? 0;
+    if (owned <= 0) {
       return {
         ok: false as const,
-        reason: "Nie masz już Poké Balli.",
+        reason: `Nie masz już przedmiotu: ${ball.label}.`,
         state: await buildState(supabase, userId),
       };
     }
+    const useRazz = data.razz && (profile.razz_berries ?? 0) > 0;
 
     const hpFactor = (3 * row.hp_max - 2 * row.hp_current) / (3 * row.hp_max);
-    const chance = Math.max(0.05, Math.min(0.95, hpFactor * 0.9));
+    const chance =
+      ball.multiplier >= 99
+        ? 1
+        : Math.max(
+            0.05,
+            Math.min(0.95, hpFactor * 0.9 * ball.multiplier * (useRazz ? RAZZ.bonus : 1)),
+          );
     const success = Math.random() < chance;
     const log: string[] = [
       ...((row.log as string[]) ?? []),
-      `Rzut Poké Ballem (szansa ${Math.round(chance * 100)}%).`,
+      ...(useRazz ? [`Podajesz ${RAZZ.label} — Pokémon się uspokaja.`] : []),
+      `Rzut ${ball.label} (szansa ${Math.round(chance * 100)}%).`,
     ];
 
-    await supabase
-      .from("profiles")
-      .update({ poke_balls: profile.poke_balls - 1 })
-      .eq("id", userId);
+    const spend: Record<string, number> = { [ball.field]: owned - 1 };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (useRazz) spend[RAZZ.field] = (profile.razz_berries ?? 0) - 1;
+    await (supabase.from("profiles") as any).update(spend).eq("id", userId);
+
 
     if (success) {
       const { count } = await supabase
@@ -637,7 +665,7 @@ export const throwBall = createServerFn({ method: "POST" })
       };
     }
 
-    const fled = Math.random() < 0.15;
+    const fled = Math.random() < (useRazz ? 0.05 : 0.15);
     log.push(fled ? `${row.species_name} uciekł.` : "Ball chybił — Pokémon nadal tu jest.");
     await supabase
       .from("encounters")
