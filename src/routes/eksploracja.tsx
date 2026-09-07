@@ -295,6 +295,8 @@ function EksploracjaPage() {
   );
 }
 
+const ENERGY_TICK_DISPLAY_MS = 3 * 60 * 1000;
+
 function formatCountdown(ms: number) {
   const total = Math.max(0, Math.ceil(ms / 1000));
   const minutes = Math.floor(total / 60);
@@ -311,10 +313,14 @@ function ResourcesPanel({ state }: { state: ExplorationState | undefined }) {
     setLeft(state?.energy_next_ms ?? 0);
   }, [state?.energy_next_ms]);
   useEffect(() => {
-    if (left <= 0) return;
-    const timer = setInterval(() => setLeft((value) => Math.max(0, value - 1000)), 1000);
+    if ((state?.energy_next_ms ?? 0) <= 0) return;
+    const timer = setInterval(
+      () =>
+        setLeft((value) => (value <= 1000 ? ENERGY_TICK_DISPLAY_MS : Math.max(0, value - 1000))),
+      1000,
+    );
     return () => clearInterval(timer);
-  }, [left > 0]);
+  }, [state?.energy_next_ms]);
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <div className="glass-panel rounded-2xl p-4 sm:col-span-2">
