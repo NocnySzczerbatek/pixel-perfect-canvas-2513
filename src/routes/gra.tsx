@@ -66,6 +66,7 @@ type Pokemon = {
   hp_current: number;
   hp_max: number;
   fainted: boolean;
+  is_shiny: boolean;
 };
 
 function TrainerDashboard() {
