@@ -94,7 +94,7 @@ function TrainerDashboard() {
           .maybeSingle(),
         supabase
           .from("player_pokemon")
-          .select("id, species_id, species_name, level, hp_current, hp_max, fainted")
+          .select("id, species_id, species_name, level, hp_current, hp_max, fainted, is_shiny")
           .eq("owner_id", userId)
           .eq("in_party", true),
       ]);
