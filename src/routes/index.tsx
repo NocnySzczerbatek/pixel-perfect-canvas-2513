@@ -7,6 +7,7 @@ import loginBg from "@/assets/catchzone-login.jpg";
 import introVideo from "@/assets/catch-zone-intro.mp4.asset.json";
 import logoAsset from "@/assets/logo.png.asset.json";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
@@ -33,7 +34,7 @@ export const Route = createFileRoute("/")({
   component: StartScreen,
 });
 
-type Step = "region" | "starter" | "tutorial";
+type Step = "name" | "region" | "starter" | "tutorial";
 
 function StartScreen() {
   const { session, loading, userId } = useSession();
@@ -42,7 +43,9 @@ function StartScreen() {
   const createTrainerFn = useServerFn(createTrainerServerFn);
   const completeTutorialFn = useServerFn(completeTutorial);
 
-  const [step, setStep] = useState<Step>("region");
+  const [step, setStep] = useState<Step>("name");
+  const [trainerName, setTrainerName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [starter, setStarter] = useState<Starter | null>(null);
   const [busy, setBusy] = useState(false);
@@ -50,7 +53,7 @@ function StartScreen() {
   const [tutorialStage, setTutorialStage] = useState(0);
 
   // After sign-in: send finished trainers straight into the game,
-  // and resume onboarding for anyone mid-tutorial.
+  // resume onboarding for anyone mid-tutorial, and ask new users for a trainer name first.
   useEffect(() => {
     if (!userId) return;
     let active = true;
@@ -63,7 +66,10 @@ function StartScreen() {
       .then(({ data }) => {
         if (!active) return;
         setCheckingProfile(false);
-        if (!data) return;
+        if (!data) {
+          setStep("name");
+          return;
+        }
         if (data.tutorial_completed) {
           void navigate({ to: "/gra" });
           return;
@@ -72,6 +78,8 @@ function StartScreen() {
         if (existing) {
           setRegion(existing);
           setStep("tutorial");
+        } else {
+          setStep("name");
         }
       });
     return () => {
@@ -96,7 +104,9 @@ function StartScreen() {
   async function createTrainer(chosen: Starter) {
     if (!session || !region) return;
     setBusy(true);
-    const result = await createTrainerFn({ data: { region: region.slug, starterId: chosen.id } });
+    const result = await createTrainerFn({
+      data: { region: region.slug, starterId: chosen.id, trainerName },
+    });
     setBusy(false);
     if (!result.ok) {
       toast.error(result.reason);
@@ -105,6 +115,24 @@ function StartScreen() {
     setStarter(chosen);
     setStep("tutorial");
     setTutorialStage(1);
+  }
+
+  function submitName() {
+    const trimmed = trainerName.trim();
+    if (trimmed.length < 3) {
+      setNameError("Nick musi mieć co najmniej 3 znaki.");
+      return;
+    }
+    if (trimmed.length > 20) {
+      setNameError("Nick może mieć maksymalnie 20 znaków.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9_\-]+$/.test(trimmed)) {
+      setNameError("Nick może zawierać tylko litery, cyfry, myślnik i podkreślenie.");
+      return;
+    }
+    setNameError(null);
+    setStep("region");
   }
 
   async function finishTutorial() {
@@ -164,7 +192,9 @@ function StartScreen() {
             onSignIn={signIn}
             onSignOut={async () => {
               await supabase.auth.signOut();
-              setStep("region");
+              setStep("name");
+              setTrainerName("");
+              setNameError(null);
               setRegion(null);
               setStarter(null);
               setTutorialStage(0);
@@ -177,6 +207,14 @@ function StartScreen() {
             <IntroCard loading={loading} />
           ) : checkingProfile ? (
             <p className="text-center text-sm text-muted-foreground">Wczytywanie profilu…</p>
+          ) : step === "name" ? (
+            <NameStep
+              value={trainerName}
+              error={nameError}
+              busy={busy}
+              onChange={setTrainerName}
+              onSubmit={submitName}
+            />
           ) : step === "region" ? (
             <RegionGrid
               onPick={(picked) => {
@@ -285,6 +323,56 @@ function IntroCard({ loading }: { loading: boolean }) {
       <p className="mt-6 text-xs uppercase tracking-[0.25em] text-primary">
         {loading ? "Ładowanie…" : "Zaloguj się w panelu w prawym górnym rogu"}
       </p>
+    </div>
+  );
+}
+
+function NameStep({
+  value,
+  error,
+  busy,
+  onChange,
+  onSubmit,
+}: {
+  value: string;
+  error: string | null;
+  busy: boolean;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div className="glass-panel mx-auto w-full max-w-md rounded-2xl p-8 text-center">
+      <h2 className="text-3xl">Jak Cię nazwać, Trenerze?</h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Ten nick zobaczą inni gracze w rankingach, PvP i na GTS.
+      </p>
+      <div className="mt-6 text-left">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit();
+          }}
+          placeholder="Np. Ash_Ketchum"
+          maxLength={20}
+          disabled={busy}
+          className="text-center text-lg"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "name-error" : undefined}
+        />
+        {error ? (
+          <p id="name-error" className="mt-2 text-sm text-destructive">
+            {error}
+          </p>
+        ) : (
+          <p className="mt-2 text-xs text-muted-foreground">
+            3–20 znaków: litery, cyfry, myślnik, podkreślenie.
+          </p>
+        )}
+      </div>
+      <Button className="mt-6 w-full" disabled={busy} onClick={onSubmit}>
+        Dalej
+      </Button>
     </div>
   );
 }
