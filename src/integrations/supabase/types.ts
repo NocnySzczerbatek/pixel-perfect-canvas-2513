@@ -652,7 +652,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      fulfill_game_purchase: {
+        Args: {
+          _checkout_session_id: string
+          _environment: string
+          _owner_id: string
+          _payment_intent_id: string
+          _price_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
