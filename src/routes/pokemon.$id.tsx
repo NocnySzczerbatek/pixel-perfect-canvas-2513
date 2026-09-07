@@ -5,7 +5,7 @@ import { ArrowLeft, Coins, Dumbbell, Heart } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { pokemonExpToNext } from "@/lib/leveling";
+import { GROWTH_LABEL, fetchGrowthRate, pokemonExpToNext } from "@/lib/leveling";
 import { GamePage } from "@/components/game/GamePage";
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
@@ -191,19 +191,20 @@ function PokemonDetailPage() {
                 Doświadczenie do Lvl {pokemon.level + 1}
               </span>
               <span>
-                {pokemon.exp} / {pokemonExpToNext(pokemon.level)} EXP
+                {pokemon.exp} / {pokemonExpToNext(pokemon.level, growth)} EXP
               </span>
             </div>
             <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full bg-ice"
                 style={{
-                  width: `${Math.min(100, Math.round((pokemon.exp / pokemonExpToNext(pokemon.level)) * 100))}%`,
+                  width: `${Math.min(100, Math.round((pokemon.exp / pokemonExpToNext(pokemon.level, growth)) * 100))}%`,
                 }}
               />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Brakuje {Math.max(0, pokemonExpToNext(pokemon.level) - pokemon.exp)} EXP. EXP zdobywasz
+              Brakuje {Math.max(0, pokemonExpToNext(pokemon.level, growth) - pokemon.exp)} EXP.
+              Krzywa wzrostu tego gatunku: {GROWTH_LABEL[growth] ?? "Średnia"}. EXP zdobywasz
               w walkach: dziki Pokémon, Trener-Bot (x1,4) i Lider Sali (x2,2).
             </p>
           </div>
