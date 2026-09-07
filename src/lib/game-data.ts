@@ -114,8 +114,9 @@ export const REGIONS: Region[] = [
   },
 ];
 
-export function artworkUrl(speciesId: number) {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${speciesId}.png`;
+export function artworkUrl(speciesId: number, shiny = false) {
+  const dir = shiny ? "official-artwork/shiny" : "official-artwork";
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/${dir}/${speciesId}.png`;
 }
 
 export function findRegion(slug: string | null | undefined) {
