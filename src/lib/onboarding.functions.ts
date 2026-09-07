@@ -18,14 +18,14 @@ const schema = z.object({
   trainerName: z.string().min(1),
 });
 
-function validateTrainerName(name: string): { ok: true } | { ok: false; reason: string } {
+function validateTrainerName(name: string): { ok: true; name: string } | { ok: false; reason: string } {
   const trimmed = name.trim();
   if (trimmed.length < 3) return { ok: false, reason: "Nick musi mieć co najmniej 3 znaki." };
   if (trimmed.length > 20) return { ok: false, reason: "Nick może mieć maksymalnie 20 znaków." };
   if (!/^[a-zA-Z0-9_\-]+$/.test(trimmed)) {
     return { ok: false, reason: "Nick może zawierać tylko litery, cyfry, myślnik i podkreślenie." };
   }
-  return { ok: true };
+  return { ok: true, name: trimmed };
 }
 
 export const createTrainer = createServerFn({ method: "POST" })
