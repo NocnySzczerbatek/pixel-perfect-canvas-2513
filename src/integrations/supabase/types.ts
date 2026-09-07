@@ -316,6 +316,45 @@ export type Database = {
           },
         ]
       }
+      payment_orders: {
+        Row: {
+          checkout_session_id: string
+          created_at: string
+          environment: string
+          fulfilled_at: string | null
+          id: string
+          owner_id: string
+          payment_intent_id: string | null
+          price_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          checkout_session_id: string
+          created_at?: string
+          environment?: string
+          fulfilled_at?: string | null
+          id?: string
+          owner_id: string
+          payment_intent_id?: string | null
+          price_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          checkout_session_id?: string
+          created_at?: string
+          environment?: string
+          fulfilled_at?: string | null
+          id?: string
+          owner_id?: string
+          payment_intent_id?: string | null
+          price_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_items: {
         Row: {
           created_at: string
