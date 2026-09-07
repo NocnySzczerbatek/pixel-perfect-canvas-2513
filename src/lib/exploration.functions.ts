@@ -4,6 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BIOMES, findBiome, type BiomeSpecies } from "@/lib/biomes";
 import { RAZZ, ballByKey, healByKey } from "@/lib/items";
 import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
+import { progressActivities } from "@/lib/quests.functions";
+import { effectiveRegion } from "@/lib/travel";
 import {
   hpFromIv,
   simulateTeamBattle,
@@ -77,6 +79,14 @@ export type ExplorationState = {
   great_balls: number;
   ultra_balls: number;
   master_balls: number;
+  premier_balls: number;
+  net_balls: number;
+  dive_balls: number;
+  dusk_balls: number;
+  quick_balls: number;
+  timer_balls: number;
+  repeat_balls: number;
+  luxury_balls: number;
   razz_berries: number;
   potions: number;
   super_potions: number;
@@ -117,6 +127,14 @@ type ProfileRow = {
   great_balls: number;
   ultra_balls: number;
   master_balls: number;
+  premier_balls: number;
+  net_balls: number;
+  dive_balls: number;
+  dusk_balls: number;
+  quick_balls: number;
+  timer_balls: number;
+  repeat_balls: number;
+  luxury_balls: number;
   razz_berries: number;
   potions: number;
   super_potions: number;
@@ -127,10 +145,12 @@ type ProfileRow = {
   trainer_level: number;
   trainer_exp: number;
   region: string | null;
+  travel_region: string | null;
+  travel_until: string | null;
 };
 
 const PROFILE_COLUMNS =
-  "energy, energy_updated_at, poke_balls, great_balls, ultra_balls, master_balls, razz_berries, potions, super_potions, revives, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region";
+  "energy, energy_updated_at, poke_balls, great_balls, ultra_balls, master_balls, premier_balls, net_balls, dive_balls, dusk_balls, quick_balls, timer_balls, repeat_balls, luxury_balls, razz_berries, potions, super_potions, revives, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region, travel_region, travel_until";
 
 
 
@@ -294,6 +314,14 @@ async function buildState(supabase: any, userId: string): Promise<ExplorationSta
     great_balls: profile.great_balls ?? 0,
     ultra_balls: profile.ultra_balls ?? 0,
     master_balls: profile.master_balls ?? 0,
+    premier_balls: profile.premier_balls ?? 0,
+    net_balls: profile.net_balls ?? 0,
+    dive_balls: profile.dive_balls ?? 0,
+    dusk_balls: profile.dusk_balls ?? 0,
+    quick_balls: profile.quick_balls ?? 0,
+    timer_balls: profile.timer_balls ?? 0,
+    repeat_balls: profile.repeat_balls ?? 0,
+    luxury_balls: profile.luxury_balls ?? 0,
     razz_berries: profile.razz_berries ?? 0,
     potions: profile.potions ?? 0,
     super_potions: profile.super_potions ?? 0,
@@ -313,7 +341,7 @@ async function buildState(supabase: any, userId: string): Promise<ExplorationSta
     trainer_exp_next: expThreshold(profile.trainer_level),
     party_size: party.length,
     party: party.map(toPartyView),
-    region: profile.region,
+    region: effectiveRegion(profile.region, profile.travel_region, profile.travel_until),
     active,
     history: rows.filter((row) => row.status !== "active").slice(0, 6),
   };
@@ -337,8 +365,9 @@ export const travel = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const biome = findBiome(data.biome)!;
     const profile = await syncEnergy(supabase, userId);
-    const pool = speciesPool(biome.slug, profile.region);
-    const trainerPool = regionPool(profile.region);
+    const activeRegion = effectiveRegion(profile.region, profile.travel_region, profile.travel_until);
+    const pool = speciesPool(biome.slug, activeRegion);
+    const trainerPool = regionPool(activeRegion);
 
     const cost = randInt(MIN_TRAVEL_COST, MAX_TRAVEL_COST);
     if (profile.energy < cost) {
@@ -384,6 +413,16 @@ export const travel = createServerFn({ method: "POST" })
           ? "Znalazłeś Cukierek XL — rzadkie znalezisko!"
           : null;
 
+    const megaSpecies = [3, 6, 9, 65, 94, 115, 127, 130, 142, 150, 181, 212, 214, 229, 248, 254, 257, 260, 282, 303, 306, 308, 310, 319, 323, 334, 354, 359, 362, 373, 376, 380, 381, 445, 448, 460, 475, 531, 719];
+    const foundMegaSpecies = Math.random() < 0.08 ? pick(megaSpecies) : null;
+    if (foundMegaSpecies) {
+      const itemKey = `mega_shard_${foundMegaSpecies}`;
+      const { data: owned } = await supabase.from("player_items").select("id, quantity").eq("owner_id", userId).eq("item_key", itemKey).maybeSingle();
+      if (owned) await supabase.from("player_items").update({ quantity: owned.quantity + 1 }).eq("id", owned.id).eq("owner_id", userId);
+      else await supabase.from("player_items").insert({ owner_id: userId, item_key: itemKey, quantity: 1, metadata: { species_id: foundMegaSpecies, kind: "mega_shard" } });
+    }
+    await progressActivities(supabase, userId, "battle", 1, "exploration");
+
     const trainerLevel = profile.trainer_level;
     const kind: "wild" | "bot" = Math.random() < 0.62 ? "wild" : "bot";
 
@@ -406,6 +445,7 @@ export const travel = createServerFn({ method: "POST" })
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
           ...(candyLine ? [candyLine] : []),
+          ...(foundMegaSpecies ? ["Znalazłeś fragment Kamienia Mega!"] : []),
           `Z zarośli wyszedł dziki ${species.name} (typ ${species.type}, Lvl ${level}).`,
           "Wybierz Pokémona i atak — po pokonaniu dzikiego możesz go złapać.",
         ],
@@ -437,6 +477,7 @@ export const travel = createServerFn({ method: "POST" })
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
           ...(candyLine ? [candyLine] : []),
+          ...(foundMegaSpecies ? ["Znalazłeś fragment Kamienia Mega!"] : []),
           `${trainerClass} ${person} wyzywa Cię na walkę: ${size} Pokémony (średni Lvl ${avg}).`,
         ],
       };
@@ -623,12 +664,22 @@ export const throwBall = createServerFn({ method: "POST" })
     const useRazz = data.razz && (profile.razz_berries ?? 0) > 0;
 
     const hpFactor = (3 * row.hp_max - 2 * row.hp_current) / (3 * row.hp_max);
+    const hour = new Date().getHours();
+    const isNight = hour >= 20 || hour < 6;
+    const { count: ownedSpecies } = await supabase.from("player_pokemon").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("species_id", row.species_id ?? 0);
+    const turns = ((row.log as string[]) ?? []).filter((line: string) => line.includes("zadaje")).length;
+    const situational = data.ball === "net" && ["Woda", "Robak"].includes(row.species_type ?? "") ? 3 / ball.multiplier
+      : data.ball === "dive" && row.species_type === "Woda" ? 3 / ball.multiplier
+      : data.ball === "dusk" && (isNight || row.biome === "cave") ? 3 / ball.multiplier
+      : data.ball === "quick" && row.hp_current === row.hp_max ? 4 / ball.multiplier
+      : data.ball === "timer" ? Math.min(3.5, 1 + turns * 0.35) / ball.multiplier
+      : data.ball === "repeat" && (ownedSpecies ?? 0) > 0 ? 3 / ball.multiplier : 1;
     const chance =
       ball.multiplier >= 99
         ? 1
         : Math.max(
             0.05,
-            Math.min(0.95, hpFactor * 0.9 * ball.multiplier * (useRazz ? RAZZ.bonus : 1)),
+            Math.min(0.95, hpFactor * 0.9 * ball.multiplier * situational * (useRazz ? RAZZ.bonus : 1)),
           );
     const success = Math.random() < chance;
     const log: string[] = [
@@ -672,11 +723,13 @@ export const throwBall = createServerFn({ method: "POST" })
         in_party: (count ?? 0) < 6,
         nature,
         ability,
+        ...(data.ball === "luxury" ? { friendship: 120 } : {}),
         ...ivs,
       });
       log.push(`Złapano ${row.species_name}! Natura: ${nature}, umiejętność: ${ability}.`);
       const gainedExp = 8 + row.level * 5;
       await applyTrainerReward(supabase, userId, gainedExp, 0);
+      await progressActivities(supabase, userId, "catch", 1, String(speciesId));
       await supabase
         .from("encounters")
         .update({ status: "caught", log, reward_exp: gainedExp })
@@ -767,7 +820,8 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
       log.push(
         `Nagroda: +${row.reward_exp} EXP trenera, +${row.reward_coins} Catch Coins.`,
       );
-      await applyTrainerReward(supabase, userId, row.reward_exp, row.reward_coins);
+      log.push(...(await applyTrainerReward(supabase, userId, row.reward_exp, row.reward_coins)));
+      await progressActivities(supabase, userId, "battle", 1, "bot");
       const foeLevel = Math.max(1, ...team.map((f) => f.level));
       log.push(
         ...(await awardPokemonExp(
@@ -816,27 +870,33 @@ async function applyTrainerReward(
   userId: string,
   exp: number,
   coins: number,
-) {
+) : Promise<string[]> {
   const { data } = await supabase
     .from("profiles")
-    .select("trainer_level, trainer_exp, catch_coins")
+    .select("trainer_level, trainer_exp, catch_coins, poke_balls, great_balls, ultra_balls, energy_bottles")
     .eq("id", userId)
     .maybeSingle();
-  if (!data) return;
+  if (!data) return [];
+  const oldLevel = data.trainer_level as number;
   let level = data.trainer_level as number;
   let total = (data.trainer_exp as number) + exp;
   while (total >= expThreshold(level)) {
     total -= expThreshold(level);
     level += 1;
   }
+  const gainedLevels = level - oldLevel;
+  const updates: Record<string, number> = { trainer_level: level, trainer_exp: total, catch_coins: (data.catch_coins as number) + coins };
+  if (gainedLevels > 0) {
+    updates.poke_balls = data.poke_balls + gainedLevels * 5;
+    updates.great_balls = data.great_balls + gainedLevels * Math.max(1, Math.floor(level / 5));
+    updates.ultra_balls = data.ultra_balls + gainedLevels * Math.floor(level / 10);
+    updates.energy_bottles = data.energy_bottles + gainedLevels * Math.max(1, Math.floor(level / 10));
+  }
   await supabase
     .from("profiles")
-    .update({
-      trainer_level: level,
-      trainer_exp: total,
-      catch_coins: (data.catch_coins as number) + coins,
-    })
+    .update(updates)
     .eq("id", userId);
+  return gainedLevels > 0 ? [`Awans trenera na Lvl ${level}: +${gainedLevels * 5} Poké Balli, +${gainedLevels * Math.max(1, Math.floor(level / 5))} Great Balli i +${gainedLevels * Math.max(1, Math.floor(level / 10))} Flakonów Energii.`] : [];
 }
 
 /** Leczenie Pokémona w trakcie walki (albo poza nią) przedmiotem z torby. */
