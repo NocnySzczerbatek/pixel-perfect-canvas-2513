@@ -93,13 +93,14 @@ function SalePage() {
                       i {gym.rewardCoins} CC
                     </p>
                   </div>
-                  <div
-                    className="tile-hover flex h-16 w-16 items-center justify-center rounded-full text-xs font-semibold"
-                    style={{ background: gym.gradient, color: "#0b1020" }}
-                    aria-hidden
-                  >
-                    {gym.earned ? "✓" : gym.index}
-                  </div>
+                  <img
+                    src={gym.imageUrl}
+                    alt={gym.badgeName}
+                    className={`h-16 w-16 object-contain drop-shadow-lg transition-transform duration-300 hover:[transform:rotateY(18deg)_rotateX(9deg)_scale(1.1)] ${
+                      gym.earned ? "" : "grayscale opacity-45"
+                    }`}
+                    loading="lazy"
+                  />
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">

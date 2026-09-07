@@ -28,7 +28,7 @@ const BADGE_SPRITE_BASE =
 
 function badgeImageUrl(badgeKey: string, index: number): string {
   const region = badgeKey.split("_")[0] ?? "kanto";
-  const start = BADGE_SPRITE_START[region] ?? BADGE_SPRITE_START.kanto;
+  const start = BADGE_SPRITE_START[region] ?? 1;
   return `${BADGE_SPRITE_BASE}/${start + index - 1}.png`;
 }
 
