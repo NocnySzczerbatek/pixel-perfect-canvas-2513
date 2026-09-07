@@ -34,7 +34,7 @@ export const Route = createFileRoute("/")({
   component: StartScreen,
 });
 
-type Step = "region" | "starter" | "tutorial";
+type Step = "name" | "region" | "starter" | "tutorial";
 
 function StartScreen() {
   const { session, loading, userId } = useSession();
@@ -43,7 +43,9 @@ function StartScreen() {
   const createTrainerFn = useServerFn(createTrainerServerFn);
   const completeTutorialFn = useServerFn(completeTutorial);
 
-  const [step, setStep] = useState<Step>("region");
+  const [step, setStep] = useState<Step>("name");
+  const [trainerName, setTrainerName] = useState("");
+  const [nameError, setNameError] = useState<string | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [starter, setStarter] = useState<Starter | null>(null);
   const [busy, setBusy] = useState(false);
