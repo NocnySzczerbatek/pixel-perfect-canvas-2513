@@ -61,7 +61,9 @@ const PARTY_COLUMNS =
 
 async function buildState(supabase: any, userId: string): Promise<PvpState> {
   const now = Date.now();
-  const [{ data: me }, { data: profiles }, { data: myParty }, { data: log }] = await Promise.all([
+  // Lista rywali pochodzi z listy publicznej — pełne profile są prywatne (RLS).
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const [{ data: me }, { data: allTrainers }, { data: myParty }, { data: log }] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -69,12 +71,7 @@ async function buildState(supabase: any, userId: string): Promise<PvpState> {
       )
       .eq("id", userId)
       .maybeSingle(),
-    supabase
-      .from("profiles")
-      .select("id, trainer_name, trainer_level, catch_coins, region, shield_until, pvp_wins, pvp_losses")
-      .neq("id", userId)
-      .order("trainer_level", { ascending: false })
-      .limit(40),
+    (supabaseAdmin as any).rpc("public_trainers"),
     supabase.from("player_pokemon").select("id").eq("owner_id", userId).eq("in_party", true),
     supabase
       .from("pvp_battles_log")
