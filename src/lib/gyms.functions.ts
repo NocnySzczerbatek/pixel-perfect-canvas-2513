@@ -245,7 +245,41 @@ export const challengeGym = createServerFn({ method: "POST" })
           Object.keys(result.allyHp).map((id) => ({ id, exp: expForDefeat(gym.level, "gym") })),
         )),
       );
+
+      // Bonusy: buff czasowy za wygraną w Sali + trwały bonus za komplet odznak regionu.
+      const { grantTimedBuff, grantPermanentBonus } = await import("@/lib/bonuses.server");
+      const { GYM_BUFF, PERMANENT_BONUS_PCT } = await import("@/lib/bonuses");
+      await grantTimedBuff(userId, {
+        key: GYM_BUFF.key,
+        label: GYM_BUFF.label,
+        source: GYM_BUFF.source,
+        shiny_bonus_pct: GYM_BUFF.shiny_bonus_pct,
+        rare_bonus_pct: GYM_BUFF.rare_bonus_pct,
+        minutes: GYM_BUFF.minutes,
+      });
+      log.push(
+        `${GYM_BUFF.label}: +${GYM_BUFF.shiny_bonus_pct}% szansy na Shiny i rzadkie spotkania na ${GYM_BUFF.minutes} minut.`,
+      );
+
+      const { count: badgeCount } = await (await writeDb())
+        .from("gym_badges")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", userId)
+        .eq("region", region);
+      if ((badgeCount ?? 0) >= 8) {
+        const granted = await grantPermanentBonus(
+          userId,
+          `region_sweep_${region}`,
+          `Wszystkie Sale regionu ${region}`,
+        );
+        if (granted) {
+          log.push(
+            `Komplet odznak regionu ${region}! Trwały bonus +${PERMANENT_BONUS_PCT}% do szansy na Shiny i rzadkie spotkania.`,
+          );
+        }
+      }
     }
+
 
     await ((await writeDb()).from("profiles") as any).update(updates).eq("id", userId);
 
