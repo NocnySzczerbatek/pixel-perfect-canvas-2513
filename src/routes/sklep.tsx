@@ -1,23 +1,185 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
 
-import { ComingSoon, GamePage } from "@/components/game/GamePage";
+import { GamePage } from "@/components/game/GamePage";
+import { Button } from "@/components/ui/button";
+import { useTrainerData } from "@/hooks/useTrainerData";
+import { BALLS, RAZZ, SHOP_PACKAGES } from "@/lib/items";
+import { MASTER_BALL_CC, buyItem } from "@/lib/items.functions";
+import { itemSprite } from "@/lib/pokedex";
 
 export const Route = createFileRoute("/sklep")({
   head: () => ({
     meta: [
       { title: "Sklep — Catch Zone" },
-      { name: "description", content: "Flakony Energii, Skrzynia Energii i Master Ball." },
+      {
+        name: "description",
+        content:
+          "Kup Balle i Razz Berry za Catch Coins albo pakiety Energii i Master Balla za złotówki.",
+      },
       { property: "og:title", content: "Sklep — Catch Zone" },
-      { property: "og:description", content: "Flakony Energii, Skrzynia Energii i Master Ball." },
+      {
+        property: "og:description",
+        content: "Pakiety Energii, Master Ball i przedmioty do łapania Pokémonów.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SklepPage,
 });
 
 function SklepPage() {
+  const { data, isLoading, setData } = useTrainerData();
+  const buy = useServerFn(buyItem);
+  const [busy, setBusy] = useState(false);
+
+  const purchase = async (kind: string, amount: number, label: string) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const result = await buy({ data: { kind, amount } });
+      if (result.ok === false) toast.error(result.reason);
+      else toast.success(`Kupiono ${amount}× ${label} za ${result.cost} CC.`);
+      window.setTimeout(() => void reload(), 0);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się kupić.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reload = async () => {
+    const { getTrainerData } = await import("@/lib/trainer.functions");
+    const fresh = await getTrainerData();
+    setData(fresh);
+  };
+
+  const profile = data?.profile;
+
   return (
-    <GamePage title="Sklep" subtitle={"Flakony Energii, Skrzynia Energii i Master Ball."}>
-      <ComingSoon note={"Płatności uruchomimy po podłączeniu systemu płatniczego."} />
+    <GamePage
+      title="Sklep"
+      subtitle="Za Catch Coins kupisz Balle i Razz Berry. Pakiety w złotówkach dają Energię i Master Balla."
+    >
+      {isLoading || !profile ? (
+        <p className="text-sm text-muted-foreground">Wczytuję sklep…</p>
+      ) : (
+        <div className="space-y-8">
+          <section>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-display text-2xl">Za Catch Coins</h2>
+              <p className="text-sm text-muted-foreground">
+                Masz {profile.catch_coins} Catch Coins
+              </p>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {BALLS.filter((ball) => ball.price !== null).map((ball) => (
+                <div key={ball.key} className="glass-panel rounded-2xl p-5">
+                  <ShopIcon sprite={ball.sprite} label={ball.label} />
+                  <p className="mt-3 font-display text-xl">{ball.label}</p>
+                  <p className="text-xs text-muted-foreground">{ball.note}</p>
+                  <p className="mt-2 text-sm">
+                    Masz: {(profile as any)[ball.field] ?? 0} · {ball.price} CC / szt.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {[1, 5, 10].map((amount) => (
+                      <Button
+                        key={amount}
+                        size="sm"
+                        variant={amount === 1 ? "default" : "outline"}
+                        disabled={busy || profile.catch_coins < amount * (ball.price ?? 0)}
+                        onClick={() => void purchase(ball.key, amount, ball.label)}
+                      >
+                        +{amount} · {amount * (ball.price ?? 0)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <div className="glass-panel rounded-2xl p-5">
+                <ShopIcon sprite={RAZZ.sprite} label={RAZZ.label} />
+                <p className="mt-3 font-display text-xl">{RAZZ.label}</p>
+                <p className="text-xs text-muted-foreground">{RAZZ.note}</p>
+                <p className="mt-2 text-sm">
+                  Masz: {profile.razz_berries} · {RAZZ.price} CC / szt.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[1, 5, 10].map((amount) => (
+                    <Button
+                      key={amount}
+                      size="sm"
+                      variant={amount === 1 ? "default" : "outline"}
+                      disabled={busy || profile.catch_coins < amount * RAZZ.price}
+                      onClick={() => void purchase("razz", amount, RAZZ.label)}
+                    >
+                      +{amount} · {amount * RAZZ.price}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="glass-panel rounded-2xl p-5">
+                <ShopIcon sprite="master-ball" label="Master Ball" />
+                <p className="mt-3 font-display text-xl">Master Ball</p>
+                <p className="text-xs text-muted-foreground">
+                  Łapie zawsze. Za monety kosztuje bardzo dużo — taniej w pakiecie PLN.
+                </p>
+                <p className="mt-2 text-sm">
+                  Masz: {profile.master_balls} · {MASTER_BALL_CC} CC / szt.
+                </p>
+                <Button
+                  className="mt-3"
+                  size="sm"
+                  disabled={busy || profile.catch_coins < MASTER_BALL_CC}
+                  onClick={() => void purchase("master", 1, "Master Ball")}
+                >
+                  Kup za {MASTER_BALL_CC} CC
+                </Button>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="font-display text-2xl">Pakiety w złotówkach</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Płatności BLIK i kartą włączymy przed publikacją gry — pakiety są już przygotowane.
+            </p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              {SHOP_PACKAGES.map((pack) => (
+                <div key={pack.id} className="glass-panel rounded-2xl p-5">
+                  <ShopIcon sprite={pack.sprite} label={pack.name} />
+                  <p className="mt-3 font-display text-xl">{pack.name}</p>
+                  <p className="text-xs text-muted-foreground">{pack.description}</p>
+                  <p className="mt-2 text-sm text-aurora">{pack.grants}</p>
+                  <p className="mt-2 font-display text-2xl">
+                    {pack.pricePln.toFixed(2).replace(".", ",")} zł
+                  </p>
+                  <Button className="mt-3" size="sm" variant="outline" disabled>
+                    Płatność wkrótce
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
     </GamePage>
+  );
+}
+
+function ShopIcon({ sprite, label }: { sprite: string; label: string }) {
+  return (
+    <img
+      src={itemSprite(sprite)}
+      alt={label}
+      loading="lazy"
+      width={40}
+      height={40}
+      className="h-10 w-10 [image-rendering:pixelated]"
+    />
   );
 }

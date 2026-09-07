@@ -10,6 +10,7 @@ import { GamePage } from "@/components/game/GamePage";
 import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
 import { artworkUrl } from "@/lib/game-data";
+import { BALLS, RAZZ, ballByKey } from "@/lib/items";
 import { itemSprite } from "@/lib/pokedex";
 import {
   dismissEncounter,
@@ -131,11 +132,11 @@ function EksploracjaPage() {
   };
 
 
-  const handleThrowBall = async (encounterId: string) => {
+  const handleThrowBall = async (encounterId: string, ball = "poke", razz = false) => {
     if (!userId || busy) return;
     setBusy(true);
     try {
-      const result = await throwBallFn({ data: { encounterId } });
+      const result = await throwBallFn({ data: { encounterId, ball, razz } });
       if (!result.ok) {
         toast.error(result.reason);
       } else if (result.caught) {
@@ -224,7 +225,13 @@ function EksploracjaPage() {
           {state?.active ? (
             <EncounterCard
               encounter={state.active}
-              pokeBalls={state.poke_balls}
+              balls={{
+                poke: state.poke_balls,
+                great: state.great_balls,
+                ultra: state.ultra_balls,
+                master: state.master_balls,
+              }}
+              razzBerries={state.razz_berries}
               party={state.party}
               activeMonId={activeMonId}
               onSelectMon={setActiveMonId}
@@ -404,7 +411,8 @@ function OutcomePanel({
 
 function EncounterCard({
   encounter,
-  pokeBalls,
+  balls,
+  razzBerries,
   party,
   activeMonId,
   onSelectMon,
@@ -416,11 +424,12 @@ function EncounterCard({
   busy,
 }: {
   encounter: EncounterView;
-  pokeBalls: number;
+  balls: Record<string, number>;
+  razzBerries: number;
   party: PartyView[];
   activeMonId: string | null;
   onSelectMon: (id: string) => void;
-  onThrowBall: (id: string) => void;
+  onThrowBall: (id: string, ball?: string, razz?: boolean) => void;
   onMove: (encounter: EncounterView, pokemonId: string, move: string) => void;
   onBattle: (encounter: EncounterView) => void;
   onDismiss: (id: string) => void;
@@ -440,6 +449,10 @@ function EncounterCard({
       ),
     ),
   );
+  const [ballKey, setBallKey] = useState<string>("poke");
+  const [useRazz, setUseRazz] = useState(false);
+  const selectedBall = ballByKey(ballKey) ?? BALLS[0]!;
+  const ballCount = balls[selectedBall.key] ?? 0;
   const ready = party.filter((mon) => !mon.fainted && mon.hp_current > 0);
   const active = ready.find((mon) => mon.id === activeMonId) ?? ready[0] ?? null;
   const defeated = encounter.hp_current <= 0;
@@ -540,20 +553,72 @@ function EncounterCard({
             </div>
           ) : null}
 
+          {encounter.kind === "wild" ? (
+            <div className="mt-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ball</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {BALLS.map((ball) => {
+                  const count = balls[ball.key] ?? 0;
+                  return (
+                    <button
+                      key={ball.key}
+                      onClick={() => setBallKey(ball.key)}
+                      disabled={busy || count <= 0}
+                      title={ball.note}
+                      className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs disabled:opacity-40 ${
+                        ballKey === ball.key
+                          ? "border-aurora bg-aurora/15 text-aurora"
+                          : "border-border/60 text-muted-foreground"
+                      }`}
+                    >
+                      <img
+                        src={itemSprite(ball.sprite)}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="h-5 w-5 [image-rendering:pixelated]"
+                      />
+                      {ball.label} · {count}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setUseRazz((value) => !value)}
+                  disabled={busy || razzBerries <= 0}
+                  title={RAZZ.note}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs disabled:opacity-40 ${
+                    useRazz
+                      ? "border-ember bg-ember/15 text-ember"
+                      : "border-border/60 text-muted-foreground"
+                  }`}
+                >
+                  <img
+                    src={itemSprite(RAZZ.sprite)}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 [image-rendering:pixelated]"
+                  />
+                  {RAZZ.label} · {razzBerries}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           {defeated ? (
             <div className="mt-6 flex flex-wrap gap-3">
               <Button
-                onClick={() => onThrowBall(encounter.id)}
-                disabled={busy || pokeBalls <= 0}
+                onClick={() => onThrowBall(encounter.id, selectedBall.key, useRazz)}
+                disabled={busy || ballCount <= 0}
               >
                 <img
-                  src={itemSprite("poke-ball")}
+                  src={itemSprite(selectedBall.sprite)}
                   alt=""
                   width={20}
                   height={20}
                   className="h-5 w-5 [image-rendering:pixelated]"
                 />
-                Złap go ({pokeBalls})
+                Złap go — {selectedBall.label} ({ballCount})
               </Button>
               <Button variant="outline" onClick={() => onNext(encounter)} disabled={busy}>
                 Dalej
@@ -583,17 +648,17 @@ function EncounterCard({
               <div className="mt-4 flex flex-wrap gap-3">
                 <Button
                   variant="secondary"
-                  onClick={() => onThrowBall(encounter.id)}
-                  disabled={busy || pokeBalls <= 0}
+                  onClick={() => onThrowBall(encounter.id, selectedBall.key, useRazz)}
+                  disabled={busy || ballCount <= 0}
                 >
                   <img
-                    src={itemSprite("poke-ball")}
+                    src={itemSprite(selectedBall.sprite)}
                     alt=""
                     width={20}
                     height={20}
                     className="h-5 w-5 [image-rendering:pixelated]"
                   />
-                  Rzut Poké Ball ({pokeBalls})
+                  Rzut {selectedBall.label} ({ballCount})
                 </Button>
                 <Button variant="outline" onClick={() => onDismiss(encounter.id)} disabled={busy}>
                   Uciekaj

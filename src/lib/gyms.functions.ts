@@ -1,0 +1,283 @@
+import { createServerFn } from "@tanstack/react-start";
+
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
+import { gymsForRegion, type Gym } from "@/lib/gyms";
+import { MEGA_STONE } from "@/lib/items";
+import { REGION_SPECIES, inRegion, speciesType } from "@/lib/pokedex";
+import { BIOMES } from "@/lib/biomes";
+
+const GYM_ENERGY = 10;
+
+export type BadgeRow = {
+  id: string;
+  region: string;
+  gym_index: number;
+  badge_key: string;
+  badge_name: string;
+  leader_name: string;
+  earned_at: string;
+};
+
+export type GymView = Gym & {
+  earned: boolean;
+  locked: boolean;
+  team: { species_id: number; species_name: string; species_type: string; level: number }[];
+};
+
+export type GymsState = {
+  region: string | null;
+  energy: number;
+  gym_energy: number;
+  mega_stones: number;
+  featured_badge: string | null;
+  badges: BadgeRow[];
+  gyms: GymView[];
+};
+
+function pool(region: string | null, type: string) {
+  const all = [...BIOMES.flatMap((b) => b.species), ...Object.values(REGION_SPECIES).flat()];
+  const regional = all.filter((s) => inRegion(s.id, region));
+  const typed = regional.filter((s) => s.type === type);
+  const base = typed.length >= 2 ? typed : regional.length > 0 ? regional : all;
+  const unique = new Map(base.map((s) => [s.id, s]));
+  return [...unique.values()];
+}
+
+/** Deterministyczna drużyna Lidera: ta sama za każdym podejściem. */
+function leaderTeam(region: string | null, gym: Gym) {
+  const candidates = pool(region, gym.type);
+  const team = [];
+  const used = new Set<number>();
+  for (let i = 0; i < gym.teamSize; i += 1) {
+    let cursor = (gym.index * 7 + i * 3) % candidates.length;
+    while (used.has(cursor) && used.size < candidates.length) {
+      cursor = (cursor + 1) % candidates.length;
+    }
+    used.add(cursor);
+    const species = candidates[cursor]!;
+    team.push({
+      species_id: species.id,
+      species_name: species.name,
+      species_type: species.type,
+      level: gym.level + (i === gym.teamSize - 1 ? 2 : 0),
+    });
+  }
+  return team;
+}
+
+function toFoe(member: { species_name: string; species_type: string; level: number }): Fighter {
+  return {
+    name: member.species_name,
+    type: member.species_type,
+    level: member.level,
+    hp: hpFromIv(member.level, 22),
+    hpMax: hpFromIv(member.level, 22),
+    atk: statFromIv(member.level, 22, 10),
+    def: statFromIv(member.level, 20, 9),
+    spe: statFromIv(member.level, 20, 9),
+  };
+}
+
+function toAlly(row: any, boost: number): Fighter {
+  const type = speciesType(row.species_id);
+  return {
+    id: row.id,
+    name: row.nickname ?? row.species_name,
+    type,
+    level: row.level,
+    hp: row.hp_current,
+    hpMax: row.hp_max,
+    atk: Math.round(statFromIv(row.level, row.iv_atk ?? 0, 9) * (1 + boost)),
+    def: statFromIv(row.level, row.iv_def ?? 0, 8),
+    spe: statFromIv(row.level, row.iv_spe ?? 0, 8),
+  };
+}
+
+const PARTY_COLUMNS =
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_atk, iv_def, iv_spe";
+
+async function buildState(supabase: any, userId: string): Promise<GymsState> {
+  const [{ data: profile }, { data: badges }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("region, energy, mega_stones, featured_badge")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("gym_badges")
+      .select("id, region, gym_index, badge_key, badge_name, leader_name, earned_at")
+      .eq("owner_id", userId)
+      .order("gym_index", { ascending: true }),
+  ]);
+  if (!profile) throw new Error("Nie znaleziono profilu trenera.");
+
+  const region = profile.region ?? "kanto";
+  const owned = new Set(
+    ((badges ?? []) as BadgeRow[]).filter((b) => b.region === region).map((b) => b.gym_index),
+  );
+
+  return {
+    region: profile.region,
+    energy: profile.energy,
+    gym_energy: GYM_ENERGY,
+    mega_stones: profile.mega_stones ?? 0,
+    featured_badge: profile.featured_badge ?? null,
+    badges: (badges ?? []) as BadgeRow[],
+    gyms: gymsForRegion(region).map((gym) => ({
+      ...gym,
+      earned: owned.has(gym.index),
+      locked: gym.index > 1 && !owned.has(gym.index - 1),
+      team: leaderTeam(region, gym),
+    })),
+  };
+}
+
+/** Sale regionu, moje odznaki i Kamienie Mega. */
+export const getGymsState = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => buildState(context.supabase, context.userId));
+
+/** Walka z Liderem Sali. Kamień Mega daje +30% siły ataku i jest zużywany. */
+export const challengeGym = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { gymIndex: number; useMega?: boolean }) => {
+    const gymIndex = Math.floor(Number(input?.gymIndex ?? 0));
+    if (gymIndex < 1 || gymIndex > 8) throw new Error("Nieznana Sala.");
+    return { gymIndex, useMega: Boolean(input?.useMega) };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("region, energy, mega_stones, trainer_level, trainer_exp, catch_coins")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!profile) throw new Error("Nie znaleziono profilu trenera.");
+
+    const region = profile.region ?? "kanto";
+    const gym = gymsForRegion(region).find((g) => g.index === data.gymIndex)!;
+
+    const { data: badges } = await supabase
+      .from("gym_badges")
+      .select("gym_index")
+      .eq("owner_id", userId)
+      .eq("region", region);
+    const owned = new Set(((badges ?? []) as any[]).map((b) => b.gym_index));
+
+    if (owned.has(gym.index)) {
+      return {
+        ok: false as const,
+        reason: "Tę odznakę już masz.",
+        state: await buildState(supabase, userId),
+      };
+    }
+    if (gym.index > 1 && !owned.has(gym.index - 1)) {
+      return {
+        ok: false as const,
+        reason: "Najpierw zdobądź odznakę z poprzedniej Sali.",
+        state: await buildState(supabase, userId),
+      };
+    }
+    if (profile.energy < GYM_ENERGY) {
+      return {
+        ok: false as const,
+        reason: `Wyzwanie kosztuje ${GYM_ENERGY} Energii — masz ${profile.energy}.`,
+        state: await buildState(supabase, userId),
+      };
+    }
+
+    const useMega = data.useMega && (profile.mega_stones ?? 0) > 0;
+    const boost = useMega ? MEGA_STONE.boost : 0;
+
+    const { data: party } = await supabase
+      .from("player_pokemon")
+      .select(PARTY_COLUMNS)
+      .eq("owner_id", userId)
+      .eq("in_party", true);
+    const allies = (party ?? [])
+      .filter((p: any) => !p.fainted && p.hp_current > 0)
+      .map((p: any) => toAlly(p, boost));
+    if (allies.length === 0) {
+      return {
+        ok: false as const,
+        reason: "Cała drużyna jest wyczerpana — ulecz Pokémony.",
+        state: await buildState(supabase, userId),
+      };
+    }
+
+    const foes = leaderTeam(region, gym).map(toFoe);
+    const result = simulateTeamBattle(allies, foes);
+    const log = [
+      `${gym.leader} (Sala ${gym.index}, typ ${gym.type}) przyjmuje wyzwanie!`,
+      ...(useMega ? [`Aktywujesz ${MEGA_STONE.label}: +30% siły ataku.`] : []),
+      ...result.log,
+    ];
+
+    for (const [id, hp] of Object.entries(result.allyHp)) {
+      await supabase
+        .from("player_pokemon")
+        .update({ hp_current: hp, fainted: hp <= 0 })
+        .eq("id", id)
+        .eq("owner_id", userId);
+    }
+
+    const updates: any = {
+      energy: profile.energy - GYM_ENERGY,
+      energy_updated_at: new Date().toISOString(),
+    };
+    if (useMega) updates.mega_stones = (profile.mega_stones ?? 0) - 1;
+
+    if (result.won) {
+      await supabase.from("gym_badges").insert({
+        owner_id: userId,
+        region,
+        gym_index: gym.index,
+        badge_key: gym.badgeKey,
+        badge_name: gym.badgeName,
+        leader_name: gym.leader,
+      });
+      updates.catch_coins = profile.catch_coins + gym.rewardCoins;
+      let exp = profile.trainer_exp + gym.rewardExp;
+      let level = profile.trainer_level;
+      while (exp >= Math.round(100 * Math.pow(level, 1.8))) {
+        exp -= Math.round(100 * Math.pow(level, 1.8));
+        level += 1;
+      }
+      updates.trainer_exp = exp;
+      updates.trainer_level = level;
+      // Ósma Sala nagradza Kamieniem Mega.
+      if (gym.index === 8) {
+        updates.mega_stones = (updates.mega_stones ?? profile.mega_stones ?? 0) + 1;
+      }
+      log.push(
+        `Zdobywasz ${gym.badgeName}! +${gym.rewardExp} EXP, +${gym.rewardCoins} Catch Coins.`,
+      );
+      if (gym.index === 8) log.push(`${gym.leader} wręcza Ci ${MEGA_STONE.label}.`);
+    }
+
+    await (supabase.from("profiles") as any).update(updates).eq("id", userId);
+
+    return {
+      ok: true as const,
+      won: result.won,
+      badge: result.won ? gym.badgeName : null,
+      log,
+      state: await buildState(supabase, userId),
+    };
+  });
+
+/** Odznaka wyróżniona, widoczna w rankingu. */
+export const setFeaturedBadge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { badgeKey: string }) => ({
+    badgeKey: String(input?.badgeKey ?? ""),
+  }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await supabase
+      .from("profiles")
+      .update({ featured_badge: data.badgeKey || null })
+      .eq("id", userId);
+    return { ok: true as const, state: await buildState(supabase, userId) };
+  });
