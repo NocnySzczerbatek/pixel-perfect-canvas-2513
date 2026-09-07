@@ -88,6 +88,7 @@ export const SHIELD_HOURS = 8;
 
 export type ShopPackage = {
   id: string;
+  priceId: string;
   name: string;
   pricePln: number;
   sprite: string;
@@ -98,6 +99,7 @@ export type ShopPackage = {
 export const SHOP_PACKAGES: ShopPackage[] = [
   {
     id: "bottles-3",
+    priceId: "energy_bottles_3_pln",
     name: "3× Flakon Energii",
     pricePln: 4.99,
     sprite: "max-elixir",
@@ -106,6 +108,7 @@ export const SHOP_PACKAGES: ShopPackage[] = [
   },
   {
     id: "energy-chest",
+    priceId: "energy_chest_pln",
     name: "Skrzynia Energii",
     pricePln: 12.99,
     sprite: "max-revive",
@@ -114,6 +117,7 @@ export const SHOP_PACKAGES: ShopPackage[] = [
   },
   {
     id: "master-ball",
+    priceId: "master_ball_pln",
     name: "Master Ball",
     pricePln: 9.99,
     sprite: "master-ball",
