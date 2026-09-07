@@ -228,6 +228,30 @@ export function movePool(speciesId: number): Move[] {
   }));
 }
 
+/**
+ * Zestaw walki: dokładnie 4 ataki, tak jak w oryginalnych grach.
+ * Bierzemy cztery najświeższe ruchy dostępne na danym poziomie,
+ * a przy niskim poziomie dopełniamy ruchami Normalnymi.
+ */
+export function battleMoves(speciesId: number, level: number): Move[] {
+  const learned = movePool(speciesId).filter((move) => move.level <= level);
+  const chosen = learned.slice(-4);
+  if (chosen.length < 4) {
+    const filler = movePool(0)
+      .filter((move) => move.level <= Math.max(1, level))
+      .concat(TYPE_MOVES["Normalny"]!.slice(0, 4).map((name, i) => ({
+        name,
+        level: 1,
+        power: MOVE_POWERS[i] ?? 30,
+      })));
+    for (const move of filler) {
+      if (chosen.length >= 4) break;
+      if (!chosen.some((m) => m.name === move.name)) chosen.push(move);
+    }
+  }
+  return chosen.slice(0, 4);
+}
+
 export const STAT_KEYS = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
 export type StatKey = (typeof STAT_KEYS)[number];
 
