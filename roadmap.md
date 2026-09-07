@@ -25,13 +25,14 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Sklep PLN: pakiety energii, Master Ball (płatności)
 
 ## Do wdrożenia
-- [ ] Podróże: Bilet Podróży, okna regionów według Europe/Warsaw, czasowa pula eksploracji
-- [ ] Zadania dzienne: 2 typy, wybór trudności, postęp i odbiór nagród
-- [ ] Badania Profesora Oaka: dialogi, zadania poziomowe i nagrody
+- [x] Podróże: Bilet Podróży, okna regionów według Europe/Warsaw, czasowa pula eksploracji
+- [x] Zadania dzienne: 2 typy, wybór trudności, postęp i odbiór nagród
+- [x] Badania Profesora Oaka: dialogi, zadania poziomowe i nagrody
 - [ ] Nagrody za awans trenera: Balle i Flakony Energii
 - [ ] Mega Ewolucja: składniki z eksploracji, kamienie gatunkowe i aktywacja
-- [ ] Więcej Balli oraz czas odnowienia zakupu Master Balla
+- [x] Więcej Balli oraz czas odnowienia zakupu Master Balla
 - [ ] Postacie pixel-art: Profesor Oak, Liderzy i klasy trenerów
-- [ ] Dokończyć stronę Trenerzy oraz poprawić ruchy niskopoziomowych Pokémonów
+- [ ] Dokończyć stronę Trenerzy
+- [x] Ruchy niskopoziomowych Pokémonów: wyłącznie poznane, maks. 4
 - [ ] Wykonywanie zwykłych ewolucji i rozwijane sekcje walk
 - [ ] Uruchomić płatności PLN

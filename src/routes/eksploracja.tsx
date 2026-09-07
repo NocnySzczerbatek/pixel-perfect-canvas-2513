@@ -249,6 +249,14 @@ function EksploracjaPage() {
                 great: state.great_balls,
                 ultra: state.ultra_balls,
                 master: state.master_balls,
+                premier: state.premier_balls,
+                net: state.net_balls,
+                dive: state.dive_balls,
+                dusk: state.dusk_balls,
+                quick: state.quick_balls,
+                timer: state.timer_balls,
+                repeat: state.repeat_balls,
+                luxury: state.luxury_balls,
               }}
               razzBerries={state.razz_berries}
               heals={{

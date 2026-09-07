@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { BALLS, HEAL_ITEMS, RAZZ, SHOP_PACKAGES } from "@/lib/items";
-import { MASTER_BALL_CC, buyItem } from "@/lib/items.functions";
+import { MASTER_BALL_CC, MASTER_BALL_COOLDOWN_MS, buyItem } from "@/lib/items.functions";
+import { TRAVEL_TICKET_PRICE } from "@/lib/travel";
+import { formatDuration } from "@/lib/time";
 import { itemSprite } from "@/lib/pokedex";
 
 export const Route = createFileRoute("/sklep")({
@@ -35,6 +38,8 @@ function SklepPage() {
   const { data, isLoading, setData } = useTrainerData();
   const buy = useServerFn(buyItem);
   const [busy, setBusy] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
 
   const purchase = async (kind: string, amount: number, label: string) => {
     if (busy) return;
@@ -121,6 +126,13 @@ function SklepPage() {
                   ))}
                 </div>
               </div>
+              <div className="glass-panel rounded-2xl p-5">
+                <ShopIcon sprite="ss-ticket" label="Bilet Podróży" />
+                <p className="mt-3 font-display text-xl">Bilet Podróży</p>
+                <p className="text-xs text-muted-foreground">Jednorazowy bilet na lot w otwartym oknie regionu.</p>
+                <p className="mt-2 text-sm">Masz: {profile.travel_tickets} · {TRAVEL_TICKET_PRICE} CC</p>
+                <Button className="mt-3" size="sm" disabled={busy || profile.catch_coins < TRAVEL_TICKET_PRICE} onClick={() => void purchase("travel_ticket", 1, "Bilet Podróży")}>Kup bilet</Button>
+              </div>
 
               {HEAL_ITEMS.map((item) => (
                 <div key={item.key} className="glass-panel rounded-2xl p-5">
@@ -158,11 +170,12 @@ function SklepPage() {
                 <Button
                   className="mt-3"
                   size="sm"
-                  disabled={busy || profile.catch_coins < MASTER_BALL_CC}
+                  disabled={busy || profile.catch_coins < MASTER_BALL_CC || Boolean(profile.master_ball_bought_at && new Date(profile.master_ball_bought_at).getTime() + MASTER_BALL_COOLDOWN_MS > now)}
                   onClick={() => void purchase("master", 1, "Master Ball")}
                 >
                   Kup za {MASTER_BALL_CC} CC
                 </Button>
+                {profile.master_ball_bought_at && new Date(profile.master_ball_bought_at).getTime() + MASTER_BALL_COOLDOWN_MS > now ? <p className="mt-2 text-xs text-muted-foreground">Kolejny zakup za {formatDuration(new Date(profile.master_ball_bought_at).getTime() + MASTER_BALL_COOLDOWN_MS - now)}</p> : null}
               </div>
             </div>
           </section>

@@ -78,6 +78,7 @@ export function fetchLevelUpMoves(speciesId: number) {
 }
 
 export type EvolutionInfo = {
+  toId: number;
   to: string;
   minLevel: number | null;
   minHappiness: number | null;
@@ -113,6 +114,7 @@ export function fetchEvolutions(speciesId: number) {
         return node.evolves_to.map((next) => {
           const detail = next.evolution_details[0];
           return {
+            toId: Number(next.species.url.split("/").filter(Boolean).pop() ?? 0),
             to: pretty(next.species.name),
             minLevel: detail?.min_level ?? null,
             minHappiness: detail?.min_happiness ?? null,

@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_quests: {
+        Row: {
+          created_at: string
+          difficulty: string
+          id: string
+          owner_id: string
+          progress: number
+          quest_date: string
+          quest_type: string
+          reward_coins: number
+          reward_item_key: string | null
+          reward_item_quantity: number
+          status: string
+          target: number
+          target_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty: string
+          id?: string
+          owner_id: string
+          progress?: number
+          quest_date: string
+          quest_type: string
+          reward_coins?: number
+          reward_item_key?: string | null
+          reward_item_quantity?: number
+          status?: string
+          target: number
+          target_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: string
+          id?: string
+          owner_id?: string
+          progress?: number
+          quest_date?: string
+          quest_type?: string
+          reward_coins?: number
+          reward_item_key?: string | null
+          reward_item_quantity?: number
+          status?: string
+          target?: number
+          target_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_quests_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       encounters: {
         Row: {
           biome: string
@@ -195,6 +254,106 @@ export type Database = {
           },
         ]
       }
+      oak_research: {
+        Row: {
+          created_at: string
+          dialog_complete: string
+          dialog_intro: string
+          id: string
+          owner_id: string
+          progress: number
+          research_type: string
+          reward_coins: number
+          reward_item_key: string | null
+          reward_item_quantity: number
+          stage: number
+          status: string
+          target: number
+          target_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dialog_complete: string
+          dialog_intro: string
+          id?: string
+          owner_id: string
+          progress?: number
+          research_type: string
+          reward_coins?: number
+          reward_item_key?: string | null
+          reward_item_quantity?: number
+          stage: number
+          status?: string
+          target: number
+          target_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dialog_complete?: string
+          dialog_intro?: string
+          id?: string
+          owner_id?: string
+          progress?: number
+          research_type?: string
+          reward_coins?: number
+          reward_item_key?: string | null
+          reward_item_quantity?: number
+          stage?: number
+          status?: string
+          target?: number
+          target_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oak_research_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_key: string
+          metadata: Json
+          owner_id: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_key: string
+          metadata?: Json
+          owner_id: string
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_key?: string
+          metadata?: Json
+          owner_id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_items_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_pokemon: {
         Row: {
           ability: string | null
@@ -287,26 +446,39 @@ export type Database = {
           candy_xl: number
           catch_coins: number
           created_at: string
+          dive_balls: number
+          dusk_balls: number
           energy: number
           energy_bottles: number
           energy_updated_at: string
           featured_badge: string | null
           great_balls: number
           id: string
+          luxury_balls: number
+          master_ball_bought_at: string | null
           master_balls: number
           mega_stones: number
+          net_balls: number
+          oak_stage: number
           poke_balls: number
           potions: number
+          premier_balls: number
           pvp_losses: number
           pvp_wins: number
+          quick_balls: number
           razz_berries: number
           region: string | null
+          repeat_balls: number
           revives: number
           shield_until: string | null
           super_potions: number
+          timer_balls: number
           trainer_exp: number
           trainer_level: number
           trainer_name: string
+          travel_region: string | null
+          travel_tickets: number
+          travel_until: string | null
           tutorial_completed: boolean
           ultra_balls: number
           updated_at: string
@@ -316,26 +488,39 @@ export type Database = {
           candy_xl?: number
           catch_coins?: number
           created_at?: string
+          dive_balls?: number
+          dusk_balls?: number
           energy?: number
           energy_bottles?: number
           energy_updated_at?: string
           featured_badge?: string | null
           great_balls?: number
           id: string
+          luxury_balls?: number
+          master_ball_bought_at?: string | null
           master_balls?: number
           mega_stones?: number
+          net_balls?: number
+          oak_stage?: number
           poke_balls?: number
           potions?: number
+          premier_balls?: number
           pvp_losses?: number
           pvp_wins?: number
+          quick_balls?: number
           razz_berries?: number
           region?: string | null
+          repeat_balls?: number
           revives?: number
           shield_until?: string | null
           super_potions?: number
+          timer_balls?: number
           trainer_exp?: number
           trainer_level?: number
           trainer_name: string
+          travel_region?: string | null
+          travel_tickets?: number
+          travel_until?: string | null
           tutorial_completed?: boolean
           ultra_balls?: number
           updated_at?: string
@@ -345,26 +530,39 @@ export type Database = {
           candy_xl?: number
           catch_coins?: number
           created_at?: string
+          dive_balls?: number
+          dusk_balls?: number
           energy?: number
           energy_bottles?: number
           energy_updated_at?: string
           featured_badge?: string | null
           great_balls?: number
           id?: string
+          luxury_balls?: number
+          master_ball_bought_at?: string | null
           master_balls?: number
           mega_stones?: number
+          net_balls?: number
+          oak_stage?: number
           poke_balls?: number
           potions?: number
+          premier_balls?: number
           pvp_losses?: number
           pvp_wins?: number
+          quick_balls?: number
           razz_berries?: number
           region?: string | null
+          repeat_balls?: number
           revives?: number
           shield_until?: string | null
           super_potions?: number
+          timer_balls?: number
           trainer_exp?: number
           trainer_level?: number
           trainer_name?: string
+          travel_region?: string | null
+          travel_tickets?: number
+          travel_until?: string | null
           tutorial_completed?: boolean
           ultra_balls?: number
           updated_at?: string

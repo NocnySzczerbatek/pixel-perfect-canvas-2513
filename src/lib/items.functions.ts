@@ -2,9 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BALLS, HEAL_ITEMS, RAZZ, SHIELD_COST, SHIELD_HOURS, ballByKey, healByKey } from "@/lib/items";
+import { TRAVEL_TICKET_PRICE } from "@/lib/travel";
 
 /** Master Ball da się też kupić za monety — bardzo drogo. */
 export const MASTER_BALL_CC = 2500;
+export const MASTER_BALL_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 type Purchase = { field: string; unit: number; label: string };
 
@@ -15,6 +17,7 @@ function resolve(kind: string): Purchase | null {
   if (kind === "master") {
     return { field: "master_balls", unit: MASTER_BALL_CC, label: "Master Ball" };
   }
+  if (kind === "travel_ticket") return { field: "travel_tickets", unit: TRAVEL_TICKET_PRICE, label: "Bilet Podróży" };
   const heal = healByKey(kind);
   if (heal) return { field: heal.field, unit: heal.price, label: heal.label };
   const ball = ballByKey(kind);
@@ -36,10 +39,14 @@ export const buyItem = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const item = resolve(data.kind)!;
     const { data: profile } = await (supabase.from("profiles") as any)
-      .select(`catch_coins, ${item.field}`)
+      .select(`catch_coins, master_ball_bought_at, ${item.field}`)
       .eq("id", userId)
       .maybeSingle();
     if (!profile) throw new Error("Nie znaleziono profilu trenera.");
+    if (data.kind === "master" && profile.master_ball_bought_at) {
+      const availableAt = new Date(profile.master_ball_bought_at).getTime() + MASTER_BALL_COOLDOWN_MS;
+      if (availableAt > Date.now()) return { ok: false as const, reason: "Master Ball jest jeszcze objęty czasem odnowienia.", availableAt: new Date(availableAt).toISOString() };
+    }
     const cost = item.unit * data.amount;
     if (profile.catch_coins < cost) {
       return {
@@ -51,6 +58,7 @@ export const buyItem = createServerFn({ method: "POST" })
       .update({
         catch_coins: profile.catch_coins - cost,
         [item.field]: (profile[item.field] ?? 0) + data.amount,
+        ...(data.kind === "master" ? { master_ball_bought_at: new Date().toISOString() } : {}),
       })
       .eq("id", userId);
     return { ok: true as const, cost, label: item.label, amount: data.amount };

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { itemSprite } from "@/lib/pokedex";
 import { buyPokeBalls, useEnergyBottle } from "@/lib/trainer.functions";
+import { BALLS } from "@/lib/items";
 
 export const Route = createFileRoute("/ekwipunek")({
   head: () => ({
@@ -106,9 +107,8 @@ function EkwipunekPage() {
           </div>
 
           {[
-            { label: "Great Balle", sprite: "great-ball", count: profile.great_balls },
-            { label: "Ultra Balle", sprite: "ultra-ball", count: profile.ultra_balls },
-            { label: "Master Balle", sprite: "master-ball", count: profile.master_balls },
+            ...BALLS.filter((ball) => ball.key !== "poke").map((ball) => ({ label: ball.label, sprite: ball.sprite, count: profile[ball.field] })),
+            { label: "Bilety Podróży", sprite: "ss-ticket", count: profile.travel_tickets },
             { label: "Razz Berry", sprite: "razz-berry", count: profile.razz_berries },
             { label: "Mikstura", sprite: "potion", count: profile.potions },
             { label: "Super Mikstura", sprite: "super-potion", count: profile.super_potions },

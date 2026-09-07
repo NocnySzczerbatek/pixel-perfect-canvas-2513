@@ -49,6 +49,7 @@ function GtsPage() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string>("");
   const [price, setPrice] = useState<string>("");
+  const [npcConfirm, setNpcConfirm] = useState(false);
 
   const { isLoading } = useQuery({
     queryKey: ["gts"],
@@ -246,13 +247,13 @@ function GtsPage() {
                       variant="outline"
                       disabled={busy || !mon}
                       onClick={() =>
-                        void run(
+                        npcConfirm ? void run(
                           () => npcFn({ data: { pokemonId: selected } }),
-                          (r) => `NPC-Kupiec zapłacił ${r.price} CC za ${r.name}.`,
-                        )
+                          (r) => { setNpcConfirm(false); return `NPC-Kupiec zapłacił ${r.price} CC za ${r.name}.`; },
+                        ) : setNpcConfirm(true)
                       }
                     >
-                      Sprzedaj NPC-Kupcowi
+                      {npcConfirm ? `Potwierdź sprzedaż za ${mon?.npc_price ?? 0} CC` : "Pokaż ofertę Kupca"}
                     </Button>
                   </div>
                 </>

@@ -17,12 +17,14 @@ import { Route as GraRouteImport } from './routes/gra'
 import { Route as GtsRouteImport } from './routes/gts'
 import { Route as OdznakiRouteImport } from './routes/odznaki'
 import { Route as PcBoxRouteImport } from './routes/pc-box'
+import { Route as PodrozeRouteImport } from './routes/podroze'
 import { Route as ProfilRouteImport } from './routes/profil'
 import { Route as PvpRouteImport } from './routes/pvp'
 import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as SaleRouteImport } from './routes/sale'
 import { Route as SklepRouteImport } from './routes/sklep'
 import { Route as TrenerzyRouteImport } from './routes/trenerzy'
+import { Route as ZadaniaRouteImport } from './routes/zadania'
 import { Route as PokemonIdRouteImport } from './routes/pokemon.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -65,6 +67,11 @@ const PcBoxRoute = PcBoxRouteImport.update({
   path: '/pc-box',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PodrozeRoute = PodrozeRouteImport.update({
+  id: '/podroze',
+  path: '/podroze',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfilRoute = ProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
@@ -95,6 +102,11 @@ const TrenerzyRoute = TrenerzyRouteImport.update({
   path: '/trenerzy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZadaniaRoute = ZadaniaRouteImport.update({
+  id: '/zadania',
+  path: '/zadania',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PokemonIdRoute = PokemonIdRouteImport.update({
   id: '/pokemon/$id',
   path: '/pokemon/$id',
@@ -110,12 +122,14 @@ export interface FileRoutesByFullPath {
   '/gts': typeof GtsRoute
   '/odznaki': typeof OdznakiRoute
   '/pc-box': typeof PcBoxRoute
+  '/podroze': typeof PodrozeRoute
   '/profil': typeof ProfilRoute
   '/pvp': typeof PvpRoute
   '/ranking': typeof RankingRoute
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
+  '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
 }
 export interface FileRoutesByTo {
@@ -127,12 +141,14 @@ export interface FileRoutesByTo {
   '/gts': typeof GtsRoute
   '/odznaki': typeof OdznakiRoute
   '/pc-box': typeof PcBoxRoute
+  '/podroze': typeof PodrozeRoute
   '/profil': typeof ProfilRoute
   '/pvp': typeof PvpRoute
   '/ranking': typeof RankingRoute
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
+  '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
 }
 export interface FileRoutesById {
@@ -145,12 +161,14 @@ export interface FileRoutesById {
   '/gts': typeof GtsRoute
   '/odznaki': typeof OdznakiRoute
   '/pc-box': typeof PcBoxRoute
+  '/podroze': typeof PodrozeRoute
   '/profil': typeof ProfilRoute
   '/pvp': typeof PvpRoute
   '/ranking': typeof RankingRoute
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
+  '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
 }
 export interface FileRouteTypes {
@@ -164,12 +182,14 @@ export interface FileRouteTypes {
     | '/gts'
     | '/odznaki'
     | '/pc-box'
+    | '/podroze'
     | '/profil'
     | '/pvp'
     | '/ranking'
     | '/sale'
     | '/sklep'
     | '/trenerzy'
+    | '/zadania'
     | '/pokemon/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -181,12 +201,14 @@ export interface FileRouteTypes {
     | '/gts'
     | '/odznaki'
     | '/pc-box'
+    | '/podroze'
     | '/profil'
     | '/pvp'
     | '/ranking'
     | '/sale'
     | '/sklep'
     | '/trenerzy'
+    | '/zadania'
     | '/pokemon/$id'
   id:
     | '__root__'
@@ -198,12 +220,14 @@ export interface FileRouteTypes {
     | '/gts'
     | '/odznaki'
     | '/pc-box'
+    | '/podroze'
     | '/profil'
     | '/pvp'
     | '/ranking'
     | '/sale'
     | '/sklep'
     | '/trenerzy'
+    | '/zadania'
     | '/pokemon/$id'
   fileRoutesById: FileRoutesById
 }
@@ -216,12 +240,14 @@ export interface RootRouteChildren {
   GtsRoute: typeof GtsRoute
   OdznakiRoute: typeof OdznakiRoute
   PcBoxRoute: typeof PcBoxRoute
+  PodrozeRoute: typeof PodrozeRoute
   ProfilRoute: typeof ProfilRoute
   PvpRoute: typeof PvpRoute
   RankingRoute: typeof RankingRoute
   SaleRoute: typeof SaleRoute
   SklepRoute: typeof SklepRoute
   TrenerzyRoute: typeof TrenerzyRoute
+  ZadaniaRoute: typeof ZadaniaRoute
   PokemonIdRoute: typeof PokemonIdRoute
 }
 
@@ -283,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PcBoxRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/podroze': {
+      id: '/podroze'
+      path: '/podroze'
+      fullPath: '/podroze'
+      preLoaderRoute: typeof PodrozeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profil': {
       id: '/profil'
       path: '/profil'
@@ -325,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrenerzyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zadania': {
+      id: '/zadania'
+      path: '/zadania'
+      fullPath: '/zadania'
+      preLoaderRoute: typeof ZadaniaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pokemon/$id': {
       id: '/pokemon/$id'
       path: '/pokemon/$id'
@@ -344,12 +384,14 @@ const rootRouteChildren: RootRouteChildren = {
   GtsRoute: GtsRoute,
   OdznakiRoute: OdznakiRoute,
   PcBoxRoute: PcBoxRoute,
+  PodrozeRoute: PodrozeRoute,
   ProfilRoute: ProfilRoute,
   PvpRoute: PvpRoute,
   RankingRoute: RankingRoute,
   SaleRoute: SaleRoute,
   SklepRoute: SklepRoute,
   TrenerzyRoute: TrenerzyRoute,
+  ZadaniaRoute: ZadaniaRoute,
   PokemonIdRoute: PokemonIdRoute,
 }
 export const routeTree = rootRouteImport

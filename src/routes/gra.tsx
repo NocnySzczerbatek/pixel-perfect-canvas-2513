@@ -5,11 +5,13 @@ import {
   Compass,
   Landmark,
   Medal,
+  Plane,
   Repeat,
   Shield,
   ShoppingBag,
   Swords,
   Trophy,
+  ClipboardList,
   UserRound,
   Users,
 } from "lucide-react";
@@ -281,6 +283,7 @@ const NAV_GROUPS = [
     note: "Tu zdobywasz doświadczenie, odznaki i monety.",
     tiles: [
       { to: "/eksploracja", label: "Eksploracja", Icon: Compass, desc: "Biomy, dzicy i trenerzy" },
+      { to: "/podroze", label: "Podróże", Icon: Plane, desc: "Czasowe wyprawy do regionów" },
       { to: "/sale", label: "Sale", Icon: Landmark, desc: "8 Liderów regionu" },
       { to: "/pvp", label: "PvP", Icon: Swords, desc: "Napady na innych trenerów" },
       { to: "/trenerzy", label: "Trenerzy", Icon: Users, desc: "Przeciwnicy i klasy" },
@@ -294,6 +297,7 @@ const NAV_GROUPS = [
       { to: "/pc-box", label: "PC Box", Icon: Boxes, desc: "Reszta kolekcji" },
       { to: "/ekwipunek", label: "Ekwipunek", Icon: Backpack, desc: "Balle i mikstury" },
       { to: "/odznaki", label: "Odznaki", Icon: Medal, desc: "Zdobyte odznaki" },
+      { to: "/zadania", label: "Zadania", Icon: ClipboardList, desc: "Dzienne cele i badania Oaka" },
     ],
   },
   {
