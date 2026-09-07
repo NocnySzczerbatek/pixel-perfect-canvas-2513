@@ -808,9 +808,12 @@ function EncounterCard({
             <div className="flex-1">
               {encounter.kind === "bot" ? (
                 <>
-                  <p className="font-display text-2xl">
-                    {encounter.trainer_class ?? "Trener"} {encounter.trainer_person ?? ""}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <TrainerAvatar trainerClass={encounter.trainer_class} className="h-14 w-14" />
+                    <p className="font-display text-2xl">
+                      {encounter.trainer_class ?? "Trener"} {encounter.trainer_person ?? ""}
+                    </p>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     Drużyna {encounter.bot_team?.length ?? 0} Pokémonów · średni Lvl{" "}
                     {encounter.level}
