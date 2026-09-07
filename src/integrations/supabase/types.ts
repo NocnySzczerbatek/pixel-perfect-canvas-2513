@@ -653,6 +653,93 @@ export type Database = {
           },
         ]
       }
+      tournament_entries: {
+        Row: {
+          battles_today: number
+          created_at: string
+          final_place: number | null
+          id: string
+          last_battle_at: string | null
+          losses: number
+          player_id: string
+          points: number
+          reward_text: string | null
+          tournament_id: string
+          updated_at: string
+          wins: number
+        }
+        Insert: {
+          battles_today?: number
+          created_at?: string
+          final_place?: number | null
+          id?: string
+          last_battle_at?: string | null
+          losses?: number
+          player_id: string
+          points?: number
+          reward_text?: string | null
+          tournament_id: string
+          updated_at?: string
+          wins?: number
+        }
+        Update: {
+          battles_today?: number
+          created_at?: string
+          final_place?: number | null
+          id?: string
+          last_battle_at?: string | null
+          losses?: number
+          player_id?: string
+          points?: number
+          reward_text?: string | null
+          tournament_id?: string
+          updated_at?: string
+          wins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_entries_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_entries_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
