@@ -23,6 +23,7 @@ import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as SaleRouteImport } from './routes/sale'
 import { Route as SklepRouteImport } from './routes/sklep'
 import { Route as TrenerzyRouteImport } from './routes/trenerzy'
+import { Route as PokemonIdRouteImport } from './routes/pokemon.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +95,11 @@ const TrenerzyRoute = TrenerzyRouteImport.update({
   path: '/trenerzy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PokemonIdRoute = PokemonIdRouteImport.update({
+  id: '/pokemon/$id',
+  path: '/pokemon/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
+  '/pokemon/$id': typeof PokemonIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
+  '/pokemon/$id': typeof PokemonIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
+  '/pokemon/$id': typeof PokemonIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/sale'
     | '/sklep'
     | '/trenerzy'
+    | '/pokemon/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/sale'
     | '/sklep'
     | '/trenerzy'
+    | '/pokemon/$id'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/sale'
     | '/sklep'
     | '/trenerzy'
+    | '/pokemon/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   SaleRoute: typeof SaleRoute
   SklepRoute: typeof SklepRoute
   TrenerzyRoute: typeof TrenerzyRoute
+  PokemonIdRoute: typeof PokemonIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrenerzyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pokemon/$id': {
+      id: '/pokemon/$id'
+      path: '/pokemon/$id'
+      fullPath: '/pokemon/$id'
+      preLoaderRoute: typeof PokemonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -330,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   SaleRoute: SaleRoute,
   SklepRoute: SklepRoute,
   TrenerzyRoute: TrenerzyRoute,
+  PokemonIdRoute: PokemonIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -33,6 +33,8 @@ export type Database = {
           species_name: string | null
           species_type: string | null
           status: string
+          trainer_class: string | null
+          trainer_person: string | null
           updated_at: string
         }
         Insert: {
@@ -53,6 +55,8 @@ export type Database = {
           species_name?: string | null
           species_type?: string | null
           status?: string
+          trainer_class?: string | null
+          trainer_person?: string | null
           updated_at?: string
         }
         Update: {
@@ -73,6 +77,8 @@ export type Database = {
           species_name?: string | null
           species_type?: string | null
           status?: string
+          trainer_class?: string | null
+          trainer_person?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -87,6 +93,7 @@ export type Database = {
       }
       player_pokemon: {
         Row: {
+          ability: string | null
           caught_at: string
           exp: number
           fainted: boolean
@@ -95,13 +102,22 @@ export type Database = {
           id: string
           in_party: boolean
           is_starter: boolean
+          iv_atk: number
+          iv_def: number
+          iv_hp: number
+          iv_spa: number
+          iv_spd: number
+          iv_spe: number
           level: number
+          nature: string | null
           nickname: string | null
           owner_id: string
           species_id: number
           species_name: string
+          training_points: number
         }
         Insert: {
+          ability?: string | null
           caught_at?: string
           exp?: number
           fainted?: boolean
@@ -110,13 +126,22 @@ export type Database = {
           id?: string
           in_party?: boolean
           is_starter?: boolean
+          iv_atk?: number
+          iv_def?: number
+          iv_hp?: number
+          iv_spa?: number
+          iv_spd?: number
+          iv_spe?: number
           level?: number
+          nature?: string | null
           nickname?: string | null
           owner_id: string
           species_id: number
           species_name: string
+          training_points?: number
         }
         Update: {
+          ability?: string | null
           caught_at?: string
           exp?: number
           fainted?: boolean
@@ -125,11 +150,19 @@ export type Database = {
           id?: string
           in_party?: boolean
           is_starter?: boolean
+          iv_atk?: number
+          iv_def?: number
+          iv_hp?: number
+          iv_spa?: number
+          iv_spd?: number
+          iv_spe?: number
           level?: number
+          nature?: string | null
           nickname?: string | null
           owner_id?: string
           species_id?: number
           species_name?: string
+          training_points?: number
         }
         Relationships: [
           {

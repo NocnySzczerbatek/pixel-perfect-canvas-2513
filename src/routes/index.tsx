@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
 import { REGIONS, artworkUrl, findRegion, type Region, type Starter } from "@/lib/game-data";
+import { NATURES, abilitiesFor } from "@/lib/pokedex";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -109,14 +110,27 @@ function StartScreen() {
       return;
     }
 
+    const iv = () => Math.floor(Math.random() * 32);
+    const ivHp = iv();
     const { error: pokemonError } = await supabase.from("player_pokemon").insert({
       owner_id: session.user.id,
       species_id: chosen.id,
       species_name: chosen.name,
-      level: 1,
-      hp_current: 20,
-      hp_max: 20,
+      level: 5,
+      hp_current: 20 + 5 * 4 + Math.round(ivHp * 0.8),
+      hp_max: 20 + 5 * 4 + Math.round(ivHp * 0.8),
       is_starter: true,
+      iv_hp: ivHp,
+      iv_atk: iv(),
+      iv_def: iv(),
+      iv_spa: iv(),
+      iv_spd: iv(),
+      iv_spe: iv(),
+      nature: NATURES[Math.floor(Math.random() * NATURES.length)] ?? "Hardy",
+      ability:
+        abilitiesFor(chosen.type)[
+          Math.floor(Math.random() * abilitiesFor(chosen.type).length)
+        ] ?? "Adaptability",
     });
     if (pokemonError) {
       setBusy(false);

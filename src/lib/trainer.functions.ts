@@ -19,6 +19,15 @@ export type PokemonRow = {
   fainted: boolean;
   in_party: boolean;
   is_starter: boolean;
+  iv_hp: number;
+  iv_atk: number;
+  iv_def: number;
+  iv_spa: number;
+  iv_spd: number;
+  iv_spe: number;
+  nature: string | null;
+  ability: string | null;
+  training_points: number;
 };
 
 export type TrainerData = {
@@ -41,7 +50,7 @@ export type TrainerData = {
 };
 
 const POKEMON_COLUMNS =
-  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter";
+  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, nature, ability, training_points";
 
 function expThreshold(level: number) {
   return Math.round(100 * Math.pow(level, 1.8));
@@ -311,4 +320,98 @@ export const deleteAccount = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.auth.admin.deleteUser(userId);
     return { ok: true as const };
+  });
+
+/** Koszt jednego punktu treningu danego staty (rośnie z wartością IV). */
+export const TRAINING_LEVEL_STEP = 5; // co 5 punktów treningu = +1 poziom
+export function trainingCost(currentIv: number) {
+  return Math.max(10, currentIv * 10);
+}
+
+const IV_FIELDS = {
+  hp: "iv_hp",
+  atk: "iv_atk",
+  def: "iv_def",
+  spa: "iv_spa",
+  spd: "iv_spd",
+  spe: "iv_spe",
+} as const;
+
+/** Trening: 1 punkt = +1 IV wybranego staty; co 5 punktów Pokémon zyskuje poziom. */
+export const trainPokemon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; stat: keyof typeof IV_FIELDS }) => {
+    if (!input?.id) throw new Error("Brak Pokémona.");
+    if (!(input.stat in IV_FIELDS)) throw new Error("Nieznana statystyka.");
+    return { id: input.id, stat: input.stat };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const field = IV_FIELDS[data.stat];
+    const { data: row } = await supabase
+      .from("player_pokemon")
+      .select(POKEMON_COLUMNS)
+      .eq("id", data.id)
+      .eq("owner_id", userId)
+      .maybeSingle();
+    if (!row) throw new Error("Nie znaleziono Pokémona.");
+    const pokemon = row as PokemonRow;
+    const currentIv = pokemon[field as keyof PokemonRow] as number;
+
+    if (currentIv >= 31) {
+      return {
+        ok: false as const,
+        reason: "Ta statystyka jest już na maksimum (31).",
+        data: await buildTrainerData(supabase, userId),
+      };
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("catch_coins, trainer_level")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!profile) throw new Error("Nie znaleziono profilu trenera.");
+    const cost = trainingCost(currentIv);
+    if (profile.catch_coins < cost) {
+      return {
+        ok: false as const,
+        reason: `Brakuje Catch Coins — ten trening kosztuje ${cost}, masz ${profile.catch_coins}.`,
+        data: await buildTrainerData(supabase, userId),
+      };
+    }
+
+    const points = pokemon.training_points + 1;
+    const gainedLevels =
+      Math.floor(points / TRAINING_LEVEL_STEP) -
+      Math.floor(pokemon.training_points / TRAINING_LEVEL_STEP);
+    const maxLevel = (profile.trainer_level as number) + 5;
+    const level = Math.min(maxLevel, pokemon.level + gainedLevels);
+    const newIvHp = data.stat === "hp" ? currentIv + 1 : pokemon.iv_hp;
+    const hpMax = Math.round(20 + level * 4 + newIvHp * 0.8);
+
+    await (supabase.from("player_pokemon") as any)
+      .update({
+        [field]: currentIv + 1,
+        training_points: points,
+        level,
+        hp_max: hpMax,
+        hp_current: Math.min(hpMax, pokemon.hp_current + (hpMax - pokemon.hp_max)),
+      })
+      .eq("id", data.id)
+      .eq("owner_id", userId);
+
+    await supabase
+      .from("profiles")
+      .update({ catch_coins: profile.catch_coins - cost })
+      .eq("id", userId);
+
+    return {
+      ok: true as const,
+      cost,
+      leveledUp: level > pokemon.level,
+      level,
+      cappedByTrainer: level === maxLevel && pokemon.level + gainedLevels > maxLevel,
+      data: await buildTrainerData(supabase, userId),
+    };
   });

@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Battery, Coins, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
+import { itemSprite } from "@/lib/pokedex";
 import { buyPokeBalls, useEnergyBottle } from "@/lib/trainer.functions";
 
 export const Route = createFileRoute("/ekwipunek")({
@@ -62,7 +62,7 @@ function EkwipunekPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-3">
           <div className="glass-panel rounded-2xl p-5">
-            <Sparkles className="h-6 w-6 text-muted-foreground" aria-hidden />
+            <ItemIcon name="poke-ball" label="Poké Ball" />
             <p className="mt-3 font-display text-3xl">{profile.poke_balls}</p>
             <p className="text-sm text-muted-foreground">Poké Balle</p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -87,7 +87,7 @@ function EkwipunekPage() {
           </div>
 
           <div className="glass-panel rounded-2xl p-5">
-            <Battery className="h-6 w-6 text-muted-foreground" aria-hidden />
+            <ItemIcon name="max-elixir" label="Flakon Energii" />
             <p className="mt-3 font-display text-3xl">{profile.energy_bottles}</p>
             <p className="text-sm text-muted-foreground">Flakony Energii</p>
             <Button
@@ -106,15 +106,28 @@ function EkwipunekPage() {
           </div>
 
           <div className="glass-panel rounded-2xl p-5">
-            <Coins className="h-6 w-6 text-muted-foreground" aria-hidden />
+            <ItemIcon name="coin-case" label="Catch Coins" />
             <p className="mt-3 font-display text-3xl">{profile.catch_coins}</p>
             <p className="text-sm text-muted-foreground">Catch Coins</p>
             <p className="mt-4 text-xs text-muted-foreground">
-              Monety zdobywasz za wygrane walki z Trenerami-Botami.
+              Monety zdobywasz za wygrane walki z trenerami i wydajesz na trening Pokémonów.
             </p>
           </div>
         </div>
       )}
     </GamePage>
+  );
+}
+
+function ItemIcon({ name, label }: { name: string; label: string }) {
+  return (
+    <img
+      src={itemSprite(name)}
+      alt={label}
+      loading="lazy"
+      width={40}
+      height={40}
+      className="h-10 w-10 [image-rendering:pixelated]"
+    />
   );
 }

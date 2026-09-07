@@ -2,22 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Backpack,
-  Flame,
-  Ghost,
-  Leaf,
-  Mountain,
-  MountainSnow,
-  Pickaxe,
-  Shield,
-  Skull,
-  Swords,
-  Trees,
-  Waves,
-  Wind,
-  Zap,
-} from "lucide-react";
+import { Swords } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -25,8 +10,10 @@ import { GamePage } from "@/components/game/GamePage";
 import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
 import { artworkUrl } from "@/lib/game-data";
+import { itemSprite } from "@/lib/pokedex";
 import {
   dismissEncounter,
+  fightWild,
   getExplorationState,
   resolveBotBattle,
   throwBall,
@@ -58,11 +45,15 @@ export const Route = createFileRoute("/eksploracja")({
 
 const EXPLORATION_QUERY_KEY = "exploration";
 
+type BattleOutcome = { won: boolean; biome: string; label: string };
+
 function EksploracjaPage() {
   const { session, loading, userId } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [lastBiome, setLastBiome] = useState<string | null>(null);
+  const [outcome, setOutcome] = useState<BattleOutcome | null>(null);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -73,6 +64,7 @@ function EksploracjaPage() {
   const fetchState = useServerFn(getExplorationState);
   const travelFn = useServerFn(travel);
   const throwBallFn = useServerFn(throwBall);
+  const fightWildFn = useServerFn(fightWild);
   const resolveBotFn = useServerFn(resolveBotBattle);
   const dismissFn = useServerFn(dismissEncounter);
 
@@ -91,17 +83,33 @@ function EksploracjaPage() {
   const handleTravel = async (biomeSlug: string) => {
     if (!userId || busy) return;
     setBusy(true);
+    setOutcome(null);
     try {
       const result = await travelFn({ data: { biome: biomeSlug } });
       if (!result.ok) {
         toast.error(result.reason);
       } else {
+        setLastBiome(biomeSlug);
         const biome = findBiome(biomeSlug);
         toast.success(`Dotarłeś do biomu ${biome?.name ?? biomeSlug}`);
       }
       updateState(result.state);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Błąd eksploracji");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleFightWild = async (encounterId: string) => {
+    if (!userId || busy) return;
+    setBusy(true);
+    try {
+      const result = await fightWildFn({ data: { encounterId } });
+      if (!result.ok) toast.error(result.reason);
+      updateState(result.state);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Błąd walki");
     } finally {
       setBusy(false);
     }
@@ -129,12 +137,15 @@ function EksploracjaPage() {
     }
   };
 
-  const handleBattle = async (encounterId: string) => {
+  const handleBattle = async (encounter: EncounterView) => {
     if (!userId || busy) return;
     setBusy(true);
     try {
-      const result = await resolveBotFn({ data: { encounterId } });
-      toast.success("Walka zakończona zwycięstwem!");
+      const result = await resolveBotFn({ data: { encounterId: encounter.id } });
+      const label = `${encounter.trainer_class ?? "Trener"} ${encounter.trainer_person ?? "Bot"}`;
+      if (result.won) toast.success(`Wygrana z ${label}!`);
+      else toast.error(`Przegrana z ${label}.`);
+      setOutcome({ won: result.won, biome: encounter.biome, label });
       updateState(result.state);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Błąd walki");
@@ -184,12 +195,25 @@ function EksploracjaPage() {
               encounter={state.active}
               pokeBalls={state.poke_balls}
               onThrowBall={handleThrowBall}
+              onFightWild={handleFightWild}
               onBattle={handleBattle}
               onDismiss={handleDismiss}
               busy={busy}
             />
+          ) : outcome ? (
+            <OutcomePanel
+              outcome={outcome}
+              busy={busy}
+              onContinue={() => void handleTravel(outcome.biome)}
+              onBack={() => setOutcome(null)}
+            />
           ) : (
-            <BiomeGrid onTravel={handleTravel} energy={state?.energy ?? 0} busy={busy} />
+            <BiomeGrid
+              onTravel={handleTravel}
+              energy={state?.energy ?? 0}
+              busy={busy}
+              lastBiome={lastBiome}
+            />
           )}
         </section>
 
@@ -224,11 +248,25 @@ function ResourcesPanel({ state }: { state: ExplorationState | undefined }) {
         <p className="mt-2 text-xs text-muted-foreground">+1 pkt co 3 minuty</p>
       </div>
       <div className="glass-panel rounded-2xl p-4 text-center">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Poké Balle</p>
+        <img
+          src={itemSprite("poke-ball")}
+          alt="Poké Ball"
+          loading="lazy"
+          width={32}
+          height={32}
+          className="mx-auto h-8 w-8 [image-rendering:pixelated]"
+        />
         <p className="mt-1 font-display text-3xl">{state?.poke_balls ?? 0}</p>
       </div>
       <div className="glass-panel rounded-2xl p-4 text-center">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Catch Coins</p>
+        <img
+          src={itemSprite("coin-case")}
+          alt="Catch Coins"
+          loading="lazy"
+          width={32}
+          height={32}
+          className="mx-auto h-8 w-8 [image-rendering:pixelated]"
+        />
         <p className="mt-1 font-display text-3xl">{state?.catch_coins ?? 0}</p>
       </div>
       <div className="glass-panel rounded-2xl p-4 text-center">
@@ -243,36 +281,85 @@ function BiomeGrid({
   onTravel,
   energy,
   busy,
+  lastBiome,
 }: {
   onTravel: (slug: string) => void;
   energy: number;
   busy: boolean;
+  lastBiome: string | null;
 }) {
   const minCost = 2;
   return (
     <div className="glass-panel rounded-2xl p-5">
       <h2 className="text-2xl">Wybierz biom</h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {BIOMES.map((biome) => {
           const disabled = energy < minCost || busy;
-          const Icon = BIOME_ICONS[biome.slug] ?? Trees;
           return (
             <button
               key={biome.slug}
               disabled={disabled}
               onClick={() => onTravel(biome.slug)}
-              className="tile-hover glass-panel flex flex-col items-start gap-3 rounded-2xl p-4 text-left disabled:opacity-50 disabled:hover:transform-none"
+              className="tile-hover glass-panel overflow-hidden rounded-2xl text-left disabled:opacity-50 disabled:hover:transform-none"
             >
-              <Icon className="h-6 w-6 text-aurora" aria-hidden />
-              <div>
-                <p className="font-display text-xl">{biome.name}</p>
-                <p className="text-xs text-muted-foreground">{biome.element}</p>
+              <img
+                src={biome.image}
+                alt={`Biom ${biome.name}`}
+                loading="lazy"
+                width={768}
+                height={512}
+                className="h-28 w-full object-cover"
+              />
+              <div className="p-4">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="font-display text-xl">{biome.name}</p>
+                  <span className="text-xs text-muted-foreground">{biome.element}</span>
+                </div>
                 <p className="mt-1 text-xs text-muted-foreground">{biome.tagline}</p>
+                <p className="mt-2 text-xs font-medium text-ice">
+                  2–5 Energii{lastBiome === biome.slug ? " · ostatnio tu byłeś" : ""}
+                </p>
               </div>
-              <span className="mt-auto text-xs font-medium text-ice">2–5 Energii</span>
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function OutcomePanel({
+  outcome,
+  busy,
+  onContinue,
+  onBack,
+}: {
+  outcome: BattleOutcome;
+  busy: boolean;
+  onContinue: () => void;
+  onBack: () => void;
+}) {
+  const biome = findBiome(outcome.biome);
+  return (
+    <div className="glass-panel rounded-2xl p-5">
+      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+        Wynik walki · {biome?.name ?? outcome.biome}
+      </p>
+      <h2 className="mt-1 font-display text-3xl">
+        {outcome.won ? `Wygrana z ${outcome.label}!` : `Przegrana z ${outcome.label}`}
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {outcome.won
+          ? "Nagroda trafiła do Twojego profilu. Możesz iść dalej tym samym szlakiem."
+          : "Bez nagrody. Ulecz drużynę w zakładce Drużyna albo spróbuj dalej."}
+      </p>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <Button onClick={onContinue} disabled={busy}>
+          Dalej — kolejny krok w {biome?.name ?? "tym biomie"}
+        </Button>
+        <Button variant="outline" onClick={onBack} disabled={busy}>
+          Wybierz inny biom
+        </Button>
       </div>
     </div>
   );
@@ -282,6 +369,7 @@ function EncounterCard({
   encounter,
   pokeBalls,
   onThrowBall,
+  onFightWild,
   onBattle,
   onDismiss,
   busy,
@@ -289,25 +377,39 @@ function EncounterCard({
   encounter: EncounterView;
   pokeBalls: number;
   onThrowBall: (id: string) => void;
-  onBattle: (id: string) => void;
+  onFightWild: (id: string) => void;
+  onBattle: (encounter: EncounterView) => void;
   onDismiss: (id: string) => void;
   busy: boolean;
 }) {
+  const hpPct = Math.max(
+    0,
+    Math.min(100, Math.round((encounter.hp_current / Math.max(1, encounter.hp_max)) * 100)),
+  );
+  const catchChance = Math.round(
+    Math.max(
+      5,
+      Math.min(
+        95,
+        ((3 * encounter.hp_max - 2 * encounter.hp_current) / (3 * encounter.hp_max)) * 90,
+      ),
+    ),
+  );
   return (
     <div className="glass-panel rounded-2xl p-5">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Aktywne spotkanie · {encounter.biome}
+            Aktywne spotkanie · {findBiome(encounter.biome)?.name ?? encounter.biome}
           </p>
           <h2 className="mt-1 text-3xl">{encounterTitle(encounter)}</h2>
         </div>
         <span
-          className={`rounded-full px-2 py-1 text-xs font-medium uppercase tracking-wider ${
-            kindStyles(encounter.kind)
-          }`}
+          className={`rounded-full px-2 py-1 text-xs font-medium uppercase tracking-wider ${kindStyles(
+            encounter.kind,
+          )}`}
         >
-          {encounter.kind}
+          {encounter.kind === "wild" ? "dziki" : encounter.kind === "bot" ? "trener" : "pvp"}
         </span>
       </div>
 
@@ -333,13 +435,15 @@ function EncounterCard({
                   className="mx-auto h-16 w-16 object-contain"
                 />
                 <p className="mt-1 text-xs font-medium">{member.species_name}</p>
-                <p className="text-xs text-muted-foreground">Lvl {member.level}</p>
+                <p className="text-xs text-muted-foreground">
+                  {member.species_type} · Lvl {member.level}
+                </p>
               </div>
             ))}
           </div>
         )}
         {encounter.kind === "pvp" && (
-          <div className="flex h-40 items-center justify-center rounded-2xl bg-secondary/50">
+          <div className="flex h-40 items-center justify-center rounded-2xl bg-secondary/50 px-8">
             <Swords className="h-12 w-12 text-muted-foreground" aria-hidden />
           </div>
         )}
@@ -352,16 +456,27 @@ function EncounterCard({
                 Typ {encounter.species_type} · Lvl {encounter.level}
               </p>
               <HpBar current={encounter.hp_current} max={encounter.hp_max} className="mt-4" />
+              <p className="mt-2 text-sm text-aurora">
+                Szansa złapania teraz: {catchChance}% (HP {hpPct}%)
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Osłabiaj Pokémona w walce, a szansa rośnie z każdą turą.
+              </p>
             </>
           )}
           {encounter.kind === "bot" && (
             <>
-              <p className="font-display text-2xl">Trener-Bot</p>
+              <p className="font-display text-2xl">
+                {encounter.trainer_class ?? "Trener"} {encounter.trainer_person ?? ""}
+              </p>
               <p className="text-sm text-muted-foreground">
                 Drużyna {encounter.bot_team?.length ?? 0} Pokémonów · średni Lvl {encounter.level}
               </p>
               <p className="mt-2 text-sm text-aurora">
                 Nagroda: +{encounter.reward_exp} EXP, +{encounter.reward_coins} CC
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Liczy się cała Twoja drużyna i przewagi typów — słaby lider może przegrać walkę.
               </p>
             </>
           )}
@@ -375,15 +490,31 @@ function EncounterCard({
 
       <div className="mt-6 flex flex-wrap gap-3">
         {encounter.kind === "wild" && (
-          <Button onClick={() => onThrowBall(encounter.id)} disabled={busy || pokeBalls <= 0}>
-            <Backpack className="h-4 w-4" aria-hidden />
-            Rzut Poké Ball ({pokeBalls})
-          </Button>
+          <>
+            <Button onClick={() => onFightWild(encounter.id)} disabled={busy}>
+              <Swords className="h-4 w-4" aria-hidden />
+              Atakuj
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => onThrowBall(encounter.id)}
+              disabled={busy || pokeBalls <= 0}
+            >
+              <img
+                src={itemSprite("poke-ball")}
+                alt=""
+                width={20}
+                height={20}
+                className="h-5 w-5 [image-rendering:pixelated]"
+              />
+              Rzut Poké Ball ({pokeBalls})
+            </Button>
+          </>
         )}
         {encounter.kind === "bot" && (
-          <Button onClick={() => onBattle(encounter.id)} disabled={busy}>
+          <Button onClick={() => onBattle(encounter)} disabled={busy}>
             <Swords className="h-4 w-4" aria-hidden />
-            Walcz z botem
+            Walcz
           </Button>
         )}
         <Button variant="outline" onClick={() => onDismiss(encounter.id)} disabled={busy}>
@@ -444,6 +575,11 @@ function TrainerLevelPanel({ state }: { state: ExplorationState | undefined }) {
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
         <div className="h-full rounded-full bg-ember" style={{ width: `${pct}%` }} />
       </div>
+      {state?.region ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Region: {state.region} — spotykasz tylko Pokémony z tego regionu.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -470,7 +606,8 @@ function HpBar({ current, max, className }: { current: number; max: number; clas
 
 function encounterTitle(encounter: EncounterView) {
   if (encounter.kind === "wild") return encounter.species_name ?? "Dziki Pokémon";
-  if (encounter.kind === "bot") return "Trener-Bot";
+  if (encounter.kind === "bot")
+    return `${encounter.trainer_class ?? "Trener"} ${encounter.trainer_person ?? ""}`.trim();
   return "Pojedynek PvP";
 }
 
@@ -478,36 +615,4 @@ function kindStyles(kind: EncounterView["kind"]) {
   if (kind === "wild") return "bg-aurora/20 text-aurora";
   if (kind === "bot") return "bg-ice/20 text-ice";
   return "bg-ember/20 text-ember";
-}
-
-const BIOME_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  las: Trees,
-  jaskinia: Pickaxe,
-  ocean: Waves,
-  gory: Mountain,
-  rowniny: Wind,
-  pustynia: SunIcon,
-  snieg: MountainSnow,
-  bagno: Skull,
-  wulkan: Flame,
-  "cyber-lab": Zap,
-  niebo: Wind,
-  otchlan: Ghost,
-};
-
-function SunIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="5" />
-      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-    </svg>
-  );
 }
