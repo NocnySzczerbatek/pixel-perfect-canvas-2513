@@ -21,8 +21,8 @@ function TrenerzyPage() {
   return (
     <GamePage title="Trenerzy" subtitle="Wybierz klasę rywala, a potem znajdź go podczas eksploracji. Wynik, nagrody i pełny przebieg walki zapisują się w dzienniku.">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {TRAINER_CLASSES.map((name, index) => <article key={name} className="glass-panel rounded-2xl p-5">
-          <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/trainers/${index + 1}.png`} alt={`Trener ${name}`} className="h-20 w-20 [image-rendering:pixelated]" />
+        {TRAINER_CLASSES.map((name) => <article key={name} className="glass-panel rounded-2xl p-5">
+          <TrainerAvatar trainerClass={name} className="h-24 w-24" />
           <h2 className="mt-2 font-display text-2xl">{name}</h2>
           <p className="text-sm text-muted-foreground">Drużyna 3–4 Pokémonów dopasowana do poziomu trenera.</p>
           <Button asChild className="mt-4"><Link to="/eksploracja"><Swords className="h-4 w-4" /> Szukaj wyzwania</Link></Button>
