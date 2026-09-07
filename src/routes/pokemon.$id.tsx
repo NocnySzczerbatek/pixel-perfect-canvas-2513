@@ -238,7 +238,7 @@ function PokemonDetailPage() {
               <dd>{pokemon.ability ?? "—"}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Punkty treningu</dt>
+              <dt className="text-muted-foreground">Kupione punkty treningu</dt>
               <dd>{pokemon.training_points}</dd>
             </div>
             <div className="flex justify-between">
