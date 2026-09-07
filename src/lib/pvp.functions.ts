@@ -81,8 +81,15 @@ async function buildState(supabase: any, userId: string): Promise<PvpState> {
   ]);
   if (!me) throw new Error("Nie znaleziono profilu trenera.");
 
-  const names = new Map<string, string>((profiles ?? []).map((p: any) => [p.id, p.trainer_name]));
+  const names = new Map<string, string>(
+    ((allTrainers ?? []) as any[]).map((p: any) => [p.id, p.trainer_name]),
+  );
   names.set(userId, me.trainer_name);
+
+  const profiles = ((allTrainers ?? []) as any[])
+    .filter((p: any) => p.id !== userId)
+    .sort((a: any, b: any) => b.trainer_level - a.trainer_level)
+    .slice(0, 40);
 
   return {
     me: {
