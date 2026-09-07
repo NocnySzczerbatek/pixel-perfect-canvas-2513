@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { pokemonExpToNext } from "@/lib/leveling";
 import { GamePage } from "@/components/game/GamePage";
+import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { artworkUrl } from "@/lib/game-data";
