@@ -512,6 +512,12 @@ export type Database = {
           owner_id: string
           species_id: number
           species_name: string
+          train_atk: number
+          train_def: number
+          train_hp: number
+          train_spa: number
+          train_spd: number
+          train_spe: number
           training_points: number
         }
         Insert: {
@@ -538,6 +544,12 @@ export type Database = {
           owner_id: string
           species_id: number
           species_name: string
+          train_atk?: number
+          train_def?: number
+          train_hp?: number
+          train_spa?: number
+          train_spd?: number
+          train_spe?: number
           training_points?: number
         }
         Update: {
@@ -564,6 +576,12 @@ export type Database = {
           owner_id?: string
           species_id?: number
           species_name?: string
+          train_atk?: number
+          train_def?: number
+          train_hp?: number
+          train_spa?: number
+          train_spd?: number
+          train_spe?: number
           training_points?: number
         }
         Relationships: [

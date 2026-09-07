@@ -30,6 +30,12 @@ export type PokemonRow = {
   iv_spa: number;
   iv_spd: number;
   iv_spe: number;
+  train_hp: number;
+  train_atk: number;
+  train_def: number;
+  train_spa: number;
+  train_spd: number;
+  train_spe: number;
   nature: string | null;
   ability: string | null;
   training_points: number;
@@ -89,7 +95,7 @@ export type TrainerData = {
 };
 
 const POKEMON_COLUMNS =
-  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, nature, ability, training_points, friendship, is_shiny";
+  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, nature, ability, training_points, friendship, is_shiny";
 
 
 function expThreshold(level: number) {
@@ -399,16 +405,35 @@ export const deleteAccount = createServerFn({ method: "POST" })
 /** Koszt jednego punktu treningu danego staty (rośnie wykładniczo z poziomem treningu). */
 export const TRAINING_LEVEL_STEP = 5; // co 5 punktów treningu = +1 poziom
 export const MAX_IV = 31;
+/** Maksymalna liczba kupionych punktów treningu na jedną statystykę. */
+export const MAX_TRAIN = 31;
 export const TRAINING_DISPLAY_MAX = 1000; // gracz widzi skalę 0–1000
 export const MAX_FRIENDSHIP = 255;
 
-export function trainingCost(currentIv: number) {
-  return Math.round(25 + Math.pow(currentIv, 1.85) * 4);
+/**
+ * Koszt kolejnego punktu treningu — zależy WYŁĄCZNIE od liczby punktów, które gracz
+ * już kupił dla tej statystyki (0 → 25 CC, 2 → 39 CC, 20 → ~1000 CC, 30 → ~2250 CC).
+ * Krzywa jest ściśle rosnąca, więc następny punkt nigdy nie jest tańszy od poprzedniego.
+ */
+export function trainingCost(trainedPoints: number) {
+  const points = Math.max(0, Math.min(MAX_TRAIN, trainedPoints));
+  return Math.round(25 + Math.pow(points, 1.85) * 4);
 }
 
-/** Przelicza wewnętrzne IV (0–31) na "Poziom Treningu" widoczny dla gracza (0–1000). */
-export function trainingLevel(iv: number) {
-  return Math.round((Math.min(MAX_IV, Math.max(0, iv)) / MAX_IV) * TRAINING_DISPLAY_MAX);
+/** Suma Catch Coins zainwestowanych już w daną statystykę. */
+export function trainingInvested(trainedPoints: number) {
+  let total = 0;
+  for (let i = 0; i < Math.max(0, Math.min(MAX_TRAIN, trainedPoints)); i += 1) {
+    total += trainingCost(i);
+  }
+  return total;
+}
+
+/** Przelicza kupione punkty treningu (0–31) na "Poziom Treningu" widoczny dla gracza (0–1000). */
+export function trainingLevel(trainedPoints: number) {
+  return Math.round(
+    (Math.min(MAX_TRAIN, Math.max(0, trainedPoints)) / MAX_TRAIN) * TRAINING_DISPLAY_MAX,
+  );
 }
 
 /** Rodzaje Cukierków znajdowanych podczas eksploracji (przyjaźń). */
@@ -466,6 +491,7 @@ export const useCandy = createServerFn({ method: "POST" })
   });
 
 
+/** Wrodzona moc gatunku (losowana przy złapaniu) — wpływa na walkę, nie na pasek treningu. */
 const IV_FIELDS = {
   hp: "iv_hp",
   atk: "iv_atk",
@@ -475,17 +501,28 @@ const IV_FIELDS = {
   spe: "iv_spe",
 } as const;
 
-/** Trening: 1 punkt = +1 IV wybranego staty; co 5 punktów Pokémon zyskuje poziom. */
+/** Kupione punkty treningu (0–31 na statystykę) — TYLKO to widać na pasku Poziomu Treningu. */
+export const TRAIN_FIELDS = {
+  hp: "train_hp",
+  atk: "train_atk",
+  def: "train_def",
+  spa: "train_spa",
+  spd: "train_spd",
+  spe: "train_spe",
+} as const;
+
+/** Trening: 1 kupiony punkt = +1 do statystyki; co 5 punktów Pokémon zyskuje poziom. */
 export const trainPokemon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { id: string; stat: keyof typeof IV_FIELDS }) => {
+  .inputValidator((input: { id: string; stat: keyof typeof TRAIN_FIELDS }) => {
     if (!input?.id) throw new Error("Brak Pokémona.");
-    if (!(input.stat in IV_FIELDS)) throw new Error("Nieznana statystyka.");
+    if (!(input.stat in TRAIN_FIELDS)) throw new Error("Nieznana statystyka.");
     return { id: input.id, stat: input.stat };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const field = IV_FIELDS[data.stat];
+    const ivField = IV_FIELDS[data.stat];
+    const trainField = TRAIN_FIELDS[data.stat];
     const { data: row } = await supabase
       .from("player_pokemon")
       .select(POKEMON_COLUMNS)
@@ -494,12 +531,13 @@ export const trainPokemon = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Nie znaleziono Pokémona.");
     const pokemon = row as PokemonRow;
-    const currentIv = pokemon[field as keyof PokemonRow] as number;
+    const currentIv = pokemon[ivField as keyof PokemonRow] as number;
+    const currentTrain = (pokemon[trainField as keyof PokemonRow] as number) ?? 0;
 
-    if (currentIv >= 31) {
+    if (currentTrain >= MAX_TRAIN) {
       return {
         ok: false as const,
-        reason: "Ta statystyka jest już na maksimum (31).",
+        reason: `Poziom Treningu tej statystyki jest już maksymalny (${TRAINING_DISPLAY_MAX}/${TRAINING_DISPLAY_MAX}).`,
         data: await buildTrainerData(supabase, userId),
       };
     }
@@ -510,7 +548,7 @@ export const trainPokemon = createServerFn({ method: "POST" })
       .eq("id", userId)
       .maybeSingle();
     if (!profile) throw new Error("Nie znaleziono profilu trenera.");
-    const cost = trainingCost(currentIv);
+    const cost = trainingCost(currentTrain);
     if (profile.catch_coins < cost) {
       return {
         ok: false as const,
@@ -525,12 +563,14 @@ export const trainPokemon = createServerFn({ method: "POST" })
       Math.floor(pokemon.training_points / TRAINING_LEVEL_STEP);
     const maxLevel = (profile.trainer_level as number) + 5;
     const level = Math.min(maxLevel, pokemon.level + gainedLevels);
-    const newIvHp = data.stat === "hp" ? currentIv + 1 : pokemon.iv_hp;
+    const newIvHp = data.stat === "hp" ? pokemon.iv_hp + 1 : pokemon.iv_hp;
     const hpMax = Math.round(20 + level * 4 + newIvHp * 0.8);
 
     await ((await writeDb()).from("player_pokemon") as any)
       .update({
-        [field]: currentIv + 1,
+        [trainField]: currentTrain + 1,
+        // Wrodzona moc + kupiony punkt trafia do statystyk używanych w walce.
+        [ivField]: currentIv + 1,
         training_points: points,
         level,
         hp_max: hpMax,

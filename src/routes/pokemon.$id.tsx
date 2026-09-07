@@ -16,11 +16,13 @@ import { STAT_KEYS, STAT_LABELS, itemSprite, speciesType, type StatKey } from "@
 import {
   CANDIES,
   MAX_FRIENDSHIP,
+  MAX_TRAIN,
   TRAINING_DISPLAY_MAX,
   TRAINING_LEVEL_STEP,
   trainPokemon,
   evolvePokemon,
   trainingCost,
+  trainingInvested,
   trainingLevel,
   useCandy,
   type CandyKind,
@@ -48,13 +50,14 @@ export const Route = createFileRoute("/pokemon/$id")({
   component: PokemonDetailPage,
 });
 
-const IV_OF: Record<StatKey, keyof PokemonRow> = {
-  hp: "iv_hp",
-  atk: "iv_atk",
-  def: "iv_def",
-  spa: "iv_spa",
-  spd: "iv_spd",
-  spe: "iv_spe",
+/** Pasek pokazuje wyłącznie punkty kupione przez gracza — nie wrodzoną moc gatunku. */
+const TRAIN_OF: Record<StatKey, keyof PokemonRow> = {
+  hp: "train_hp",
+  atk: "train_atk",
+  def: "train_def",
+  spa: "train_spa",
+  spd: "train_spd",
+  spe: "train_spe",
 };
 
 function PokemonDetailPage() {
@@ -235,7 +238,7 @@ function PokemonDetailPage() {
               <dd>{pokemon.ability ?? "—"}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Punkty treningu</dt>
+              <dt className="text-muted-foreground">Kupione punkty treningu</dt>
               <dd>{pokemon.training_points}</dd>
             </div>
             <div className="flex justify-between">
@@ -251,20 +254,34 @@ function PokemonDetailPage() {
         <section className="glass-panel rounded-2xl p-5 lg:col-span-2">
           <h2 className="text-2xl">Poziom Treningu statystyk</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Skala 0–{TRAINING_DISPLAY_MAX}. Kolejne punkty są coraz droższe, więc samą gotówką nie
-            zmaksymalizujesz Pokémona. Co {TRAINING_LEVEL_STEP} punkty treningu Pokémon zyskuje
+            Skala 0–{TRAINING_DISPLAY_MAX} pokazuje wyłącznie punkty, które sam kupiłeś za Catch
+            Coins — świeżo złapany Pokémon startuje z 0/{TRAINING_DISPLAY_MAX} na każdej statystyce.
+            Wrodzona moc gatunku liczy się osobno i wpływa na walkę, ale nie na ten pasek. Kolejne
+            punkty są coraz droższe, a co {TRAINING_LEVEL_STEP} punkty treningu Pokémon zyskuje
             poziom.
           </p>
           <ul className="mt-4 space-y-3">
             {STAT_KEYS.map((stat) => {
-              const value = pokemon[IV_OF[stat]] as number;
-              const shown = trainingLevel(value);
-              const cost = trainingCost(value);
-              const maxed = shown >= TRAINING_DISPLAY_MAX;
+              const points = (pokemon[TRAIN_OF[stat]] as number) ?? 0;
+              const shown = trainingLevel(points);
+              const cost = trainingCost(points);
+              const invested = trainingInvested(points);
+              const maxed = points >= MAX_TRAIN;
+              const hint =
+                points === 0
+                  ? `${STAT_LABELS[stat]}: 0/${TRAINING_DISPLAY_MAX} — jeszcze nie trenowano`
+                  : `${STAT_LABELS[stat]}: ${shown}/${TRAINING_DISPLAY_MAX} — zainwestowano ${invested} CC łącznie (${points} pkt)`;
               return (
-                <li key={stat} className="flex items-center gap-3">
+                <li key={stat} className="flex items-center gap-3" title={hint}>
                   <span className="w-24 shrink-0 text-sm">{STAT_LABELS[stat]}</span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-2 flex-1 overflow-hidden rounded-full bg-secondary"
+                    role="progressbar"
+                    aria-label={hint}
+                    aria-valuemin={0}
+                    aria-valuemax={TRAINING_DISPLAY_MAX}
+                    aria-valuenow={shown}
+                  >
                     <div
                       className="h-full rounded-full bg-aurora transition-all"
                       style={{ width: `${(shown / TRAINING_DISPLAY_MAX) * 100}%` }}
