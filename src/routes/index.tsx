@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import loginBg from "@/assets/catchzone-login.jpg";
+import introVideo from "@/assets/catch-zone-intro.mp4.asset.json";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -163,12 +164,16 @@ function StartScreen() {
 
   return (
     <main className="relative min-h-screen overflow-hidden">
-      <img
-        src={loginBg}
-        alt="Zimowa dolina Catch Zone o zachodzie słońca"
-        width={1920}
-        height={1088}
+      <video
         className="absolute inset-0 h-full w-full object-cover"
+        src={introVideo.url}
+        poster={loginBg}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden
       />
       <div className="absolute inset-0 bg-background/70" />
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
