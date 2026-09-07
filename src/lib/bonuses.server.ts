@@ -77,7 +77,7 @@ export async function bonusStateFor(userId: string): Promise<BonusState> {
     buffs: m.buffs,
     permanent: m.permanent,
     permanent_shiny_pct: m.permanentShinyPct,
-    permanent_cap_pct: capPermanent(Number.POSITIVE_INFINITY),
+    permanent_cap_pct: PERMANENT_CAP_PCT,
     shiny_multiplier: m.shiny,
     rare_multiplier: m.rare,
     shiny_chance_text: chanceText(m.shiny),
