@@ -662,6 +662,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      public_trainers: {
+        Args: never
+        Returns: {
+          catch_coins: number
+          featured_badge: string
+          id: string
+          pvp_losses: number
+          pvp_wins: number
+          region: string
+          shield_until: string
+          trainer_exp: number
+          trainer_level: number
+          trainer_name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
