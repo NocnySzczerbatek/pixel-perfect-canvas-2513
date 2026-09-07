@@ -317,7 +317,8 @@ function TrainerDashboard() {
                   <li key={item}>{item}</li>
                 ))}
               </ul>
-            </article>
+              </div>
+            </details>
           ))}
         </div>
       </section>
