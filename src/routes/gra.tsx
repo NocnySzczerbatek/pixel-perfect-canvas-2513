@@ -149,15 +149,15 @@ function TrainerDashboard() {
 
   return (
     <main className="min-h-screen px-5 py-8 md:px-10">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex items-end gap-3">
-          <Link to="/">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link to="/" className="shrink-0">
             <img
               src={logoAsset.url}
               alt="Catch Zone"
               width={56}
               height={56}
-              className="h-12 w-12 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.55)] ring-1 ring-white/20"
+              className="block h-12 w-12 shrink-0 rounded-xl object-contain align-middle drop-shadow-[0_0_12px_rgba(255,255,255,0.55)] ring-1 ring-white/20"
             />
           </Link>
           <div>
@@ -173,6 +173,9 @@ function TrainerDashboard() {
           <Button variant="outline" size="sm" onClick={() => setTourOpen(true)}>
             Samouczek
           </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/profil">Profil</Link>
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -185,6 +188,9 @@ function TrainerDashboard() {
           </Button>
         </div>
       </header>
+
+      <BonusPanel enabled={!!userId} />
+
 
       <GuidedTour steps={TOUR_STEPS} open={tourOpen} onClose={closeTour} />
 
