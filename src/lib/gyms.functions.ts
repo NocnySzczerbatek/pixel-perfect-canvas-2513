@@ -4,8 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
 import { gymsForRegion, type Gym } from "@/lib/gyms";
 import { MEGA_STONE } from "@/lib/items";
-import { REGION_SPECIES, inRegion, speciesType } from "@/lib/pokedex";
-import { BIOMES } from "@/lib/biomes";
+import { speciesType } from "@/lib/pokedex";
 
 const GYM_ENERGY = 10;
 
@@ -35,35 +34,14 @@ export type GymsState = {
   gyms: GymView[];
 };
 
-function pool(region: string | null, type: string) {
-  const all = [...BIOMES.flatMap((b) => b.species), ...Object.values(REGION_SPECIES).flat()];
-  const regional = all.filter((s) => inRegion(s.id, region));
-  const typed = regional.filter((s) => s.type === type);
-  const base = [...typed, ...(regional.length > 0 ? regional : all)];
-  const unique = new Map(base.map((s) => [s.id, s]));
-  return [...unique.values()];
-}
-
-/** Deterministyczna drużyna Lidera: ta sama za każdym podejściem. */
-function leaderTeam(region: string | null, gym: Gym) {
-  const candidates = pool(region, gym.type);
-  const team = [];
-  const used = new Set<number>();
-  for (let i = 0; i < gym.teamSize; i += 1) {
-    let cursor = (gym.index + i) % candidates.length;
-    while (used.has(cursor) && used.size < candidates.length) {
-      cursor = (cursor + 1) % candidates.length;
-    }
-    used.add(cursor);
-    const species = candidates[cursor]!;
-    team.push({
-      species_id: species.id,
-      species_name: species.name,
-      species_type: species.type,
-      level: gym.level + (i === gym.teamSize - 1 ? 2 : 0),
-    });
-  }
-  return team;
+/** Drużyna Lidera jak w serialu — stała, prosto z danych regionu. */
+function leaderTeam(gym: Gym) {
+  return gym.team.map((member) => ({
+    species_id: member.species_id,
+    species_name: member.species_name,
+    species_type: speciesType(member.species_id),
+    level: member.level,
+  }));
 }
 
 function toFoe(member: { species_name: string; species_type: string; level: number }): Fighter {
@@ -128,7 +106,7 @@ async function buildState(supabase: any, userId: string): Promise<GymsState> {
       ...gym,
       earned: owned.has(gym.index),
       locked: gym.index > 1 && !owned.has(gym.index - 1),
-      team: leaderTeam(region, gym),
+      team: leaderTeam(gym),
     })),
   };
 }
@@ -206,7 +184,7 @@ export const challengeGym = createServerFn({ method: "POST" })
       };
     }
 
-    const foes = leaderTeam(region, gym).map(toFoe);
+    const foes = leaderTeam(gym).map(toFoe);
     const result = simulateTeamBattle(allies, foes);
     const log = [
       `${gym.leader} (Sala ${gym.index}, typ ${gym.type}) przyjmuje wyzwanie!`,
