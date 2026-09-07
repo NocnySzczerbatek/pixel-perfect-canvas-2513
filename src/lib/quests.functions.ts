@@ -4,19 +4,24 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { OAK_STAGES, QUEST_PRESETS, type QuestDifficulty } from "@/lib/quests";
 import { warsawClock } from "@/lib/time";
 
+async function writeDb(): Promise<any> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
 export async function progressActivities(supabase: any, userId: string, event: "catch" | "battle", amount = 1, targetKey = "any") {
   const today = warsawClock().dateKey;
   const { data: quests } = await supabase.from("daily_quests").select("id, quest_type, progress, target, status").eq("owner_id", userId).eq("quest_date", today).eq("quest_type", event).eq("status", "active");
   for (const quest of quests ?? []) {
     const progress = Math.min(quest.target, quest.progress + amount);
-    await supabase.from("daily_quests").update({ progress, status: progress >= quest.target ? "completed" : "active" }).eq("id", quest.id).eq("owner_id", userId);
+    await (await writeDb()).from("daily_quests").update({ progress, status: progress >= quest.target ? "completed" : "active" }).eq("id", quest.id).eq("owner_id", userId);
   }
   const researchType = event === "catch" ? "catch_species" : "win_battles";
   const { data: research } = await supabase.from("oak_research").select("id, target_key, progress, target, status").eq("owner_id", userId).eq("research_type", researchType).eq("status", "active");
   for (const row of research ?? []) {
     if (row.target_key !== "any" && row.target_key !== targetKey) continue;
     const progress = Math.min(row.target, row.progress + amount);
-    await supabase.from("oak_research").update({ progress, status: progress >= row.target ? "completed" : "active" }).eq("id", row.id).eq("owner_id", userId);
+    await (await writeDb()).from("oak_research").update({ progress, status: progress >= row.target ? "completed" : "active" }).eq("id", row.id).eq("owner_id", userId);
   }
 }
 
@@ -43,7 +48,7 @@ export const chooseDailyQuest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const preset = QUEST_PRESETS[data.difficulty];
     const date = warsawClock().dateKey;
-    const { error } = await context.supabase.from("daily_quests").insert({ owner_id: context.userId, quest_date: date, quest_type: data.type, difficulty: data.difficulty, target: data.type === "catch" ? preset.catchTarget : preset.battleTarget, reward_coins: preset.coins, reward_item_key: preset.item, reward_item_quantity: preset.quantity });
+    const { error } = await (await writeDb()).from("daily_quests").insert({ owner_id: context.userId, quest_date: date, quest_type: data.type, difficulty: data.difficulty, target: data.type === "catch" ? preset.catchTarget : preset.battleTarget, reward_coins: preset.coins, reward_item_key: preset.item, reward_item_quantity: preset.quantity });
     if (error) return { ok: false as const, reason: "Ten rodzaj zadania został już dziś wybrany.", state: await buildState(context.supabase, context.userId) };
     return { ok: true as const, state: await buildState(context.supabase, context.userId) };
   });
@@ -55,14 +60,14 @@ async function grantReward(supabase: any, userId: string, coins: number, item: s
   if (!profile) throw new Error("Nie znaleziono profilu.");
   const update: Record<string, number> = { catch_coins: profile.catch_coins + coins };
   if (item && fields.includes(item)) update[item] = (profile[item] ?? 0) + quantity;
-  await supabase.from("profiles").update(update).eq("id", userId);
+  await (await writeDb()).from("profiles").update(update).eq("id", userId);
 }
 
 export const claimDailyQuest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: { id: string }) => ({ id: String(input?.id ?? "") })).handler(async ({ data, context }) => {
   const { data: row } = await context.supabase.from("daily_quests").select("*").eq("id", data.id).eq("owner_id", context.userId).eq("status", "completed").maybeSingle();
   if (!row) return { ok: false as const, reason: "Nagroda nie jest jeszcze gotowa.", state: await buildState(context.supabase, context.userId) };
   await grantReward(context.supabase, context.userId, row.reward_coins, row.reward_item_key, row.reward_item_quantity);
-  await context.supabase.from("daily_quests").update({ status: "claimed" }).eq("id", row.id).eq("owner_id", context.userId);
+  await (await writeDb()).from("daily_quests").update({ status: "claimed" }).eq("id", row.id).eq("owner_id", context.userId);
   return { ok: true as const, state: await buildState(context.supabase, context.userId) };
 });
 
@@ -71,7 +76,7 @@ export const startOakResearch = createServerFn({ method: "POST" }).middleware([r
   const stage = OAK_STAGES.find((entry) => entry.stage === state.oak_stage);
   if (!stage) return { ok: false as const, reason: "Wszystkie dostępne badania są ukończone.", state };
   if (state.trainer_level < stage.level) return { ok: false as const, reason: `Badanie odblokuje się na poziomie trenera ${stage.level}.`, state };
-  const { error } = await context.supabase.from("oak_research").insert({ owner_id: context.userId, stage: stage.stage, research_type: stage.type, target_key: stage.targetKey, target: stage.target, reward_coins: stage.coins, reward_item_key: stage.item, reward_item_quantity: stage.quantity, dialog_intro: stage.intro, dialog_complete: stage.complete });
+  const { error } = await (await writeDb()).from("oak_research").insert({ owner_id: context.userId, stage: stage.stage, research_type: stage.type, target_key: stage.targetKey, target: stage.target, reward_coins: stage.coins, reward_item_key: stage.item, reward_item_quantity: stage.quantity, dialog_intro: stage.intro, dialog_complete: stage.complete });
   if (error) return { ok: false as const, reason: "Badanie jest już rozpoczęte.", state: await buildState(context.supabase, context.userId) };
   return { ok: true as const, state: await buildState(context.supabase, context.userId) };
 });
@@ -82,10 +87,10 @@ export const claimOakResearch = createServerFn({ method: "POST" }).middleware([r
   if (!row || row.status !== "completed") return { ok: false as const, reason: "Badanie nie jest jeszcze ukończone.", state };
   if (row.research_type === "deliver_item") {
     if (state.candy_normal < row.target) return { ok: false as const, reason: "Nie masz wymaganych przedmiotów.", state };
-    await context.supabase.from("profiles").update({ candy_normal: state.candy_normal - row.target }).eq("id", context.userId);
+    await (await writeDb()).from("profiles").update({ candy_normal: state.candy_normal - row.target }).eq("id", context.userId);
   }
   await grantReward(context.supabase, context.userId, row.reward_coins, row.reward_item_key, row.reward_item_quantity);
-  await context.supabase.from("oak_research").update({ status: "claimed" }).eq("id", row.id).eq("owner_id", context.userId);
-  await context.supabase.from("profiles").update({ oak_stage: state.oak_stage + 1 }).eq("id", context.userId);
+  await (await writeDb()).from("oak_research").update({ status: "claimed" }).eq("id", row.id).eq("owner_id", context.userId);
+  await (await writeDb()).from("profiles").update({ oak_stage: state.oak_stage + 1 }).eq("id", context.userId);
   return { ok: true as const, state: await buildState(context.supabase, context.userId) };
 });

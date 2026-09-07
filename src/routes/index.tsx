@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -9,7 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
 import { REGIONS, artworkUrl, findRegion, type Region, type Starter } from "@/lib/game-data";
-import { NATURES, abilitiesFor } from "@/lib/pokedex";
+import { completeTutorial, createTrainer as createTrainerServerFn } from "@/lib/onboarding.functions";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,6 +37,9 @@ type Step = "region" | "starter" | "tutorial";
 function StartScreen() {
   const { session, loading, userId } = useSession();
   const navigate = useNavigate();
+
+  const createTrainerFn = useServerFn(createTrainerServerFn);
+  const completeTutorialFn = useServerFn(completeTutorial);
 
   const [step, setStep] = useState<Step>("region");
   const [region, setRegion] = useState<Region | null>(null);
@@ -90,56 +95,12 @@ function StartScreen() {
   async function createTrainer(chosen: Starter) {
     if (!session || !region) return;
     setBusy(true);
-    const base =
-      (session.user.user_metadata?.["full_name"] as string | undefined)?.split(" ")[0] ??
-      session.user.email?.split("@")[0] ??
-      "Trener";
-    const trainerName = `${base.slice(0, 14)}-${session.user.id.slice(0, 4)}`;
-
-    const { error: profileError } = await supabase.from("profiles").upsert(
-      {
-        id: session.user.id,
-        trainer_name: trainerName,
-        region: region.slug,
-        featured_badge: `${region.slug}_champion`,
-      },
-      { onConflict: "id" },
-    );
-    if (profileError) {
-      setBusy(false);
-      toast.error("Nie udało się zapisać profilu trenera.");
-      return;
-    }
-
-    const iv = () => Math.floor(Math.random() * 32);
-    const ivHp = iv();
-    const { error: pokemonError } = await supabase.from("player_pokemon").insert({
-      owner_id: session.user.id,
-      species_id: chosen.id,
-      species_name: chosen.name,
-      level: 5,
-      hp_current: 20 + 5 * 4 + Math.round(ivHp * 0.8),
-      hp_max: 20 + 5 * 4 + Math.round(ivHp * 0.8),
-      is_starter: true,
-      iv_hp: ivHp,
-      iv_atk: iv(),
-      iv_def: iv(),
-      iv_spa: iv(),
-      iv_spd: iv(),
-      iv_spe: iv(),
-      nature: NATURES[Math.floor(Math.random() * NATURES.length)] ?? "Hardy",
-      ability:
-        abilitiesFor(chosen.type)[
-          Math.floor(Math.random() * abilitiesFor(chosen.type).length)
-        ] ?? "Adaptability",
-    });
-    if (pokemonError) {
-      setBusy(false);
-      toast.error("Nie udało się przypisać startera.");
-      return;
-    }
-
+    const result = await createTrainerFn({ data: { region: region.slug, starterId: chosen.id } });
     setBusy(false);
+    if (!result.ok) {
+      toast.error(result.reason);
+      return;
+    }
     setStarter(chosen);
     setStep("tutorial");
     setTutorialStage(1);
@@ -148,17 +109,15 @@ function StartScreen() {
   async function finishTutorial() {
     if (!session) return;
     setBusy(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ tutorial_completed: true, trainer_level: 2 })
-      .eq("id", session.user.id);
+    const result = await completeTutorialFn({});
     setBusy(false);
-    if (error) {
+    if (!result.ok) {
       toast.error("Nie udało się zakończyć samouczka.");
       return;
     }
     void navigate({ to: "/gra" });
   }
+
 
   const signedIn = Boolean(session);
 

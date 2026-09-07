@@ -7,6 +7,11 @@ import { MEGA_STONE } from "@/lib/items";
 import { speciesType } from "@/lib/pokedex";
 import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
 
+async function writeDb(): Promise<any> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
 const GYM_ENERGY = 10;
 
 export type BadgeRow = {
@@ -194,7 +199,7 @@ export const challengeGym = createServerFn({ method: "POST" })
     ];
 
     for (const [id, hp] of Object.entries(result.allyHp)) {
-      await supabase
+      await (await writeDb())
         .from("player_pokemon")
         .update({ hp_current: hp, fainted: hp <= 0 })
         .eq("id", id)
@@ -208,7 +213,7 @@ export const challengeGym = createServerFn({ method: "POST" })
     if (useMega) updates.mega_stones = (profile.mega_stones ?? 0) - 1;
 
     if (result.won) {
-      await supabase.from("gym_badges").insert({
+      await (await writeDb()).from("gym_badges").insert({
         owner_id: userId,
         region,
         gym_index: gym.index,
@@ -242,7 +247,7 @@ export const challengeGym = createServerFn({ method: "POST" })
       );
     }
 
-    await (supabase.from("profiles") as any).update(updates).eq("id", userId);
+    await ((await writeDb()).from("profiles") as any).update(updates).eq("id", userId);
 
     return {
       ok: true as const,
@@ -261,7 +266,7 @@ export const setFeaturedBadge = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await supabase
+    await (await writeDb())
       .from("profiles")
       .update({ featured_badge: data.badgeKey || null })
       .eq("id", userId);

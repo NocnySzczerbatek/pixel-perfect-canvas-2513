@@ -77,7 +77,8 @@ export async function awardPokemonExp(
       log.push(`${name} zdobywa ${gain.exp} EXP (${exp}/${pokemonExpToNext(level)}).`);
     }
 
-    await supabase.from("player_pokemon").update(update).eq("id", row.id).eq("owner_id", userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await (supabaseAdmin as any).from("player_pokemon").update(update).eq("id", row.id).eq("owner_id", userId);
   }
 
   return log;

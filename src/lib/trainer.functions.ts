@@ -2,6 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+async function writeDb(): Promise<any> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin as any;
+}
+
 const MAX_ENERGY = 100;
 const MAX_PARTY = 6;
 export const BALL_PRICE = 20; // Catch Coins za 1 Poké Balla
@@ -189,7 +194,7 @@ export const setInParty = createServerFn({ method: "POST" })
         };
       }
     }
-    await supabase
+    await (await writeDb())
       .from("player_pokemon")
       .update({ in_party: data.inParty })
       .eq("id", data.id)
@@ -208,7 +213,7 @@ export const healParty = createServerFn({ method: "POST" })
       .eq("owner_id", userId)
       .eq("in_party", true);
     for (const row of (rows ?? []) as { id: string; hp_max: number }[]) {
-      await supabase
+      await (await writeDb())
         .from("player_pokemon")
         .update({ hp_current: row.hp_max, fainted: false })
         .eq("id", row.id)
@@ -231,7 +236,7 @@ export const renamePokemon = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await supabase
+    await (await writeDb())
       .from("player_pokemon")
       .update({ nickname: data.nickname.length > 0 ? data.nickname : null })
       .eq("id", data.id)
@@ -262,7 +267,7 @@ export const releasePokemon = createServerFn({ method: "POST" })
         data: await buildTrainerData(supabase, userId),
       };
     }
-    await supabase.from("player_pokemon").delete().eq("id", data.id).eq("owner_id", userId);
+    await (await writeDb()).from("player_pokemon").delete().eq("id", data.id).eq("owner_id", userId);
     return { ok: true as const, data: await buildTrainerData(supabase, userId) };
   });
 
@@ -278,7 +283,7 @@ export const renameTrainer = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await supabase.from("profiles").update({ trainer_name: data.name }).eq("id", userId);
+    await (await writeDb()).from("profiles").update({ trainer_name: data.name }).eq("id", userId);
     return { ok: true as const, data: await buildTrainerData(supabase, userId) };
   });
 
@@ -307,7 +312,7 @@ export const useEnergyBottle = createServerFn({ method: "POST" })
         data: await buildTrainerData(supabase, userId),
       };
     }
-    await supabase
+    await (await writeDb())
       .from("profiles")
       .update({
         energy: Math.min(MAX_ENERGY, profile.energy + BOTTLE_ENERGY),
@@ -342,7 +347,7 @@ export const buyPokeBalls = createServerFn({ method: "POST" })
         data: await buildTrainerData(supabase, userId),
       };
     }
-    await supabase
+    await (await writeDb())
       .from("profiles")
       .update({
         poke_balls: profile.poke_balls + data.amount,
@@ -382,9 +387,9 @@ export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    await supabase.from("player_pokemon").delete().eq("owner_id", userId);
-    await supabase.from("encounters").delete().eq("owner_id", userId);
-    await supabase.from("profiles").delete().eq("id", userId);
+    await (await writeDb()).from("player_pokemon").delete().eq("owner_id", userId);
+    await (await writeDb()).from("encounters").delete().eq("owner_id", userId);
+    await (await writeDb()).from("profiles").delete().eq("id", userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.auth.admin.deleteUser(userId);
     return { ok: true as const };
@@ -443,12 +448,12 @@ export const useCandy = createServerFn({ method: "POST" })
       };
     }
     const friendship = Math.min(MAX_FRIENDSHIP, (row.friendship as number) + candy.friendship);
-    await supabase
+    await (await writeDb())
       .from("player_pokemon")
       .update({ friendship })
       .eq("id", data.id)
       .eq("owner_id", userId);
-    await (supabase.from("profiles") as any)
+    await ((await writeDb()).from("profiles") as any)
       .update({ [candy.field]: owned - 1 })
       .eq("id", userId);
     return {
@@ -522,7 +527,7 @@ export const trainPokemon = createServerFn({ method: "POST" })
     const newIvHp = data.stat === "hp" ? currentIv + 1 : pokemon.iv_hp;
     const hpMax = Math.round(20 + level * 4 + newIvHp * 0.8);
 
-    await (supabase.from("player_pokemon") as any)
+    await ((await writeDb()).from("player_pokemon") as any)
       .update({
         [field]: currentIv + 1,
         training_points: points,
@@ -533,7 +538,7 @@ export const trainPokemon = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("owner_id", userId);
 
-    await supabase
+    await (await writeDb())
       .from("profiles")
       .update({ catch_coins: profile.catch_coins - cost })
       .eq("id", userId);
@@ -577,12 +582,12 @@ export const evolvePokemon = createServerFn({ method: "POST" })
       const itemKey = `evolution_${detail.item.name}`;
       const { data: item } = await supabase.from("player_items").select("id, quantity").eq("owner_id", userId).eq("item_key", itemKey).maybeSingle();
       if (!item || item.quantity < 1) return { ok: false as const, reason: `Potrzebujesz przedmiotu: ${detail.item.name}.`, data: await buildTrainerData(supabase, userId) };
-      if (item.quantity === 1) await supabase.from("player_items").delete().eq("id", item.id).eq("owner_id", userId);
-      else await supabase.from("player_items").update({ quantity: item.quantity - 1 }).eq("id", item.id).eq("owner_id", userId);
+      if (item.quantity === 1) await (await writeDb()).from("player_items").delete().eq("id", item.id).eq("owner_id", userId);
+      else await (await writeDb()).from("player_items").update({ quantity: item.quantity - 1 }).eq("id", item.id).eq("owner_id", userId);
     }
     const toId = Number(next.species.url.split("/").filter(Boolean).pop() ?? 0);
     const name = next.species.name.charAt(0).toUpperCase() + next.species.name.slice(1);
-    await supabase.from("player_pokemon").update({ species_id: toId, species_name: name }).eq("id", mon.id).eq("owner_id", userId);
+    await (await writeDb()).from("player_pokemon").update({ species_id: toId, species_name: name }).eq("id", mon.id).eq("owner_id", userId);
     return { ok: true as const, name, data: await buildTrainerData(supabase, userId) };
   });
 
@@ -600,8 +605,8 @@ export const craftMegaStone = createServerFn({ method: "POST" })
     const { data: shard } = await supabase.from("player_items").select("id, quantity, metadata").eq("owner_id", userId).eq("item_key", shardKey).maybeSingle();
     if (!shard || shard.quantity < 5) return { ok: false as const, reason: "Potrzebujesz 5 fragmentów tego gatunku.", data: await buildTrainerData(supabase, userId) };
     const { data: stone } = await supabase.from("player_items").select("id, quantity").eq("owner_id", userId).eq("item_key", stoneKey).maybeSingle();
-    await supabase.from("player_items").update({ quantity: shard.quantity - 5 }).eq("id", shard.id).eq("owner_id", userId);
-    if (stone) await supabase.from("player_items").update({ quantity: stone.quantity + 1 }).eq("id", stone.id).eq("owner_id", userId);
-    else await supabase.from("player_items").insert({ owner_id: userId, item_key: stoneKey, quantity: 1, metadata: { species_id: data.speciesId, kind: "mega_stone" } });
+    await (await writeDb()).from("player_items").update({ quantity: shard.quantity - 5 }).eq("id", shard.id).eq("owner_id", userId);
+    if (stone) await (await writeDb()).from("player_items").update({ quantity: stone.quantity + 1 }).eq("id", stone.id).eq("owner_id", userId);
+    else await (await writeDb()).from("player_items").insert({ owner_id: userId, item_key: stoneKey, quantity: 1, metadata: { species_id: data.speciesId, kind: "mega_stone" } });
     return { ok: true as const, data: await buildTrainerData(supabase, userId) };
   });
