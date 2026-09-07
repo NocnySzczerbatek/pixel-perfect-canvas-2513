@@ -7,6 +7,19 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0",
+    date: "07.09.2026",
+    added: [
+      "Pokédex regionu: spotkane i złapane gatunki, typy, statystyki bazowe oraz biomy, w których je znajdziesz.",
+      "Kafelek Pokédexu w nawigacji panelu trenera.",
+    ],
+    changed: [
+      "Płatności prawdziwymi pieniędzmi są wyłączone — pakiety w złotówkach mają status „Wkrótce”.",
+      "Punkty życia wszystkich Pokémonów liczone są jednym wzorem (poziom + statystyka HP).",
+      "Ewolucja działa i sprawdzana jest po stronie serwera: poziom, przyjaźń i wymagany przedmiot.",
+    ],
+  },
+  {
     version: "0.9",
     date: "07.09.2026",
     added: [
