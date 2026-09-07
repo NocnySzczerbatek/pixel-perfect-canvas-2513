@@ -23,12 +23,14 @@ export type Biome = {
   element: string;
   tagline: string;
   image: string;
+  types: string[];
   species: BiomeSpecies[];
 };
 
 export const BIOMES: Biome[] = [
   {
     slug: "las",
+    types: ["Trawa", "Robak"],
     name: "Las",
     element: "Trawa",
     tagline: "Gęste korony drzew i szelest w krzakach — raj dla typów Trawa i Robak.",
@@ -46,6 +48,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "jaskinia",
+    types: ["Skała", "Ziemia", "Stal", "Ciemność"],
     name: "Jaskinia",
     element: "Skała",
     tagline: "Wilgotne korytarze i echo skrzydeł — twarde typy Skała i Trucizna.",
@@ -62,6 +65,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "ocean",
+    types: ["Woda"],
     name: "Ocean",
     element: "Woda",
     tagline: "Otwarta toń i prądy pełne życia — same typy Woda.",
@@ -79,6 +83,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "gory",
+    types: ["Walka", "Ziemia", "Skała", "Lot"],
     name: "Góry",
     element: "Walka",
     tagline: "Strome ściany i lodowaty wiatr — typy Walka, Ziemia i Lot.",
@@ -95,6 +100,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "rowniny",
+    types: ["Normalny", "Lot", "Elektryczny", "Baśniowy"],
     name: "Równiny",
     element: "Normalny",
     tagline: "Szerokie trawy i stada w biegu — spokojny start dla nowych trenerów.",
@@ -111,6 +117,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "pustynia",
+    types: ["Ziemia", "Skała", "Trucizna", "Ogień"],
     name: "Pustynia",
     element: "Ziemia",
     tagline: "Rozgrzany piasek i burze pyłowe — typy Ziemia dobrze się tu chowają.",
@@ -127,6 +134,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "snieg",
+    types: ["Lód", "Woda"],
     name: "Śnieg",
     element: "Lód",
     tagline: "Śnieżna polana pod aurorą — dom lodowych Pokémonów.",
@@ -144,6 +152,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "bagno",
+    types: ["Trucizna", "Woda", "Ciemność"],
     name: "Bagno",
     element: "Trucizna",
     tagline: "Mgła, muł i podejrzane bąble — typy Trucizna i Woda.",
@@ -160,6 +169,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "wulkan",
+    types: ["Ogień", "Skała"],
     name: "Wulkan",
     element: "Ogień",
     tagline: "Lawa, popiół i gorące gejzery — wyłącznie typy Ogień.",
@@ -176,6 +186,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "cyber-lab",
+    types: ["Stal", "Elektryczny", "Psychiczny", "Normalny"],
     name: "Cyber-Lab",
     element: "Stal",
     tagline: "Serwerownie i eksperymentalne konstrukty — typy Stal i Elektryczny.",
@@ -192,6 +203,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "niebo",
+    types: ["Lot", "Smok", "Psychiczny"],
     name: "Niebo",
     element: "Lot",
     tagline: "Pływające wyspy w chmurach — szybkie typy Lot.",
@@ -208,6 +220,7 @@ export const BIOMES: Biome[] = [
   },
   {
     slug: "otchlan",
+    types: ["Duch", "Smok", "Ciemność", "Psychiczny"],
     name: "Otchłań",
     element: "Duch",
     tagline: "Ciemność, w której coś patrzy z powrotem — typy Duch i Smok.",
