@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BIOMES, findBiome, type BiomeSpecies } from "@/lib/biomes";
-import { RAZZ, ballByKey } from "@/lib/items";
+import { RAZZ, ballByKey, healByKey } from "@/lib/items";
 import {
   hpFromIv,
   simulateTeamBattle,
@@ -16,6 +16,7 @@ import {
   TRAINER_NAMES,
   abilitiesFor,
   movePool,
+  battleMoves,
   REGION_SPECIES,
   inRegion,
   speciesType,
@@ -76,6 +77,11 @@ export type ExplorationState = {
   ultra_balls: number;
   master_balls: number;
   razz_berries: number;
+  potions: number;
+  super_potions: number;
+  revives: number;
+  /** Ile milisekund zostało do kolejnego punktu Energii (0 = pełna). */
+  energy_next_ms: number;
 
   catch_coins: number;
   candy_normal: number;
@@ -111,6 +117,9 @@ type ProfileRow = {
   ultra_balls: number;
   master_balls: number;
   razz_berries: number;
+  potions: number;
+  super_potions: number;
+  revives: number;
   catch_coins: number;
   candy_normal: number;
   candy_xl: number;
@@ -120,7 +129,7 @@ type ProfileRow = {
 };
 
 const PROFILE_COLUMNS =
-  "energy, energy_updated_at, poke_balls, great_balls, ultra_balls, master_balls, razz_berries, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region";
+  "energy, energy_updated_at, poke_balls, great_balls, ultra_balls, master_balls, razz_berries, potions, super_potions, revives, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region";
 
 
 
@@ -258,7 +267,7 @@ function toPartyView(row: PartyRow): PartyView {
     hp_current: row.hp_current,
     hp_max: row.hp_max,
     fainted: row.fainted,
-    moves: movePool(row.species_id).filter((move) => move.level <= row.level),
+    moves: battleMoves(row.species_id, row.level),
   };
 }
 
@@ -285,6 +294,16 @@ async function buildState(supabase: any, userId: string): Promise<ExplorationSta
     ultra_balls: profile.ultra_balls ?? 0,
     master_balls: profile.master_balls ?? 0,
     razz_berries: profile.razz_berries ?? 0,
+    potions: profile.potions ?? 0,
+    super_potions: profile.super_potions ?? 0,
+    revives: profile.revives ?? 0,
+    energy_next_ms:
+      profile.energy >= MAX_ENERGY
+        ? 0
+        : Math.max(
+            0,
+            new Date(profile.energy_updated_at).getTime() + ENERGY_TICK_MS - Date.now(),
+          ),
 
     catch_coins: profile.catch_coins,
     candy_normal: profile.candy_normal ?? 0,
@@ -489,7 +508,7 @@ export const fightWildMove = createServerFn({ method: "POST" })
     }
 
     const me = toFighter(mine);
-    const myMoves = movePool(mine.species_id).filter((m) => m.level <= mine.level);
+    const myMoves = battleMoves(mine.species_id, mine.level);
     const move = myMoves.find((m) => m.name === data.move);
     if (!move) throw new Error("Ten Pokémon nie zna tego ataku.");
 
@@ -520,7 +539,7 @@ export const fightWildMove = createServerFn({ method: "POST" })
 
     let allyHp = me.hp;
     if (wildHp > 0) {
-      const foeMoves = movePool(row.species_id ?? 0).filter((m) => m.level <= row.level);
+      const foeMoves = battleMoves(row.species_id ?? 0, row.level);
       const foeMove = foeMoves.length > 0 ? pick(foeMoves) : { name: "Tackle", power: 35, level: 1 };
       const foeMult = typeMultiplier(foe.type, me.type);
       const foeDmg = Math.max(
@@ -806,3 +825,98 @@ async function applyTrainerReward(
     })
     .eq("id", userId);
 }
+
+/** Leczenie Pokémona w trakcie walki (albo poza nią) przedmiotem z torby. */
+export const useHealItem = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { pokemonId: string; item: string; encounterId?: string }) => {
+    if (!input?.pokemonId) throw new Error("Wybierz Pokémona.");
+    const item = healByKey(String(input?.item ?? ""));
+    if (!item) throw new Error("Nieznany przedmiot leczący.");
+    return {
+      pokemonId: String(input.pokemonId),
+      item: item.key,
+      encounterId: input?.encounterId ? String(input.encounterId) : null,
+    };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const item = healByKey(data.item)!;
+    const profile = await syncEnergy(supabase, userId);
+    const owned = (profile as any)[item.field] ?? 0;
+    if (owned <= 0) {
+      return {
+        ok: false as const,
+        reason: `Nie masz przedmiotu: ${item.label}.`,
+        state: await buildState(supabase, userId),
+      };
+    }
+
+    const { data: mon } = await supabase
+      .from("player_pokemon")
+      .select("id, species_name, nickname, hp_current, hp_max, fainted")
+      .eq("id", data.pokemonId)
+      .eq("owner_id", userId)
+      .maybeSingle();
+    if (!mon) throw new Error("Nie znaleziono Pokémona.");
+
+    const name = mon.nickname ?? mon.species_name;
+    if (item.revive) {
+      if (!mon.fainted && mon.hp_current > 0) {
+        return {
+          ok: false as const,
+          reason: `${name} nie jest zemdlony.`,
+          state: await buildState(supabase, userId),
+        };
+      }
+    } else if (mon.fainted || mon.hp_current <= 0) {
+      return {
+        ok: false as const,
+        reason: `${name} jest zemdlony — użyj Eliksiru Życia.`,
+        state: await buildState(supabase, userId),
+      };
+    } else if (mon.hp_current >= mon.hp_max) {
+      return {
+        ok: false as const,
+        reason: `${name} ma pełne HP.`,
+        state: await buildState(supabase, userId),
+      };
+    }
+
+    const healed = item.revive
+      ? Math.max(1, Math.round(mon.hp_max / 2))
+      : Math.min(mon.hp_max, mon.hp_current + item.heal);
+
+    await supabase
+      .from("player_pokemon")
+      .update({ hp_current: healed, fainted: false })
+      .eq("id", mon.id)
+      .eq("owner_id", userId);
+    await (supabase.from("profiles") as any)
+      .update({ [item.field]: owned - 1 })
+      .eq("id", userId);
+
+    const line = item.revive
+      ? `Używasz ${item.label}: ${name} wraca do walki z ${healed} HP.`
+      : `Używasz ${item.label}: ${name} ma teraz ${healed}/${mon.hp_max} HP.`;
+
+    if (data.encounterId) {
+      const { data: row } = await supabase
+        .from("encounters")
+        .select("id, status, log")
+        .eq("id", data.encounterId)
+        .eq("owner_id", userId)
+        .maybeSingle();
+      if (row && row.status === "active") {
+        const log = [...(((row.log as string[]) ?? [])), line];
+        await supabase.from("encounters").update({ log: log.slice(-30) }).eq("id", row.id);
+      }
+    }
+
+    return {
+      ok: true as const,
+      hp: healed,
+      message: line,
+      state: await buildState(supabase, userId),
+    };
+  });

@@ -110,6 +110,9 @@ function EkwipunekPage() {
             { label: "Ultra Balle", sprite: "ultra-ball", count: profile.ultra_balls },
             { label: "Master Balle", sprite: "master-ball", count: profile.master_balls },
             { label: "Razz Berry", sprite: "razz-berry", count: profile.razz_berries },
+            { label: "Mikstura", sprite: "potion", count: profile.potions },
+            { label: "Super Mikstura", sprite: "super-potion", count: profile.super_potions },
+            { label: "Eliksir Życia", sprite: "revive", count: profile.revives },
             { label: "Kamienie Mega", sprite: "key-stone", count: profile.mega_stones },
           ].map((item) => (
             <div key={item.label} className="glass-panel rounded-2xl p-5">

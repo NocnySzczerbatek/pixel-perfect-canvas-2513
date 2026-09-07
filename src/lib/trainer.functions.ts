@@ -45,6 +45,9 @@ export type TrainerData = {
     ultra_balls: number;
     master_balls: number;
     razz_berries: number;
+    potions: number;
+    super_potions: number;
+    revives: number;
     mega_stones: number;
     shield_until: string | null;
     pvp_wins: number;
@@ -81,7 +84,7 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
     supabase
       .from("profiles")
       .select(
-        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, great_balls, ultra_balls, master_balls, razz_berries, mega_stones, shield_until, pvp_wins, pvp_losses, catch_coins, candy_normal, candy_xl, region, featured_badge, created_at",
+        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, great_balls, ultra_balls, master_balls, razz_berries, potions, super_potions, revives, mega_stones, shield_until, pvp_wins, pvp_losses, catch_coins, candy_normal, candy_xl, region, featured_badge, created_at",
       )
       .eq("id", userId)
       .maybeSingle(),
@@ -112,6 +115,9 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
       ultra_balls: profile.ultra_balls ?? 0,
       master_balls: profile.master_balls ?? 0,
       razz_berries: profile.razz_berries ?? 0,
+      potions: profile.potions ?? 0,
+      super_potions: profile.super_potions ?? 0,
+      revives: profile.revives ?? 0,
       mega_stones: profile.mega_stones ?? 0,
       shield_until: profile.shield_until ?? null,
       pvp_wins: profile.pvp_wins ?? 0,

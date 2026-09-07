@@ -296,11 +296,14 @@ export type Database = {
           master_balls: number
           mega_stones: number
           poke_balls: number
+          potions: number
           pvp_losses: number
           pvp_wins: number
           razz_berries: number
           region: string | null
+          revives: number
           shield_until: string | null
+          super_potions: number
           trainer_exp: number
           trainer_level: number
           trainer_name: string
@@ -322,11 +325,14 @@ export type Database = {
           master_balls?: number
           mega_stones?: number
           poke_balls?: number
+          potions?: number
           pvp_losses?: number
           pvp_wins?: number
           razz_berries?: number
           region?: string | null
+          revives?: number
           shield_until?: string | null
+          super_potions?: number
           trainer_exp?: number
           trainer_level?: number
           trainer_name: string
@@ -348,11 +354,14 @@ export type Database = {
           master_balls?: number
           mega_stones?: number
           poke_balls?: number
+          potions?: number
           pvp_losses?: number
           pvp_wins?: number
           razz_berries?: number
           region?: string | null
+          revives?: number
           shield_until?: string | null
+          super_potions?: number
           trainer_exp?: number
           trainer_level?: number
           trainer_name?: string

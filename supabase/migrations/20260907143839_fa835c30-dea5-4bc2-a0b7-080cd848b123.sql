@@ -1,0 +1,4 @@
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS potions integer NOT NULL DEFAULT 3,
+  ADD COLUMN IF NOT EXISTS super_potions integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS revives integer NOT NULL DEFAULT 0;

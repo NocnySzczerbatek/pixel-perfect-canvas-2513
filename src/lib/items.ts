@@ -113,3 +113,54 @@ export const SHOP_PACKAGES: ShopPackage[] = [
     grants: "+1 Master Ball",
   },
 ];
+
+export type HealKey = "potion" | "super_potion" | "revive";
+
+export type HealDef = {
+  key: HealKey;
+  label: string;
+  sprite: string;
+  field: "potions" | "super_potions" | "revives";
+  /** Ile HP przywraca; `revive` podnosi zemdlonego na połowę HP. */
+  heal: number;
+  revive: boolean;
+  price: number;
+  note: string;
+};
+
+export const HEAL_ITEMS: HealDef[] = [
+  {
+    key: "potion",
+    label: "Mikstura",
+    sprite: "potion",
+    field: "potions",
+    heal: 25,
+    revive: false,
+    price: 40,
+    note: "Leczy 25 HP — także w trakcie walki.",
+  },
+  {
+    key: "super_potion",
+    label: "Super Mikstura",
+    sprite: "super-potion",
+    field: "super_potions",
+    heal: 70,
+    revive: false,
+    price: 120,
+    note: "Leczy 70 HP jednym użyciem.",
+  },
+  {
+    key: "revive",
+    label: "Eliksir Życia",
+    sprite: "revive",
+    field: "revives",
+    heal: 0,
+    revive: true,
+    price: 250,
+    note: "Podnosi zemdlonego Pokémona z połową HP.",
+  },
+];
+
+export function healByKey(key: string): HealDef | undefined {
+  return HEAL_ITEMS.find((item) => item.key === key);
+}

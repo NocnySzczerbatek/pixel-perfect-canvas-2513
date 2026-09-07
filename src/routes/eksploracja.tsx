@@ -10,7 +10,7 @@ import { GamePage } from "@/components/game/GamePage";
 import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
 import { artworkUrl } from "@/lib/game-data";
-import { BALLS, RAZZ, ballByKey } from "@/lib/items";
+import { BALLS, HEAL_ITEMS, RAZZ, ballByKey } from "@/lib/items";
 import { itemSprite } from "@/lib/pokedex";
 import {
   dismissEncounter,
@@ -19,6 +19,7 @@ import {
   resolveBotBattle,
   throwBall,
   travel,
+  useHealItem,
   type EncounterView,
   type ExplorationState,
   type PartyView,
@@ -71,6 +72,7 @@ function EksploracjaPage() {
   const fightMoveFn = useServerFn(fightWildMove);
   const resolveBotFn = useServerFn(resolveBotBattle);
   const dismissFn = useServerFn(dismissEncounter);
+  const healFn = useServerFn(useHealItem);
 
 
   const { data: state, isLoading } = useQuery<ExplorationState>({
@@ -154,6 +156,23 @@ function EksploracjaPage() {
     }
   };
 
+  const handleHeal = async (pokemonId: string, item: string, encounterId?: string) => {
+    if (!userId || busy) return;
+    setBusy(true);
+    try {
+      const result = await healFn({
+        data: encounterId ? { pokemonId, item, encounterId } : { pokemonId, item },
+      });
+      if (!result.ok) toast.error(result.reason);
+      else toast.success(result.message);
+      updateState(result.state);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Błąd leczenia");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleBattle = async (encounter: EncounterView) => {
     if (!userId || busy) return;
     setBusy(true);
@@ -232,6 +251,12 @@ function EksploracjaPage() {
                 master: state.master_balls,
               }}
               razzBerries={state.razz_berries}
+              heals={{
+                potion: state.potions,
+                super_potion: state.super_potions,
+                revive: state.revives,
+              }}
+              onHeal={handleHeal}
               party={state.party}
               activeMonId={activeMonId}
               onSelectMon={setActiveMonId}
@@ -270,10 +295,26 @@ function EksploracjaPage() {
   );
 }
 
+function formatCountdown(ms: number) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
 function ResourcesPanel({ state }: { state: ExplorationState | undefined }) {
   const energy = state?.energy ?? 0;
   const max = state?.energy_max ?? 100;
   const pct = Math.round((energy / max) * 100);
+  const [left, setLeft] = useState(state?.energy_next_ms ?? 0);
+  useEffect(() => {
+    setLeft(state?.energy_next_ms ?? 0);
+  }, [state?.energy_next_ms]);
+  useEffect(() => {
+    if (left <= 0) return;
+    const timer = setInterval(() => setLeft((value) => Math.max(0, value - 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [left > 0]);
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <div className="glass-panel rounded-2xl p-4 sm:col-span-2">
@@ -289,7 +330,12 @@ function ResourcesPanel({ state }: { state: ExplorationState | undefined }) {
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">+1 pkt co 3 minuty</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          +1 pkt co 3 minuty
+          {energy >= max
+            ? " · Energia pełna"
+            : ` · następny punkt za ${formatCountdown(left)}`}
+        </p>
       </div>
       <div className="glass-panel rounded-2xl p-4 text-center">
         <img
@@ -413,6 +459,8 @@ function EncounterCard({
   encounter,
   balls,
   razzBerries,
+  heals,
+  onHeal,
   party,
   activeMonId,
   onSelectMon,
@@ -426,6 +474,8 @@ function EncounterCard({
   encounter: EncounterView;
   balls: Record<string, number>;
   razzBerries: number;
+  heals: Record<string, number>;
+  onHeal: (pokemonId: string, item: string, encounterId?: string) => void;
   party: PartyView[];
   activeMonId: string | null;
   onSelectMon: (id: string) => void;
@@ -602,6 +652,36 @@ function EncounterCard({
                   {RAZZ.label} · {razzBerries}
                 </button>
               </div>
+              {active ? (
+                <>
+                  <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Leczenie w walce
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {HEAL_ITEMS.map((item) => {
+                      const count = heals[item.key] ?? 0;
+                      return (
+                        <button
+                          key={item.key}
+                          onClick={() => onHeal(active.id, item.key, encounter.id)}
+                          disabled={busy || count <= 0 || item.revive}
+                          title={item.note}
+                          className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground disabled:opacity-40"
+                        >
+                          <img
+                            src={itemSprite(item.sprite)}
+                            alt=""
+                            width={20}
+                            height={20}
+                            className="h-5 w-5 [image-rendering:pixelated]"
+                          />
+                          {item.label} · {count}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
             </div>
           ) : null}
 

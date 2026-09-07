@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { BALLS, RAZZ, SHIELD_COST, SHIELD_HOURS, ballByKey } from "@/lib/items";
+import { BALLS, HEAL_ITEMS, RAZZ, SHIELD_COST, SHIELD_HOURS, ballByKey, healByKey } from "@/lib/items";
 
 /** Master Ball da się też kupić za monety — bardzo drogo. */
 export const MASTER_BALL_CC = 2500;
@@ -15,6 +15,8 @@ function resolve(kind: string): Purchase | null {
   if (kind === "master") {
     return { field: "master_balls", unit: MASTER_BALL_CC, label: "Master Ball" };
   }
+  const heal = healByKey(kind);
+  if (heal) return { field: heal.field, unit: heal.price, label: heal.label };
   const ball = ballByKey(kind);
   if (!ball || ball.price === null) return null;
   return { field: ball.field, unit: ball.price, label: ball.label };
@@ -80,3 +82,4 @@ export const buyShield = createServerFn({ method: "POST" })
   });
 
 export const BALL_CATALOG = BALLS;
+export const HEAL_CATALOG = HEAL_ITEMS;
