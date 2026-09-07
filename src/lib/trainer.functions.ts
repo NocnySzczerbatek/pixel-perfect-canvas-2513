@@ -28,6 +28,7 @@ export type PokemonRow = {
   nature: string | null;
   ability: string | null;
   training_points: number;
+  friendship: number;
 };
 
 export type TrainerData = {
@@ -41,6 +42,8 @@ export type TrainerData = {
     energy_bottles: number;
     poke_balls: number;
     catch_coins: number;
+    candy_normal: number;
+    candy_xl: number;
     region: string | null;
     created_at: string;
   };
@@ -50,7 +53,8 @@ export type TrainerData = {
 };
 
 const POKEMON_COLUMNS =
-  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, nature, ability, training_points";
+  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, nature, ability, training_points, friendship";
+
 
 function expThreshold(level: number) {
   return Math.round(100 * Math.pow(level, 1.8));
@@ -61,7 +65,7 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
     supabase
       .from("profiles")
       .select(
-        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, catch_coins, region, created_at",
+        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, catch_coins, candy_normal, candy_xl, region, created_at",
       )
       .eq("id", userId)
       .maybeSingle(),
@@ -84,6 +88,8 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
       energy_bottles: profile.energy_bottles,
       poke_balls: profile.poke_balls,
       catch_coins: profile.catch_coins,
+      candy_normal: profile.candy_normal ?? 0,
+      candy_xl: profile.candy_xl ?? 0,
       region: profile.region,
       created_at: profile.created_at,
     },
@@ -92,6 +98,7 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
     bottle_energy: BOTTLE_ENERGY,
   };
 }
+
 
 /** Profil trenera + wszystkie Pokémony (drużyna i PC Box). */
 export const getTrainerData = createServerFn({ method: "GET" })
@@ -322,11 +329,75 @@ export const deleteAccount = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/** Koszt jednego punktu treningu danego staty (rośnie z wartością IV). */
+/** Koszt jednego punktu treningu danego staty (rośnie wykładniczo z poziomem treningu). */
 export const TRAINING_LEVEL_STEP = 5; // co 5 punktów treningu = +1 poziom
+export const MAX_IV = 31;
+export const TRAINING_DISPLAY_MAX = 1000; // gracz widzi skalę 0–1000
+export const MAX_FRIENDSHIP = 255;
+
 export function trainingCost(currentIv: number) {
-  return Math.max(10, currentIv * 10);
+  return Math.round(25 + Math.pow(currentIv, 1.85) * 4);
 }
+
+/** Przelicza wewnętrzne IV (0–31) na "Poziom Treningu" widoczny dla gracza (0–1000). */
+export function trainingLevel(iv: number) {
+  return Math.round((Math.min(MAX_IV, Math.max(0, iv)) / MAX_IV) * TRAINING_DISPLAY_MAX);
+}
+
+/** Rodzaje Cukierków znajdowanych podczas eksploracji (przyjaźń). */
+export const CANDIES = {
+  normal: { field: "candy_normal", label: "Zwykły Cukierek", sprite: "rare-candy", friendship: 8 },
+  xl: { field: "candy_xl", label: "Cukierek XL", sprite: "exp-candy-xl", friendship: 35 },
+} as const;
+
+export type CandyKind = keyof typeof CANDIES;
+
+/** Użycie Cukierka na Pokémonie — podnosi przyjaźń (max 255). */
+export const useCandy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; kind: CandyKind }) => {
+    if (!input?.id) throw new Error("Brak Pokémona.");
+    if (!(input.kind in CANDIES)) throw new Error("Nieznany cukierek.");
+    return { id: input.id, kind: input.kind };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const candy = CANDIES[data.kind];
+    const [{ data: profile }, { data: row }] = await Promise.all([
+      supabase.from("profiles").select("candy_normal, candy_xl").eq("id", userId).maybeSingle(),
+      supabase
+        .from("player_pokemon")
+        .select("id, friendship")
+        .eq("id", data.id)
+        .eq("owner_id", userId)
+        .maybeSingle(),
+    ]);
+    if (!profile || !row) throw new Error("Nie znaleziono danych trenera.");
+    const owned = (profile as Record<string, number>)[candy.field] ?? 0;
+    if (owned <= 0) {
+      return {
+        ok: false as const,
+        reason: `Nie masz już ${candy.label.toLowerCase()}ów.`,
+        data: await buildTrainerData(supabase, userId),
+      };
+    }
+    const friendship = Math.min(MAX_FRIENDSHIP, (row.friendship as number) + candy.friendship);
+    await supabase
+      .from("player_pokemon")
+      .update({ friendship })
+      .eq("id", data.id)
+      .eq("owner_id", userId);
+    await (supabase.from("profiles") as any)
+      .update({ [candy.field]: owned - 1 })
+      .eq("id", userId);
+    return {
+      ok: true as const,
+      friendship,
+      gained: candy.friendship,
+      data: await buildTrainerData(supabase, userId),
+    };
+  });
+
 
 const IV_FIELDS = {
   hp: "iv_hp",

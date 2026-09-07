@@ -13,14 +13,16 @@ import { artworkUrl } from "@/lib/game-data";
 import { itemSprite } from "@/lib/pokedex";
 import {
   dismissEncounter,
-  fightWild,
+  fightWildMove,
   getExplorationState,
   resolveBotBattle,
   throwBall,
   travel,
   type EncounterView,
   type ExplorationState,
+  type PartyView,
 } from "@/lib/exploration.functions";
+
 
 export const Route = createFileRoute("/eksploracja")({
   head: () => ({
@@ -54,6 +56,7 @@ function EksploracjaPage() {
   const [busy, setBusy] = useState(false);
   const [lastBiome, setLastBiome] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<BattleOutcome | null>(null);
+  const [activeMonId, setActiveMonId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -64,9 +67,10 @@ function EksploracjaPage() {
   const fetchState = useServerFn(getExplorationState);
   const travelFn = useServerFn(travel);
   const throwBallFn = useServerFn(throwBall);
-  const fightWildFn = useServerFn(fightWild);
+  const fightMoveFn = useServerFn(fightWildMove);
   const resolveBotFn = useServerFn(resolveBotBattle);
   const dismissFn = useServerFn(dismissEncounter);
+
 
   const { data: state, isLoading } = useQuery<ExplorationState>({
     queryKey: [EXPLORATION_QUERY_KEY, userId],
@@ -101,12 +105,23 @@ function EksploracjaPage() {
     }
   };
 
-  const handleFightWild = async (encounterId: string) => {
+  const handleMove = async (encounter: EncounterView, pokemonId: string, move: string) => {
     if (!userId || busy) return;
     setBusy(true);
     try {
-      const result = await fightWildFn({ data: { encounterId } });
-      if (!result.ok) toast.error(result.reason);
+      const result = await fightMoveFn({ data: { encounterId: encounter.id, pokemonId, move } });
+      if (!result.ok) {
+        toast.error(result.reason);
+      } else if (result.wildDefeated) {
+        toast.success(`${encounter.species_name} pokonany — łap albo idź dalej!`);
+      } else if (result.allyFainted) {
+        toast.error("Twój Pokémon jest Zemdlony.");
+        setOutcome({
+          won: false,
+          biome: encounter.biome,
+          label: encounter.species_name ?? "dziki Pokémon",
+        });
+      }
       updateState(result.state);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Błąd walki");
@@ -114,6 +129,7 @@ function EksploracjaPage() {
       setBusy(false);
     }
   };
+
 
   const handleThrowBall = async (encounterId: string) => {
     if (!userId || busy) return;
@@ -168,6 +184,21 @@ function EksploracjaPage() {
     }
   };
 
+  /** "Dalej" — zamyka spotkanie i robi kolejny krok w tym samym biomie. */
+  const handleNext = async (encounter: EncounterView) => {
+    if (!userId || busy) return;
+    setBusy(true);
+    try {
+      await dismissFn({ data: { encounterId: encounter.id } });
+    } catch {
+      /* spotkanie mogło już zostać zamknięte */
+    } finally {
+      setBusy(false);
+    }
+    await handleTravel(encounter.biome);
+  };
+
+
   if (loading || isLoading) {
     return (
       <GamePage title="Eksploracja" subtitle="Ładowanie stanu eksploracji...">
@@ -194,12 +225,18 @@ function EksploracjaPage() {
             <EncounterCard
               encounter={state.active}
               pokeBalls={state.poke_balls}
+              party={state.party}
+              activeMonId={activeMonId}
+              onSelectMon={setActiveMonId}
               onThrowBall={handleThrowBall}
-              onFightWild={handleFightWild}
+              onMove={handleMove}
               onBattle={handleBattle}
               onDismiss={handleDismiss}
+              onNext={handleNext}
               busy={busy}
             />
+
+
           ) : outcome ? (
             <OutcomePanel
               outcome={outcome}
@@ -368,18 +405,26 @@ function OutcomePanel({
 function EncounterCard({
   encounter,
   pokeBalls,
+  party,
+  activeMonId,
+  onSelectMon,
   onThrowBall,
-  onFightWild,
+  onMove,
   onBattle,
   onDismiss,
+  onNext,
   busy,
 }: {
   encounter: EncounterView;
   pokeBalls: number;
+  party: PartyView[];
+  activeMonId: string | null;
+  onSelectMon: (id: string) => void;
   onThrowBall: (id: string) => void;
-  onFightWild: (id: string) => void;
+  onMove: (encounter: EncounterView, pokemonId: string, move: string) => void;
   onBattle: (encounter: EncounterView) => void;
   onDismiss: (id: string) => void;
+  onNext: (encounter: EncounterView) => void;
   busy: boolean;
 }) {
   const hpPct = Math.max(
@@ -395,6 +440,10 @@ function EncounterCard({
       ),
     ),
   );
+  const ready = party.filter((mon) => !mon.fainted && mon.hp_current > 0);
+  const active = ready.find((mon) => mon.id === activeMonId) ?? ready[0] ?? null;
+  const defeated = encounter.hp_current <= 0;
+
   return (
     <div className="glass-panel rounded-2xl p-5">
       <div className="flex items-start justify-between">
@@ -413,116 +462,221 @@ function EncounterCard({
         </span>
       </div>
 
-      <div className="mt-6 flex flex-col gap-6 md:flex-row">
-        {encounter.kind === "wild" && encounter.species_id && (
-          <img
-            src={artworkUrl(encounter.species_id)}
-            alt={encounter.species_name ?? "Pokémon"}
-            width={220}
-            height={220}
-            className="mx-auto h-40 w-40 object-contain md:mx-0"
-          />
-        )}
-        {encounter.kind === "bot" && (
-          <div className="flex flex-wrap gap-2">
-            {(encounter.bot_team ?? []).map((member, idx) => (
-              <div key={idx} className="glass-panel rounded-xl p-2 text-center">
-                <img
-                  src={artworkUrl(member.species_id)}
-                  alt={member.species_name}
-                  width={80}
-                  height={80}
-                  className="mx-auto h-16 w-16 object-contain"
-                />
-                <p className="mt-1 text-xs font-medium">{member.species_name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {member.species_type} · Lvl {member.level}
+      {encounter.kind === "wild" && encounter.species_id ? (
+        <>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="glass-panel rounded-2xl p-4 text-center">
+              {active ? (
+                <>
+                  <img
+                    src={artworkUrl(active.species_id)}
+                    alt={active.name}
+                    loading="lazy"
+                    width={220}
+                    height={220}
+                    className="mx-auto h-32 w-32 object-contain"
+                  />
+                  <p className="font-display text-xl">{active.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {active.species_type} · Lvl {active.level}
+                  </p>
+                  <HpBar current={active.hp_current} max={active.hp_max} className="mt-3" />
+                </>
+              ) : (
+                <p className="py-10 text-sm text-muted-foreground">
+                  Cała drużyna jest Zemdlona — ulecz Pokémony w zakładce Drużyna.
                 </p>
-              </div>
-            ))}
-          </div>
-        )}
-        {encounter.kind === "pvp" && (
-          <div className="flex h-40 items-center justify-center rounded-2xl bg-secondary/50 px-8">
-            <Swords className="h-12 w-12 text-muted-foreground" aria-hidden />
-          </div>
-        )}
-
-        <div className="flex-1">
-          {encounter.kind === "wild" && (
-            <>
-              <p className="font-display text-2xl">{encounter.species_name}</p>
-              <p className="text-sm text-muted-foreground">
-                Typ {encounter.species_type} · Lvl {encounter.level}
-              </p>
-              <HpBar current={encounter.hp_current} max={encounter.hp_max} className="mt-4" />
-              <p className="mt-2 text-sm text-aurora">
-                Szansa złapania teraz: {catchChance}% (HP {hpPct}%)
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Osłabiaj Pokémona w walce, a szansa rośnie z każdą turą.
-              </p>
-            </>
-          )}
-          {encounter.kind === "bot" && (
-            <>
-              <p className="font-display text-2xl">
-                {encounter.trainer_class ?? "Trener"} {encounter.trainer_person ?? ""}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Drużyna {encounter.bot_team?.length ?? 0} Pokémonów · średni Lvl {encounter.level}
-              </p>
-              <p className="mt-2 text-sm text-aurora">
-                Nagroda: +{encounter.reward_exp} EXP, +{encounter.reward_coins} CC
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Liczy się cała Twoja drużyna i przewagi typów — słaby lider może przegrać walkę.
-              </p>
-            </>
-          )}
-          {encounter.kind === "pvp" && (
-            <p className="text-sm text-muted-foreground">
-              PvP jest w fazie przygotowań. Możesz teraz tylko opuścić to spotkanie.
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        {encounter.kind === "wild" && (
-          <>
-            <Button onClick={() => onFightWild(encounter.id)} disabled={busy}>
-              <Swords className="h-4 w-4" aria-hidden />
-              Atakuj
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => onThrowBall(encounter.id)}
-              disabled={busy || pokeBalls <= 0}
-            >
+              )}
+            </div>
+            <div className="glass-panel rounded-2xl p-4 text-center">
               <img
-                src={itemSprite("poke-ball")}
-                alt=""
-                width={20}
-                height={20}
-                className="h-5 w-5 [image-rendering:pixelated]"
+                src={artworkUrl(encounter.species_id)}
+                alt={encounter.species_name ?? "Pokémon"}
+                loading="lazy"
+                width={220}
+                height={220}
+                className="mx-auto h-32 w-32 object-contain"
               />
-              Rzut Poké Ball ({pokeBalls})
+              <p className="font-display text-xl">{encounter.species_name}</p>
+              <p className="text-xs text-muted-foreground">
+                {encounter.species_type} · Lvl {encounter.level}
+              </p>
+              <HpBar current={encounter.hp_current} max={encounter.hp_max} className="mt-3" />
+              <p className="mt-2 text-xs text-aurora">
+                Szansa złapania: {catchChance}% (HP {hpPct}%)
+              </p>
+            </div>
+          </div>
+
+          {ready.length > 1 && !defeated ? (
+            <div className="mt-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Twój Pokémon
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {ready.map((mon) => (
+                  <button
+                    key={mon.id}
+                    onClick={() => onSelectMon(mon.id)}
+                    disabled={busy}
+                    className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${
+                      active?.id === mon.id
+                        ? "border-aurora bg-aurora/15 text-aurora"
+                        : "border-border/60 text-muted-foreground"
+                    }`}
+                  >
+                    <img
+                      src={artworkUrl(mon.species_id)}
+                      alt=""
+                      loading="lazy"
+                      width={24}
+                      height={24}
+                      className="h-6 w-6 object-contain"
+                    />
+                    {mon.name} · Lvl {mon.level}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {defeated ? (
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button
+                onClick={() => onThrowBall(encounter.id)}
+                disabled={busy || pokeBalls <= 0}
+              >
+                <img
+                  src={itemSprite("poke-ball")}
+                  alt=""
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 [image-rendering:pixelated]"
+                />
+                Złap go ({pokeBalls})
+              </Button>
+              <Button variant="outline" onClick={() => onNext(encounter)} disabled={busy}>
+                Dalej
+              </Button>
+            </div>
+          ) : active ? (
+            <div className="mt-6">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Wybierz atak
+              </p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {active.moves.map((move) => (
+                  <Button
+                    key={move.name}
+                    variant="secondary"
+                    className="h-auto flex-col items-start py-2"
+                    disabled={busy}
+                    onClick={() => onMove(encounter, active.id, move.name)}
+                  >
+                    <span className="font-medium">{move.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      moc {move.power} · {active.species_type}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => onThrowBall(encounter.id)}
+                  disabled={busy || pokeBalls <= 0}
+                >
+                  <img
+                    src={itemSprite("poke-ball")}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 [image-rendering:pixelated]"
+                  />
+                  Rzut Poké Ball ({pokeBalls})
+                </Button>
+                <Button variant="outline" onClick={() => onDismiss(encounter.id)} disabled={busy}>
+                  Uciekaj
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6">
+              <Button variant="outline" onClick={() => onDismiss(encounter.id)} disabled={busy}>
+                Uciekaj
+              </Button>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="mt-6 flex flex-col gap-6 md:flex-row">
+            {encounter.kind === "bot" ? (
+              <div className="flex flex-wrap gap-2">
+                {(encounter.bot_team ?? []).map((member, idx) => (
+                  <div key={idx} className="glass-panel rounded-xl p-2 text-center">
+                    <img
+                      src={artworkUrl(member.species_id)}
+                      alt={member.species_name}
+                      loading="lazy"
+                      width={80}
+                      height={80}
+                      className="mx-auto h-16 w-16 object-contain"
+                    />
+                    <p className="mt-1 text-xs font-medium">{member.species_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {member.species_type} · Lvl {member.level}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-40 items-center justify-center rounded-2xl bg-secondary/50 px-8">
+                <Swords className="h-12 w-12 text-muted-foreground" aria-hidden />
+              </div>
+            )}
+
+            <div className="flex-1">
+              {encounter.kind === "bot" ? (
+                <>
+                  <p className="font-display text-2xl">
+                    {encounter.trainer_class ?? "Trener"} {encounter.trainer_person ?? ""}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Drużyna {encounter.bot_team?.length ?? 0} Pokémonów · średni Lvl{" "}
+                    {encounter.level}
+                  </p>
+                  <p className="mt-2 text-sm text-aurora">
+                    Nagroda: +{encounter.reward_exp} EXP, +{encounter.reward_coins} CC
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Liczy się cała Twoja drużyna i przewagi typów — słaby lider może przegrać walkę.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  To spotkanie możesz już tylko opuścić.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            {encounter.kind === "bot" && (
+              <Button onClick={() => onBattle(encounter)} disabled={busy}>
+                <Swords className="h-4 w-4" aria-hidden />
+                Walcz
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => onDismiss(encounter.id)} disabled={busy}>
+              {encounter.kind === "bot" ? "Uciekaj" : "Opuść"}
             </Button>
-          </>
-        )}
-        {encounter.kind === "bot" && (
-          <Button onClick={() => onBattle(encounter)} disabled={busy}>
-            <Swords className="h-4 w-4" aria-hidden />
-            Walcz
-          </Button>
-        )}
-        <Button variant="outline" onClick={() => onDismiss(encounter.id)} disabled={busy}>
-          {encounter.kind === "pvp" ? "Opuść" : "Uciekaj"}
-        </Button>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
+
 }
 
 function LogPanel({ state }: { state: ExplorationState | undefined }) {
