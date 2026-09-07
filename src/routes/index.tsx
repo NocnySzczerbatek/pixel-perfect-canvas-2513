@@ -104,7 +104,9 @@ function StartScreen() {
   async function createTrainer(chosen: Starter) {
     if (!session || !region) return;
     setBusy(true);
-    const result = await createTrainerFn({ data: { region: region.slug, starterId: chosen.id } });
+    const result = await createTrainerFn({
+      data: { region: region.slug, starterId: chosen.id, trainerName },
+    });
     setBusy(false);
     if (!result.ok) {
       toast.error(result.reason);
@@ -113,6 +115,24 @@ function StartScreen() {
     setStarter(chosen);
     setStep("tutorial");
     setTutorialStage(1);
+  }
+
+  function submitName() {
+    const trimmed = trainerName.trim();
+    if (trimmed.length < 3) {
+      setNameError("Nick musi mieć co najmniej 3 znaki.");
+      return;
+    }
+    if (trimmed.length > 20) {
+      setNameError("Nick może mieć maksymalnie 20 znaków.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9_\-]+$/.test(trimmed)) {
+      setNameError("Nick może zawierać tylko litery, cyfry, myślnik i podkreślenie.");
+      return;
+    }
+    setNameError(null);
+    setStep("region");
   }
 
   async function finishTutorial() {
