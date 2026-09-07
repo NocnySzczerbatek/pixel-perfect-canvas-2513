@@ -18,6 +18,7 @@ import {
   TRAINING_DISPLAY_MAX,
   TRAINING_LEVEL_STEP,
   trainPokemon,
+  evolvePokemon,
   trainingCost,
   trainingLevel,
   useCandy,
@@ -60,6 +61,7 @@ function PokemonDetailPage() {
   const { data, isLoading, setData } = useTrainerData();
   const train = useServerFn(trainPokemon);
   const feed = useServerFn(useCandy);
+  const evolve = useServerFn(evolvePokemon);
   const [busy, setBusy] = useState(false);
 
   const pokemon = (data?.pokemon ?? []).find((p) => p.id === id);
@@ -112,6 +114,16 @@ function PokemonDetailPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleEvolve = async () => {
+    setBusy(true);
+    try {
+      const result = await evolve({ data: { id } });
+      if (result.data) setData(result.data);
+      if (!result.ok) toast.error(result.reason); else toast.success(`Ewolucja zakończona: ${result.name}!`);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Ewolucja się nie udała."); }
+    finally { setBusy(false); }
   };
 
   if (isLoading) {
@@ -323,6 +335,7 @@ function PokemonDetailPage() {
                           ? `przy użyciu ${evo.item}`
                           : `warunek: ${evo.trigger}`}
                   </p>
+                  <Button className="mt-3" size="sm" disabled={busy || Boolean(evo.minLevel && pokemon.level < evo.minLevel) || Boolean(evo.minHappiness && friendship < evo.minHappiness)} onClick={() => void handleEvolve()}>Ewoluuj w {evo.to}</Button>
                 </li>
               ))}
             </ul>

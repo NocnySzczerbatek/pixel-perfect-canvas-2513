@@ -544,3 +544,41 @@ export const trainPokemon = createServerFn({ method: "POST" })
       data: await buildTrainerData(supabase, userId),
     };
   });
+
+/** Wykonuje dostępną ewolucję, ponownie sprawdzając warunki po stronie serwera. */
+export const evolvePokemon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => {
+    if (!input?.id) throw new Error("Brak Pokémona.");
+    return { id: input.id };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: mon } = await supabase.from("player_pokemon").select(POKEMON_COLUMNS).eq("id", data.id).eq("owner_id", userId).maybeSingle();
+    if (!mon) throw new Error("Nie znaleziono Pokémona.");
+    const speciesResponse = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${mon.species_id}`);
+    if (!speciesResponse.ok) throw new Error("Nie udało się sprawdzić ewolucji.");
+    const species = await speciesResponse.json() as { evolution_chain: { url: string } | null; name: string };
+    if (!species.evolution_chain) return { ok: false as const, reason: "Ten Pokémon nie ma dalszej ewolucji.", data: await buildTrainerData(supabase, userId) };
+    const chainResponse = await fetch(species.evolution_chain.url);
+    if (!chainResponse.ok) throw new Error("Nie udało się sprawdzić łańcucha ewolucji.");
+    type Node = { species: { name: string; url: string }; evolves_to: Node[]; evolution_details: { min_level: number | null; min_happiness: number | null; item: { name: string } | null }[] };
+    const chain = await chainResponse.json() as { chain: Node };
+    const stack = [chain.chain]; let next: Node | null = null;
+    while (stack.length) { const node = stack.pop(); if (!node) break; if (node.species.name === species.name) { next = node.evolves_to[0] ?? null; break; } stack.push(...node.evolves_to); }
+    if (!next) return { ok: false as const, reason: "Ten Pokémon nie ma dalszej ewolucji.", data: await buildTrainerData(supabase, userId) };
+    const detail = next.evolution_details[0];
+    if ((detail?.min_level ?? 0) > mon.level) return { ok: false as const, reason: `Wymagany poziom: ${detail?.min_level}.`, data: await buildTrainerData(supabase, userId) };
+    if ((detail?.min_happiness ?? 0) > mon.friendship) return { ok: false as const, reason: `Wymagana przyjaźń: ${detail?.min_happiness}.`, data: await buildTrainerData(supabase, userId) };
+    if (detail?.item) {
+      const itemKey = `evolution_${detail.item.name}`;
+      const { data: item } = await supabase.from("player_items").select("id, quantity").eq("owner_id", userId).eq("item_key", itemKey).maybeSingle();
+      if (!item || item.quantity < 1) return { ok: false as const, reason: `Potrzebujesz przedmiotu: ${detail.item.name}.`, data: await buildTrainerData(supabase, userId) };
+      if (item.quantity === 1) await supabase.from("player_items").delete().eq("id", item.id).eq("owner_id", userId);
+      else await supabase.from("player_items").update({ quantity: item.quantity - 1 }).eq("id", item.id).eq("owner_id", userId);
+    }
+    const toId = Number(next.species.url.split("/").filter(Boolean).pop() ?? 0);
+    const name = next.species.name.charAt(0).toUpperCase() + next.species.name.slice(1);
+    await supabase.from("player_pokemon").update({ species_id: toId, species_name: name }).eq("id", mon.id).eq("owner_id", userId);
+    return { ok: true as const, name, data: await buildTrainerData(supabase, userId) };
+  });

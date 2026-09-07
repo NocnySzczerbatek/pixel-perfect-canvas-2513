@@ -887,10 +887,10 @@ async function applyTrainerReward(
   const gainedLevels = level - oldLevel;
   const updates: Record<string, number> = { trainer_level: level, trainer_exp: total, catch_coins: (data.catch_coins as number) + coins };
   if (gainedLevels > 0) {
-    updates.poke_balls = data.poke_balls + gainedLevels * 5;
-    updates.great_balls = data.great_balls + gainedLevels * Math.max(1, Math.floor(level / 5));
-    updates.ultra_balls = data.ultra_balls + gainedLevels * Math.floor(level / 10);
-    updates.energy_bottles = data.energy_bottles + gainedLevels * Math.max(1, Math.floor(level / 10));
+    updates['poke_balls'] = data.poke_balls + gainedLevels * 5;
+    updates['great_balls'] = data.great_balls + gainedLevels * Math.max(1, Math.floor(level / 5));
+    updates['ultra_balls'] = data.ultra_balls + gainedLevels * Math.floor(level / 10);
+    updates['energy_bottles'] = data.energy_bottles + gainedLevels * Math.max(1, Math.floor(level / 10));
   }
   await supabase
     .from("profiles")
