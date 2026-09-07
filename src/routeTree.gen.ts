@@ -18,6 +18,7 @@ import { Route as GtsRouteImport } from './routes/gts'
 import { Route as OdznakiRouteImport } from './routes/odznaki'
 import { Route as PcBoxRouteImport } from './routes/pc-box'
 import { Route as PodrozeRouteImport } from './routes/podroze'
+import { Route as PokedexRouteImport } from './routes/pokedex'
 import { Route as ProfilRouteImport } from './routes/profil'
 import { Route as PvpRouteImport } from './routes/pvp'
 import { Route as RankingRouteImport } from './routes/ranking'
@@ -71,6 +72,11 @@ const PcBoxRoute = PcBoxRouteImport.update({
 const PodrozeRoute = PodrozeRouteImport.update({
   id: '/podroze',
   path: '/podroze',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PokedexRoute = PokedexRouteImport.update({
+  id: '/pokedex',
+  path: '/pokedex',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfilRoute = ProfilRouteImport.update({
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/odznaki': typeof OdznakiRoute
   '/pc-box': typeof PcBoxRoute
   '/podroze': typeof PodrozeRoute
+  '/pokedex': typeof PokedexRoute
   '/profil': typeof ProfilRoute
   '/pvp': typeof PvpRoute
   '/ranking': typeof RankingRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/odznaki': typeof OdznakiRoute
   '/pc-box': typeof PcBoxRoute
   '/podroze': typeof PodrozeRoute
+  '/pokedex': typeof PokedexRoute
   '/profil': typeof ProfilRoute
   '/pvp': typeof PvpRoute
   '/ranking': typeof RankingRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/odznaki': typeof OdznakiRoute
   '/pc-box': typeof PcBoxRoute
   '/podroze': typeof PodrozeRoute
+  '/pokedex': typeof PokedexRoute
   '/profil': typeof ProfilRoute
   '/pvp': typeof PvpRoute
   '/ranking': typeof RankingRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/odznaki'
     | '/pc-box'
     | '/podroze'
+    | '/pokedex'
     | '/profil'
     | '/pvp'
     | '/ranking'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/odznaki'
     | '/pc-box'
     | '/podroze'
+    | '/pokedex'
     | '/profil'
     | '/pvp'
     | '/ranking'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/odznaki'
     | '/pc-box'
     | '/podroze'
+    | '/pokedex'
     | '/profil'
     | '/pvp'
     | '/ranking'
@@ -254,6 +266,7 @@ export interface RootRouteChildren {
   OdznakiRoute: typeof OdznakiRoute
   PcBoxRoute: typeof PcBoxRoute
   PodrozeRoute: typeof PodrozeRoute
+  PokedexRoute: typeof PokedexRoute
   ProfilRoute: typeof ProfilRoute
   PvpRoute: typeof PvpRoute
   RankingRoute: typeof RankingRoute
@@ -328,6 +341,13 @@ declare module '@tanstack/react-router' {
       path: '/podroze'
       fullPath: '/podroze'
       preLoaderRoute: typeof PodrozeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pokedex': {
+      id: '/pokedex'
+      path: '/pokedex'
+      fullPath: '/pokedex'
+      preLoaderRoute: typeof PokedexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profil': {
@@ -406,6 +426,7 @@ const rootRouteChildren: RootRouteChildren = {
   OdznakiRoute: OdznakiRoute,
   PcBoxRoute: PcBoxRoute,
   PodrozeRoute: PodrozeRoute,
+  PokedexRoute: PokedexRoute,
   ProfilRoute: ProfilRoute,
   PvpRoute: PvpRoute,
   RankingRoute: RankingRoute,
