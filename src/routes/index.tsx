@@ -53,7 +53,7 @@ function StartScreen() {
   const [tutorialStage, setTutorialStage] = useState(0);
 
   // After sign-in: send finished trainers straight into the game,
-  // and resume onboarding for anyone mid-tutorial.
+  // resume onboarding for anyone mid-tutorial, and ask new users for a trainer name first.
   useEffect(() => {
     if (!userId) return;
     let active = true;
@@ -66,7 +66,10 @@ function StartScreen() {
       .then(({ data }) => {
         if (!active) return;
         setCheckingProfile(false);
-        if (!data) return;
+        if (!data) {
+          setStep("name");
+          return;
+        }
         if (data.tutorial_completed) {
           void navigate({ to: "/gra" });
           return;
@@ -75,6 +78,8 @@ function StartScreen() {
         if (existing) {
           setRegion(existing);
           setStep("tutorial");
+        } else {
+          setStep("name");
         }
       });
     return () => {
