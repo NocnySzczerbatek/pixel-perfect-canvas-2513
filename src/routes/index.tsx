@@ -327,6 +327,56 @@ function IntroCard({ loading }: { loading: boolean }) {
   );
 }
 
+function NameStep({
+  value,
+  error,
+  busy,
+  onChange,
+  onSubmit,
+}: {
+  value: string;
+  error: string | null;
+  busy: boolean;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div className="glass-panel mx-auto w-full max-w-md rounded-2xl p-8 text-center">
+      <h2 className="text-3xl">Jak Cię nazwać, Trenerze?</h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Ten nick zobaczą inni gracze w rankingach, PvP i na GTS.
+      </p>
+      <div className="mt-6 text-left">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSubmit();
+          }}
+          placeholder="Np. Ash_Ketchum"
+          maxLength={20}
+          disabled={busy}
+          className="text-center text-lg"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? "name-error" : undefined}
+        />
+        {error ? (
+          <p id="name-error" className="mt-2 text-sm text-destructive">
+            {error}
+          </p>
+        ) : (
+          <p className="mt-2 text-xs text-muted-foreground">
+            3–20 znaków: litery, cyfry, myślnik, podkreślenie.
+          </p>
+        )}
+      </div>
+      <Button className="mt-6 w-full" disabled={busy} onClick={onSubmit}>
+        Dalej
+      </Button>
+    </div>
+  );
+}
+
 function RegionGrid({ onPick }: { onPick: (region: Region) => void }) {
   return (
     <div>
