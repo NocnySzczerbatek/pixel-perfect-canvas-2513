@@ -34,6 +34,7 @@ export type PokemonRow = {
   ability: string | null;
   training_points: number;
   friendship: number;
+  is_shiny: boolean;
 };
 
 export type TrainerData = {
@@ -88,7 +89,7 @@ export type TrainerData = {
 };
 
 const POKEMON_COLUMNS =
-  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, nature, ability, training_points, friendship";
+  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, nature, ability, training_points, friendship, is_shiny";
 
 
 function expThreshold(level: number) {

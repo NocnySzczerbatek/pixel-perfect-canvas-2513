@@ -66,6 +66,7 @@ type Pokemon = {
   hp_current: number;
   hp_max: number;
   fainted: boolean;
+  is_shiny: boolean;
 };
 
 function TrainerDashboard() {
@@ -93,7 +94,7 @@ function TrainerDashboard() {
           .maybeSingle(),
         supabase
           .from("player_pokemon")
-          .select("id, species_id, species_name, level, hp_current, hp_max, fainted")
+          .select("id, species_id, species_name, level, hp_current, hp_max, fainted, is_shiny")
           .eq("owner_id", userId)
           .eq("in_party", true),
       ]);
@@ -240,14 +241,17 @@ function TrainerDashboard() {
                       className="tile-hover glass-panel flex w-32 flex-col items-center rounded-xl p-2 text-center"
                     >
                       <img
-                        src={artworkUrl(pokemon.species_id)}
+                        src={artworkUrl(pokemon.species_id, pokemon.is_shiny)}
                         alt={pokemon.species_name}
                         loading="lazy"
                         width={96}
                         height={96}
                         className={`h-16 w-16 object-contain ${pokemon.fainted ? "opacity-40 grayscale" : ""}`}
                       />
-                      <p className="mt-1 truncate text-sm font-medium">{pokemon.species_name}</p>
+                      <p className="mt-1 truncate text-sm font-medium">
+                        {pokemon.is_shiny ? <span className="text-amber-300">★ </span> : null}
+                        {pokemon.species_name}
+                      </p>
                       <TypeBadges speciesId={pokemon.species_id} className="mt-0.5" />
                       <p className="text-[11px] text-muted-foreground">Lvl {pokemon.level}</p>
                       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">

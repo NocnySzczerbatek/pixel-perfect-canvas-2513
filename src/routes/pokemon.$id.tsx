@@ -182,14 +182,22 @@ function PokemonDetailPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className="glass-panel rounded-2xl p-5 text-center">
           <img
-            src={artworkUrl(pokemon.species_id)}
+            src={artworkUrl(pokemon.species_id, pokemon.is_shiny)}
             alt={pokemon.nickname ?? pokemon.species_name}
             loading="lazy"
             width={320}
             height={320}
-            className="mx-auto h-44 w-44 object-contain"
+            className={`mx-auto h-44 w-44 object-contain ${pokemon.is_shiny ? "shiny-glow" : ""}`}
           />
-          <p className="mt-2 font-display text-3xl">{pokemon.species_name}</p>
+          <p className="mt-2 font-display text-3xl">
+            {pokemon.is_shiny ? <span className="text-amber-300">★ </span> : null}
+            {pokemon.species_name}
+          </p>
+          {pokemon.is_shiny ? (
+            <p className="text-xs font-semibold tracking-[0.2em] text-amber-300">
+              SHINY — rzadka odmiana kolorystyczna (bez wpływu na staty)
+            </p>
+          ) : null}
           <TypeBadges speciesId={pokemon.species_id} className="mt-2" />
           <p className="text-sm text-muted-foreground">
             HP {pokemon.hp_current}/{pokemon.hp_max}

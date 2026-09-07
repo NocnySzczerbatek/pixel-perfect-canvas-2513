@@ -567,15 +567,23 @@ function EncounterCard({
               )}
             </div>
             <div className="glass-panel rounded-2xl p-4 text-center">
+              {encounter.is_shiny ? (
+                <p className="mb-1 text-xs font-semibold tracking-[0.2em] text-amber-300">
+                  ✨ SHINY ✨
+                </p>
+              ) : null}
               <img
-                src={artworkUrl(encounter.species_id)}
+                src={artworkUrl(encounter.species_id, encounter.is_shiny)}
                 alt={encounter.species_name ?? "Pokémon"}
                 loading="lazy"
                 width={220}
                 height={220}
-                className="mx-auto h-32 w-32 object-contain"
+                className={`mx-auto h-32 w-32 object-contain ${encounter.is_shiny ? "shiny-glow" : ""}`}
               />
-              <p className="font-display text-xl">{encounter.species_name}</p>
+              <p className="font-display text-xl">
+                {encounter.is_shiny ? <span className="text-amber-300">★ </span> : null}
+                {encounter.species_name}
+              </p>
               {encounter.species_id ? (
                 <TypeBadges speciesId={encounter.species_id} className="mt-1" />
               ) : null}
