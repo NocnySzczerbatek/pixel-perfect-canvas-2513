@@ -11,7 +11,8 @@ import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { artworkUrl } from "@/lib/game-data";
-import { fetchEvolutions, fetchLevelUpMoves } from "@/lib/pokeapi";
+import { fetchEvolutions, fetchLevelUpMoves, fetchMoveDetails } from "@/lib/pokeapi";
+import candyXlIcon from "@/assets/candy-xl.png.asset.json";
 import { STAT_KEYS, STAT_LABELS, itemSprite, speciesType, type StatKey } from "@/lib/pokedex";
 import {
   CANDIES,
@@ -78,6 +79,15 @@ function PokemonDetailPage() {
     enabled: !!speciesId,
     staleTime: Infinity,
   });
+
+  const moveSlugs = (moves ?? []).map((m) => m.slug);
+  const { data: moveStats } = useQuery({
+    queryKey: ["pokeapi-move-stats", speciesId, moveSlugs.length],
+    queryFn: () => fetchMoveDetails(moveSlugs),
+    enabled: moveSlugs.length > 0,
+    staleTime: Infinity,
+  });
+
   const { data: evolutions } = useQuery({
     queryKey: ["pokeapi-evo", speciesId],
     queryFn: () => fetchEvolutions(speciesId!),
@@ -337,7 +347,7 @@ function PokemonDetailPage() {
                   onClick={() => void handleCandy(kind)}
                 >
                   <img
-                    src={itemSprite(candy.sprite)}
+                    src={kind === "xl" ? candyXlIcon.url : itemSprite(candy.sprite)}
                     alt=""
                     width={20}
                     height={20}
@@ -390,6 +400,7 @@ function PokemonDetailPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {moves.map((move) => {
                 const known = pokemon.level >= move.level;
+                const stats = moveStats?.[move.slug];
                 return (
                   <div
                     key={move.name}
@@ -397,7 +408,19 @@ function PokemonDetailPage() {
                       known ? "border-aurora/40 bg-aurora/10" : "border-border/60 opacity-70"
                     }`}
                   >
-                    <p className="font-medium">{move.name}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium">{move.name}</p>
+                      {stats ? <TypeBadges types={[stats.type]} /> : null}
+                    </div>
+                    {stats ? (
+                      <p className="mt-1 text-xs">
+                        {stats.category} · Moc {stats.power ?? "—"} · Celność{" "}
+                        {stats.accuracy ? `${stats.accuracy}%` : "—"}
+                        {stats.pp ? ` · PP ${stats.pp}` : ""}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted-foreground">Wczytuję statystyki…</p>
+                    )}
                     <p className="mt-1 text-xs text-muted-foreground">
                       {known
                         ? `Opanowany (Lvl ${move.level || 1})`

@@ -46,11 +46,11 @@ function pretty(name: string) {
     .join(" ");
 }
 
-export type LevelUpMove = { name: string; level: number };
+export type LevelUpMove = { name: string; slug: string; level: number };
 
 /** Ruchy zdobywane przez poziomowanie, posortowane po poziomie nauki. */
 export function fetchLevelUpMoves(speciesId: number) {
-  return cached(`moves:${speciesId}`, async () => {
+  return cached(`moves2:${speciesId}`, async () => {
     const data = await api<{
       moves: {
         move: { name: string };
@@ -72,9 +72,86 @@ export function fetchLevelUpMoves(speciesId: number) {
       }
     }
     return [...best.entries()]
-      .map(([name, level]) => ({ name: pretty(name), level }))
+      .map(([slug, level]) => ({ name: pretty(slug), slug, level }))
       .sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)) as LevelUpMove[];
   });
+}
+
+/** Angielskie nazwy typów z PokéAPI na polskie plakietki używane w grze. */
+const TYPE_PL: Record<string, string> = {
+  normal: "Normalny",
+  fire: "Ogień",
+  water: "Woda",
+  grass: "Trawa",
+  electric: "Elektryczny",
+  ice: "Lód",
+  fighting: "Walka",
+  poison: "Trucizna",
+  ground: "Ziemia",
+  flying: "Lot",
+  psychic: "Psychiczny",
+  bug: "Robak",
+  rock: "Skała",
+  ghost: "Duch",
+  dragon: "Smok",
+  dark: "Ciemność",
+  steel: "Stal",
+  fairy: "Baśniowy",
+};
+
+const CLASS_PL: Record<string, string> = {
+  physical: "Fizyczny",
+  special: "Specjalny",
+  status: "Status",
+};
+
+export type MoveDetail = {
+  slug: string;
+  type: string;
+  power: number | null;
+  accuracy: number | null;
+  pp: number | null;
+  category: string;
+};
+
+/** Statystyki jednego ruchu (typ, moc, celność, PP, kategoria). */
+export function fetchMoveDetail(slug: string) {
+  return cached(`move:${slug}`, async () => {
+    const data = await api<{
+      type: { name: string };
+      power: number | null;
+      accuracy: number | null;
+      pp: number | null;
+      damage_class: { name: string } | null;
+    }>(`move/${slug}`);
+    return {
+      slug,
+      type: TYPE_PL[data.type.name] ?? "Normalny",
+      power: data.power ?? null,
+      accuracy: data.accuracy ?? null,
+      pp: data.pp ?? null,
+      category: CLASS_PL[data.damage_class?.name ?? "status"] ?? "Status",
+    } as MoveDetail;
+  });
+}
+
+/** Statystyki wielu ruchów naraz (z limitem równoległych zapytań). */
+export async function fetchMoveDetails(slugs: string[]): Promise<Record<string, MoveDetail>> {
+  const out: Record<string, MoveDetail> = {};
+  const queue = [...slugs];
+  const workers = Array.from({ length: 6 }, async () => {
+    while (queue.length > 0) {
+      const slug = queue.shift();
+      if (!slug) break;
+      try {
+        out[slug] = await fetchMoveDetail(slug);
+      } catch {
+        /* pojedynczy ruch bez danych — pomijamy */
+      }
+    }
+  });
+  await Promise.all(workers);
+  return out;
 }
 
 export type EvolutionInfo = {
