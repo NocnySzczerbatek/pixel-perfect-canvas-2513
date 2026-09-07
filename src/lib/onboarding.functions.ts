@@ -15,7 +15,18 @@ async function writeDb(): Promise<any> {
 const schema = z.object({
   region: z.enum(REGIONS.map((r) => r.slug) as [string, ...string[]]),
   starterId: z.number().int().positive(),
+  trainerName: z.string().min(1),
 });
+
+function validateTrainerName(name: string): { ok: true } | { ok: false; reason: string } {
+  const trimmed = name.trim();
+  if (trimmed.length < 3) return { ok: false, reason: "Nick musi mieć co najmniej 3 znaki." };
+  if (trimmed.length > 20) return { ok: false, reason: "Nick może mieć maksymalnie 20 znaków." };
+  if (!/^[a-zA-Z0-9_\-]+$/.test(trimmed)) {
+    return { ok: false, reason: "Nick może zawierać tylko litery, cyfry, myślnik i podkreślenie." };
+  }
+  return { ok: true };
+}
 
 export const createTrainer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -24,6 +35,9 @@ export const createTrainer = createServerFn({ method: "POST" })
     const region = findRegion(data.region);
     const starter = region?.starters.find((s) => s.id === data.starterId);
     if (!region || !starter) return { ok: false as const, reason: "Nieprawidłowy wybór startera." };
+
+    const nameCheck = validateTrainerName(data.trainerName);
+    if (!nameCheck.ok) return { ok: false as const, reason: nameCheck.reason };
 
     const db = await writeDb();
     const { data: existing } = await db
@@ -35,17 +49,19 @@ export const createTrainer = createServerFn({ method: "POST" })
       return { ok: false as const, reason: "Masz już swojego pierwszego Pokémona." };
     }
 
-    const claims = context.claims as Record<string, any> | undefined;
-    const base =
-      (claims?.["user_metadata"]?.["full_name"] as string | undefined)?.split(" ")[0] ??
-      (claims?.["email"] as string | undefined)?.split("@")[0] ??
-      "Trener";
-    const trainerName = `${base.slice(0, 14)}-${context.userId.slice(0, 4)}`;
+    const { data: nameTaken } = await db
+      .from("profiles")
+      .select("id")
+      .eq("trainer_name", nameCheck.name)
+      .limit(1);
+    if (nameTaken && nameTaken.length > 0) {
+      return { ok: false as const, reason: "Ten nick jest już zajęty. Wybierz inny." };
+    }
 
     const { error: profileError } = await db.from("profiles").upsert(
       {
         id: context.userId,
-        trainer_name: trainerName,
+        trainer_name: nameCheck.name,
         region: region.slug,
         featured_badge: `${region.slug}_champion`,
       },
