@@ -36,4 +36,5 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Ruchy niskopoziomowych Pokémonów: wyłącznie poznane, maks. 4
 - [x] Wykonywanie zwykłych ewolucji
 - [ ] Rozwijane sekcje walk
-- [x] Uruchomić płatności PLN
+- [x] Pokédex regionu: spotkane/złapane gatunki, typy, statystyki bazowe, biomy występowania
+- [ ] Płatności PLN — kod gotowy, celowo wyłączone na życzenie (pakiety oznaczone „Wkrótce”)

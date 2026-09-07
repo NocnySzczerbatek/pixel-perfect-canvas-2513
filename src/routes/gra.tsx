@@ -1,6 +1,7 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Backpack,
+  BookOpen,
   Boxes,
   Compass,
   Landmark,
@@ -341,6 +342,7 @@ const NAV_GROUPS = [
       { to: "/ekwipunek", label: "Ekwipunek", Icon: Backpack, desc: "Balle i mikstury" },
       { to: "/odznaki", label: "Odznaki", Icon: Medal, desc: "Zdobyte odznaki" },
       { to: "/zadania", label: "Zadania", Icon: ClipboardList, desc: "Dzienne cele i badania Oaka" },
+      { to: "/pokedex", label: "Pokédex", Icon: BookOpen, desc: "Spotkane gatunki i ich biomy" },
     ],
   },
   {

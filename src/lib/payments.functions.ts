@@ -20,6 +20,9 @@ async function resolveOrCreateCustomer(stripe: ReturnType<typeof createStripeCli
   return (await stripe.customers.create({ ...(options.email && { email: options.email }), metadata: { userId: options.userId } })).id;
 }
 
+/** Globalny wyłącznik płatności gotówkowych. */
+const PAYMENTS_ENABLED = false;
+
 export const createGameCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { priceId: string; returnUrl: string; environment: StripeEnv }) => {
@@ -30,8 +33,11 @@ export const createGameCheckout = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data, context }): Promise<{ clientSecret: string } | { error: string }> => {
+    // Płatności prawdziwymi pieniędzmi są chwilowo wyłączone w grze.
+    if (!PAYMENTS_ENABLED) return { error: "Płatności są chwilowo wyłączone." };
     try {
       const stripe = createStripeClient(data.environment);
+
       const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
       const price = prices.data[0];
       if (!price) throw new Error("Nie znaleziono ceny pakietu.");
