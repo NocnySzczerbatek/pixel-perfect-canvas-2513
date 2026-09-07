@@ -154,26 +154,14 @@ const PROFILE_COLUMNS =
 
 
 
-/** Pula gatunków biomu ograniczona do regionu wybranego przez gracza. */
+/** Pula gatunków biomu: cały Pokédex regionu przefiltrowany typami biomu. */
 function speciesPool(biomeSlug: string, region: string | null): BiomeSpecies[] {
-  const biome = findBiome(biomeSlug)!;
-  const local = biome.species.filter((s) => inRegion(s.id, region));
-  if (local.length > 0) return local;
-  const regional = [
-    ...BIOMES.flatMap((b) => b.species),
-    ...Object.values(REGION_SPECIES).flat(),
-  ].filter((s) => inRegion(s.id, region));
-  const sameElement = regional.filter((s) => s.type === biome.element);
-  if (sameElement.length > 0) return sameElement;
-  return regional.length > 0 ? regional : biome.species;
+  return biomePool(biomeSlug, region);
 }
 
 /** Szeroka pula regionu — drużyny trenerów mieszają typy, nie tylko element biomu. */
 function regionPool(region: string | null): BiomeSpecies[] {
-  const all = [...BIOMES.flatMap((b) => b.species), ...Object.values(REGION_SPECIES).flat()];
-  const regional = all.filter((s) => inRegion(s.id, region));
-  const unique = new Map(regional.map((s) => [s.id, s]));
-  return unique.size > 0 ? [...unique.values()] : all;
+  return regionWidePool(region);
 }
 
 /** Dolewa Energię za miniony czas (+1 / 3 min) i zapisuje nowy znacznik. */
