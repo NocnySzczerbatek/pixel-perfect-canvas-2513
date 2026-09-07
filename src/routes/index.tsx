@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import loginBg from "@/assets/catchzone-login.jpg";
 import introVideo from "@/assets/catch-zone-intro.mp4.asset.json";
+import logoAsset from "@/assets/logo.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -139,11 +140,20 @@ function StartScreen() {
 
       <div className="relative z-10 flex min-h-screen flex-col px-5 py-6 md:px-10">
         <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">
-              Cobblemon
-            </p>
-            <h1 className="aurora-text text-5xl leading-none md:text-6xl">Catch Zone</h1>
+          <div className="flex items-center gap-3">
+            <img
+              src={logoAsset.url}
+              alt="Catch Zone"
+              width={64}
+              height={64}
+              className="h-14 w-14 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.55)] ring-1 ring-white/20"
+            />
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">
+                Cobblemon
+              </p>
+              <h1 className="aurora-text text-5xl leading-none md:text-6xl">Catch Zone</h1>
+            </div>
           </div>
 
           <AuthPanel
