@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { Swords } from "lucide-react";
 
 import { GamePage } from "@/components/game/GamePage";
+import { TrainerAvatar } from "@/components/game/TrainerAvatar";
 import { Button } from "@/components/ui/button";
 import { TRAINER_CLASSES } from "@/lib/pokedex";
 
