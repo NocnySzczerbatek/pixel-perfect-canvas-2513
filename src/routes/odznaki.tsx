@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
-import { GYM_BLUEPRINT } from "@/lib/gyms";
+import { gymsForRegion } from "@/lib/gyms";
 import { getGymsState, setFeaturedBadge, type GymsState } from "@/lib/gyms.functions";
 
 export const Route = createFileRoute("/odznaki")({
@@ -59,6 +59,7 @@ function OdznakiPage() {
   };
 
   const owned = new Set((state?.badges ?? []).map((badge) => badge.badge_key));
+  const catalog = gymsForRegion(state?.region);
 
   return (
     <GamePage
@@ -69,7 +70,7 @@ function OdznakiPage() {
         <p className="text-sm text-muted-foreground">Wczytuję kolekcję…</p>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {GYM_BLUEPRINT.map((badge) => {
+          {catalog.map((badge) => {
             const has = owned.has(badge.badgeKey);
             const isFeatured = state.featured_badge === badge.badgeKey;
             const earned = state.badges.find((row) => row.badge_key === badge.badgeKey);
@@ -92,7 +93,7 @@ function OdznakiPage() {
                 </div>
                 <p className="mt-4 font-display text-lg">{badge.badgeName}</p>
                 <p className="text-xs text-muted-foreground">
-                  typ {badge.type}
+                  {badge.leader} · typ {badge.type}
                   {earned ? ` · ${earned.leader_name}` : ""}
                 </p>
                 <Button
