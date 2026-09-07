@@ -49,7 +49,7 @@ function TravelPage() {
       <div className="glass-panel flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5">
         <div><p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Bilety Podróży</p><p className="font-display text-3xl">{state.travel_tickets}</p></div>
         <img src={itemSprite("ss-ticket")} alt="Bilet Podróży" width={48} height={48} className="h-12 w-12 [image-rendering:pixelated]" />
-        <p className="text-sm text-muted-foreground">Region domowy: {REGIONS.find((r) => r.slug === state.home_region)?.name ?? "—"}</p>
+        <div className="text-sm text-muted-foreground"><p>Region domowy: {REGIONS.find((r) => r.slug === state.home_region)?.name ?? "—"}</p><p>Bilet w sklepie: {TRAVEL_TICKET_PRICE} CC</p></div>
       </div>
       {state.travel_region && state.travel_until ? <div className="glass-panel rounded-2xl border border-aurora/40 p-5"><p className="font-display text-2xl">Trwa wycieczka: {REGIONS.find((r) => r.slug === state.travel_region)?.name}</p><p className="text-sm text-muted-foreground">Powrót za {formatDuration(new Date(state.travel_until).getTime() - now.getTime())}</p></div> : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{REGIONS.map((region) => {
