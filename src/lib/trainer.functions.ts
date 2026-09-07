@@ -365,14 +365,14 @@ export type RankingRow = {
 export const getRanking = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase
-      .from("profiles")
-      .select("id, trainer_name, trainer_level, trainer_exp, catch_coins, featured_badge")
-      .order("trainer_level", { ascending: false })
-      .order("trainer_exp", { ascending: false })
-      .limit(25);
+    // Ranking pokazuje tylko dane publiczne — pełne profile są prywatne (RLS).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await (supabaseAdmin as any).rpc("public_trainers");
+    const rows = ((data ?? []) as RankingRow[])
+      .sort((a, b) => b.trainer_level - a.trainer_level || b.trainer_exp - a.trainer_exp)
+      .slice(0, 25);
     return {
-      rows: (data ?? []) as RankingRow[],
+      rows,
       me: context.userId,
     };
   });
