@@ -20,6 +20,9 @@ async function resolveOrCreateCustomer(stripe: ReturnType<typeof createStripeCli
   return (await stripe.customers.create({ ...(options.email && { email: options.email }), metadata: { userId: options.userId } })).id;
 }
 
+/** Globalny wyłącznik płatności gotówkowych. */
+const PAYMENTS_ENABLED = false;
+
 export const createGameCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { priceId: string; returnUrl: string; environment: StripeEnv }) => {
