@@ -297,7 +297,7 @@ function Stat({
 }: {
   label: string;
   value: string | number;
-  hint?: string;
+  hint?: string | undefined;
 }) {
   return (
     <div className="glass-panel rounded-xl p-4">
