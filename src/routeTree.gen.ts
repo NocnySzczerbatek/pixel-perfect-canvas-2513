@@ -26,6 +26,7 @@ import { Route as SklepRouteImport } from './routes/sklep'
 import { Route as TrenerzyRouteImport } from './routes/trenerzy'
 import { Route as ZadaniaRouteImport } from './routes/zadania'
 import { Route as PokemonIdRouteImport } from './routes/pokemon.$id'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -112,6 +113,12 @@ const PokemonIdRoute = PokemonIdRouteImport.update({
   path: '/pokemon/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/trenerzy': typeof TrenerzyRoute
   '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +158,7 @@ export interface FileRoutesByTo {
   '/trenerzy': typeof TrenerzyRoute
   '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +179,7 @@ export interface FileRoutesById {
   '/trenerzy': typeof TrenerzyRoute
   '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
     | '/trenerzy'
     | '/zadania'
     | '/pokemon/$id'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/trenerzy'
     | '/zadania'
     | '/pokemon/$id'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -229,6 +241,7 @@ export interface FileRouteTypes {
     | '/trenerzy'
     | '/zadania'
     | '/pokemon/$id'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -249,6 +262,7 @@ export interface RootRouteChildren {
   TrenerzyRoute: typeof TrenerzyRoute
   ZadaniaRoute: typeof ZadaniaRoute
   PokemonIdRoute: typeof PokemonIdRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -372,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PokemonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -393,6 +414,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrenerzyRoute: TrenerzyRoute,
   ZadaniaRoute: ZadaniaRoute,
   PokemonIdRoute: PokemonIdRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

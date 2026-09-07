@@ -316,6 +316,45 @@ export type Database = {
           },
         ]
       }
+      payment_orders: {
+        Row: {
+          checkout_session_id: string
+          created_at: string
+          environment: string
+          fulfilled_at: string | null
+          id: string
+          owner_id: string
+          payment_intent_id: string | null
+          price_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          checkout_session_id: string
+          created_at?: string
+          environment?: string
+          fulfilled_at?: string | null
+          id?: string
+          owner_id: string
+          payment_intent_id?: string | null
+          price_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          checkout_session_id?: string
+          created_at?: string
+          environment?: string
+          fulfilled_at?: string | null
+          id?: string
+          owner_id?: string
+          payment_intent_id?: string | null
+          price_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       player_items: {
         Row: {
           created_at: string
@@ -613,7 +652,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      fulfill_game_purchase: {
+        Args: {
+          _checkout_session_id: string
+          _environment: string
+          _owner_id: string
+          _payment_intent_id: string
+          _price_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

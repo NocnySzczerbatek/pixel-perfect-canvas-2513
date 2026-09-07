@@ -6,6 +6,8 @@ import { toast } from "sonner";
 
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { GameCheckout } from "@/components/game/GameCheckout";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { BALLS, HEAL_ITEMS, RAZZ, SHOP_PACKAGES } from "@/lib/items";
 import { MASTER_BALL_CC, MASTER_BALL_COOLDOWN_MS, buyItem } from "@/lib/items.functions";
@@ -39,6 +41,7 @@ function SklepPage() {
   const buy = useServerFn(buyItem);
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [checkout, setCheckout] = useState<{ priceId: string; name: string } | null>(null);
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
 
   const purchase = async (kind: string, amount: number, label: string) => {
@@ -183,7 +186,7 @@ function SklepPage() {
           <section>
             <h2 className="font-display text-2xl">Pakiety w złotówkach</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Płatności BLIK i kartą włączymy przed publikacją gry — pakiety są już przygotowane.
+              Bezpieczna płatność kartą. Przedmioty pojawią się po potwierdzeniu wpłaty.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
               {SHOP_PACKAGES.map((pack) => (
@@ -195,13 +198,19 @@ function SklepPage() {
                   <p className="mt-2 font-display text-2xl">
                     {pack.pricePln.toFixed(2).replace(".", ",")} zł
                   </p>
-                  <Button className="mt-3" size="sm" variant="outline" disabled>
-                    Płatność wkrótce
+                  <Button className="mt-3" size="sm" variant="outline" onClick={() => setCheckout({ priceId: pack.priceId, name: pack.name })}>
+                    Kup teraz
                   </Button>
                 </div>
               ))}
             </div>
           </section>
+          <Dialog open={Boolean(checkout)} onOpenChange={(open) => { if (!open) setCheckout(null); }}>
+            <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
+              <DialogHeader><DialogTitle>{checkout?.name}</DialogTitle><DialogDescription>Dokończ płatność w bezpiecznym formularzu.</DialogDescription></DialogHeader>
+              {checkout ? <GameCheckout priceId={checkout.priceId} /> : null}
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </GamePage>
