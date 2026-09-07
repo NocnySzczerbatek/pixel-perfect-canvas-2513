@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -36,6 +37,9 @@ type Step = "region" | "starter" | "tutorial";
 function StartScreen() {
   const { session, loading, userId } = useSession();
   const navigate = useNavigate();
+
+  const createTrainerFn = useServerFn(createTrainerServerFn);
+  const completeTutorialFn = useServerFn(completeTutorial);
 
   const [step, setStep] = useState<Step>("region");
   const [region, setRegion] = useState<Region | null>(null);
