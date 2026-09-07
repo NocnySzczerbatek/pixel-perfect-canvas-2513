@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { GamePage } from "@/components/game/GamePage";
 import { TypeBadges } from "@/components/game/TypeBadges";
+import { TrainerAvatar } from "@/components/game/TrainerAvatar";
 import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
 import { artworkUrl } from "@/lib/game-data";
@@ -808,9 +809,12 @@ function EncounterCard({
             <div className="flex-1">
               {encounter.kind === "bot" ? (
                 <>
-                  <p className="font-display text-2xl">
-                    {encounter.trainer_class ?? "Trener"} {encounter.trainer_person ?? ""}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <TrainerAvatar trainerClass={encounter.trainer_class} className="h-14 w-14" />
+                    <p className="font-display text-2xl">
+                      {encounter.trainer_class ?? "Trener"} {encounter.trainer_person ?? ""}
+                    </p>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     Drużyna {encounter.bot_team?.length ?? 0} Pokémonów · średni Lvl{" "}
                     {encounter.level}
