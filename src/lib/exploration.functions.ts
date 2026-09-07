@@ -35,6 +35,8 @@ async function writeDb(): Promise<any> {
 const MAX_ENERGY = 100;
 const ENERGY_TICK_MS = 3 * 60 * 1000; // +1 Energii co 3 minuty
 const MIN_TRAVEL_COST = 2;
+/** Bazowa szansa na Shiny: 1/512 (standard z gier). */
+const SHINY_CHANCE = 1 / 512;
 const MAX_TRAVEL_COST = 5;
 
 export type EncounterView = {
@@ -45,6 +47,7 @@ export type EncounterView = {
   species_id: number | null;
   species_name: string | null;
   species_type: string | null;
+  is_shiny: boolean;
   level: number;
   hp_current: number;
   hp_max: number;
@@ -215,6 +218,7 @@ function toView(row: any): EncounterView {
     species_id: row.species_id,
     species_name: row.species_name,
     species_type: row.species_type,
+    is_shiny: !!row.is_shiny,
     level: row.level,
     hp_current: row.hp_current,
     hp_max: row.hp_max,
@@ -428,11 +432,13 @@ export const travel = createServerFn({ method: "POST" })
       const species: BiomeSpecies = pick(pool);
       const level = levelFor();
       const hpMax = hpFromIv(level, 16);
+      const isShiny = Math.random() < SHINY_CHANCE;
       payload = {
         kind,
         species_id: species.id,
         species_name: species.name,
         species_type: species.type,
+        is_shiny: isShiny,
         level,
         hp_max: hpMax,
         hp_current: hpMax,
@@ -440,6 +446,9 @@ export const travel = createServerFn({ method: "POST" })
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
           ...(candyLine ? [candyLine] : []),
           ...(foundMegaSpecies ? ["Znalazłeś fragment Kamienia Mega!"] : []),
+          ...(isShiny
+            ? [`✨ Powietrze zaiskrzyło — to SHINY ${species.name}! Niezwykle rzadkie spotkanie.`]
+            : []),
           `Z zarośli wyszedł dziki ${species.name} (typ ${species.type}, Lvl ${level}).`,
           "Wybierz Pokémona i atak — po pokonaniu dzikiego możesz go złapać.",
         ],
@@ -718,9 +727,14 @@ export const throwBall = createServerFn({ method: "POST" })
         nature,
         ability,
         ...(data.ball === "luxury" ? { friendship: 120 } : {}),
+        ...(row.is_shiny ? { is_shiny: true } : {}),
         ...ivs,
       });
-      log.push(`Złapano ${row.species_name}! Natura: ${nature}, umiejętność: ${ability}.`);
+      log.push(
+        row.is_shiny
+          ? `✨ Złapano SHINY ${row.species_name}! Natura: ${nature}, umiejętność: ${ability}.`
+          : `Złapano ${row.species_name}! Natura: ${nature}, umiejętność: ${ability}.`,
+      );
       const gainedExp = 8 + row.level * 5;
       await applyTrainerReward(supabase, userId, gainedExp, 0);
       await progressActivities(supabase, userId, "catch", 1, String(speciesId));
