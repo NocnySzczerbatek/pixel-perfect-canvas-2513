@@ -102,7 +102,7 @@ export function gymsForRegion(region: string | null | undefined): Gym[] {
   return GYM_BLUEPRINT.map((blueprint, i) => ({
     ...blueprint,
     leader: leaders[i] ?? `Lider ${i + 1}`,
-    level: 6 + i * 5,
+    level: 4 + i * 4,
     teamSize: i < 3 ? 2 : i < 6 ? 3 : 4,
     rewardExp: 60 + i * 45,
     rewardCoins: 120 + i * 90,

@@ -71,11 +71,11 @@ function toFoe(member: { species_name: string; species_type: string; level: numb
     name: member.species_name,
     type: member.species_type,
     level: member.level,
-    hp: hpFromIv(member.level, 22),
-    hpMax: hpFromIv(member.level, 22),
-    atk: statFromIv(member.level, 22, 10),
-    def: statFromIv(member.level, 20, 9),
-    spe: statFromIv(member.level, 20, 9),
+    hp: hpFromIv(member.level, 12),
+    hpMax: hpFromIv(member.level, 12),
+    atk: statFromIv(member.level, 12, 9),
+    def: statFromIv(member.level, 10, 8),
+    spe: statFromIv(member.level, 10, 8),
   };
 }
 
