@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BIOMES, findBiome, type BiomeSpecies } from "@/lib/biomes";
+import { biomePool, regionWidePool } from "@/lib/encounter-pool";
 import { RAZZ, ballByKey, healByKey } from "@/lib/items";
 import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
 import { progressActivities } from "@/lib/quests.functions";
