@@ -292,13 +292,19 @@ function TrainerDashboard() {
       <section className="mt-10">
         <h2 className="text-2xl">Co nowego w grze</h2>
         <p className="text-xs text-muted-foreground">Lista dodanych i zmienionych rzeczy.</p>
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-3">
           {CHANGELOG.map((entry) => (
-            <article key={entry.version} className="glass-panel rounded-2xl p-5">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <details key={entry.version} className="group glass-panel rounded-2xl">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-5 [&::-webkit-details-marker]:hidden">
                 <p className="font-display text-xl">Aktualizacja {entry.version}</p>
-                <p className="text-xs text-muted-foreground">{entry.date}</p>
-              </div>
+                <span className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">{entry.date}</span>
+                  <span className="text-muted-foreground transition-transform group-open:rotate-180">
+                    ▾
+                  </span>
+                </span>
+              </summary>
+              <div className="px-5 pb-5">
               <p className="mt-4 text-xs uppercase tracking-[0.2em] text-aurora">Dodane</p>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                 {entry.added.map((item) => (
@@ -311,7 +317,8 @@ function TrainerDashboard() {
                   <li key={item}>{item}</li>
                 ))}
               </ul>
-            </article>
+              </div>
+            </details>
           ))}
         </div>
       </section>
