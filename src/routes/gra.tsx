@@ -434,6 +434,7 @@ const NAV_GROUPS = [
       { to: "/podroze", label: "Podróże", Icon: Plane, desc: "Czasowe wyprawy do regionów" },
       { to: "/sale", label: "Sale", Icon: Landmark, desc: "8 Liderów regionu" },
       { to: "/pvp", label: "PvP", Icon: Swords, desc: "Napady na innych trenerów" },
+      { to: "/turnieje", label: "Turnieje", Icon: Crown, desc: "Tygodniowa liga o puchar" },
       { to: "/trenerzy", label: "Trenerzy", Icon: Users, desc: "Przeciwnicy i klasy" },
     ],
   },
