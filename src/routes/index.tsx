@@ -7,6 +7,7 @@ import loginBg from "@/assets/catchzone-login.jpg";
 import introVideo from "@/assets/catch-zone-intro.mp4.asset.json";
 import logoAsset from "@/assets/logo.png.asset.json";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
