@@ -1,6 +1,6 @@
 /** Doświadczenie i awanse Pokémonów (zdobywane w walkach). */
 
-import { hpFromIv } from "@/lib/pokedex";
+import { hpFromIv } from "@/lib/battle";
 
 export const MAX_POKEMON_LEVEL = 100;
 

@@ -5,6 +5,7 @@ import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/ba
 import { gymsForRegion, type Gym } from "@/lib/gyms";
 import { MEGA_STONE } from "@/lib/items";
 import { speciesType } from "@/lib/pokedex";
+import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
 
 const GYM_ENERGY = 10;
 
@@ -232,6 +233,13 @@ export const challengeGym = createServerFn({ method: "POST" })
         `Zdobywasz ${gym.badgeName}! +${gym.rewardExp} EXP, +${gym.rewardCoins} Catch Coins.`,
       );
       if (gym.index === 8) log.push(`${gym.leader} wręcza Ci ${MEGA_STONE.label}.`);
+      log.push(
+        ...(await awardPokemonExp(
+          supabase,
+          userId,
+          Object.keys(result.allyHp).map((id) => ({ id, exp: expForDefeat(gym.level, "gym") })),
+        )),
+      );
     }
 
     await (supabase.from("profiles") as any).update(updates).eq("id", userId);
