@@ -50,7 +50,7 @@ function leaderTeam(region: string | null, gym: Gym) {
   const team = [];
   const used = new Set<number>();
   for (let i = 0; i < gym.teamSize; i += 1) {
-    let cursor = (gym.index * 7 + i * 3) % candidates.length;
+    let cursor = (gym.index + i) % candidates.length;
     while (used.has(cursor) && used.size < candidates.length) {
       cursor = (cursor + 1) % candidates.length;
     }
