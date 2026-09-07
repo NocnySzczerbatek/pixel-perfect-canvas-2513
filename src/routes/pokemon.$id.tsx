@@ -16,11 +16,13 @@ import { STAT_KEYS, STAT_LABELS, itemSprite, speciesType, type StatKey } from "@
 import {
   CANDIES,
   MAX_FRIENDSHIP,
+  MAX_TRAIN,
   TRAINING_DISPLAY_MAX,
   TRAINING_LEVEL_STEP,
   trainPokemon,
   evolvePokemon,
   trainingCost,
+  trainingInvested,
   trainingLevel,
   useCandy,
   type CandyKind,
