@@ -4,6 +4,7 @@ import {
   BookOpen,
   Boxes,
   Compass,
+  Crown,
   Landmark,
   Medal,
   Plane,
