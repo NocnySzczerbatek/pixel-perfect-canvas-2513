@@ -180,6 +180,7 @@ function PokemonDetailPage() {
             className="mx-auto h-44 w-44 object-contain"
           />
           <p className="mt-2 font-display text-3xl">{pokemon.species_name}</p>
+          <TypeBadges speciesId={pokemon.species_id} className="mt-2" />
           <p className="text-sm text-muted-foreground">
             HP {pokemon.hp_current}/{pokemon.hp_max}
           </p>

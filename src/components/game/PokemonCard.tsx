@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { TypeBadges } from "@/components/game/TypeBadges";
 import { artworkUrl } from "@/lib/game-data";
-import { speciesType } from "@/lib/pokedex";
 import type { PokemonRow } from "@/lib/trainer.functions";
 
 export function PokemonCard({
@@ -32,8 +32,9 @@ export function PokemonCard({
       {pokemon.nickname ? (
         <p className="text-xs text-muted-foreground">{pokemon.species_name}</p>
       ) : null}
+      <TypeBadges speciesId={pokemon.species_id} className="mt-2" />
       <p className="mt-1 text-xs text-muted-foreground">
-        Lvl {pokemon.level} · {speciesType(pokemon.species_id)}
+        Lvl {pokemon.level}
         {pokemon.is_starter ? " · Starter" : ""}
         {pokemon.fainted ? " · Zemdlony" : ""}
       </p>
