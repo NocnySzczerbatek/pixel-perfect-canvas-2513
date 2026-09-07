@@ -81,6 +81,15 @@ function PokemonDetailPage() {
     enabled: !!speciesId,
     staleTime: Infinity,
   });
+  const { data: growthRate } = useQuery({
+    queryKey: ["pokeapi-growth", speciesId],
+    queryFn: () => fetchGrowthRate(speciesId!),
+    enabled: !!speciesId,
+    staleTime: Infinity,
+  });
+  const growth = growthRate ?? "medium-fast";
+
+
 
   const handleTrain = async (stat: StatKey) => {
     setBusy(true);
