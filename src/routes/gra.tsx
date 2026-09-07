@@ -19,7 +19,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { BonusPanel } from "@/components/game/BonusPanel";
 import { GuidedTour, type TourStep } from "@/components/game/GuidedTour";
+
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
