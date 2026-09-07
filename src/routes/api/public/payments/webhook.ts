@@ -10,10 +10,10 @@ async function fulfillSession(sessionLike: any, env: StripeEnv) {
   if (!sessionId) return;
   const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ["line_items.data.price"] });
   if (session.payment_status === "unpaid") return;
-  const userId = session.metadata?.userId;
+  const userId = session.metadata?.['userId'];
   const line = session.line_items?.data?.[0];
   const price = line?.price;
-  const priceId = price?.lookup_key ?? price?.metadata?.lovable_external_id ?? session.metadata?.priceId;
+  const priceId = price?.lookup_key ?? price?.metadata?.['lovable_external_id'] ?? session.metadata?.['priceId'];
   if (!userId || !priceId || !ALLOWED_PRICES.has(priceId)) throw new Error("Invalid purchase metadata");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? "";

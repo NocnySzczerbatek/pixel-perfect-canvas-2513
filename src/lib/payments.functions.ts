@@ -36,7 +36,8 @@ export const createGameCheckout = createServerFn({ method: "POST" })
       const price = prices.data[0];
       if (!price) throw new Error("Nie znaleziono ceny pakietu.");
       const { data: authData } = await context.supabase.auth.getUser();
-      const customer = await resolveOrCreateCustomer(stripe, { userId: context.userId, email: authData.user?.email });
+      const email = authData.user?.email;
+      const customer = await resolveOrCreateCustomer(stripe, { userId: context.userId, ...(email && { email }) });
       const productId = typeof price.product === "string" ? price.product : price.product.id;
       const product = await stripe.products.retrieve(productId);
       const params = {

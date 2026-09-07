@@ -1,4 +1,4 @@
-const token = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN;
+const token = import.meta.env['VITE_PAYMENTS_CLIENT_TOKEN'];
 
 export function PaymentTestModeBanner() {
   if (!token) return <div className="w-full border-b border-destructive/40 bg-destructive/10 px-4 py-2 text-center text-sm text-destructive">Płatności produkcyjne nie są jeszcze aktywne.</div>;
