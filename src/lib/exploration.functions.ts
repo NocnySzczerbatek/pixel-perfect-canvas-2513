@@ -300,10 +300,9 @@ async function buildState(supabase: any, userId: string): Promise<ExplorationSta
     energy_next_ms:
       profile.energy >= MAX_ENERGY
         ? 0
-        : Math.max(
-            0,
-            new Date(profile.energy_updated_at).getTime() + ENERGY_TICK_MS - Date.now(),
-          ),
+        : ENERGY_TICK_MS -
+          (Math.max(0, Date.now() - new Date(profile.energy_updated_at).getTime()) %
+            ENERGY_TICK_MS),
 
     catch_coins: profile.catch_coins,
     candy_normal: profile.candy_normal ?? 0,

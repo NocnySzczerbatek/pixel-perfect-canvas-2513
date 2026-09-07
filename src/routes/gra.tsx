@@ -100,15 +100,20 @@ function TrainerDashboard() {
   }, [loading, session, userId, navigate]);
 
   const [energyLeft, setEnergyLeft] = useState(0);
+  const [energyNow, setEnergyNow] = useState<number | null>(null);
   useEffect(() => {
     if (!profile) return;
+    const base = new Date(profile.energy_updated_at).getTime();
     const tick = () => {
-      if (profile.energy >= MAX_ENERGY) {
+      const elapsed = Math.max(0, Date.now() - base);
+      const gained = Math.floor(elapsed / ENERGY_TICK_MS);
+      const current = Math.min(MAX_ENERGY, profile.energy + gained);
+      setEnergyNow(current);
+      if (current >= MAX_ENERGY) {
         setEnergyLeft(0);
         return;
       }
-      const next = new Date(profile.energy_updated_at).getTime() + ENERGY_TICK_MS;
-      setEnergyLeft(Math.max(0, next - Date.now()));
+      setEnergyLeft(ENERGY_TICK_MS - (elapsed % ENERGY_TICK_MS));
     };
     tick();
     const timer = setInterval(tick, 1000);
@@ -144,11 +149,11 @@ function TrainerDashboard() {
         <Stat label="Poziom trenera" value={profile?.trainer_level ?? "—"} />
         <Stat
           label="Energia"
-          value={`${profile?.energy ?? "—"} / ${MAX_ENERGY}`}
+          value={`${energyNow ?? profile?.energy ?? "—"} / ${MAX_ENERGY}`}
           hint={
             !profile
               ? undefined
-              : profile.energy >= MAX_ENERGY
+              : (energyNow ?? profile.energy) >= MAX_ENERGY
                 ? "Pełna Energia"
                 : `+1 pkt za ${formatCountdown(energyLeft)}`
           }
