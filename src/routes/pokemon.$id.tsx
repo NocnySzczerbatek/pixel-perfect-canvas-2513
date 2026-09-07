@@ -182,7 +182,7 @@ function PokemonDetailPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <section className="glass-panel rounded-2xl p-5 text-center">
           <img
-            src={artworkUrl(pokemon.species_id)}
+            src={artworkUrl(pokemon.species_id, pokemon.is_shiny)}
             alt={pokemon.nickname ?? pokemon.species_name}
             loading="lazy"
             width={320}
