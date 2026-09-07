@@ -77,7 +77,7 @@ export type TrainerData = {
     badge_name: string;
     leader_name: string;
   }[];
-  items: { item_key: string; quantity: number; metadata: Record<string, unknown> }[];
+  items: { item_key: string; quantity: number }[];
   ball_price: number;
   bottle_energy: number;
 };
@@ -109,7 +109,7 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
       .select("region, gym_index, badge_key, badge_name, leader_name")
       .eq("owner_id", userId)
       .order("gym_index", { ascending: true }),
-    supabase.from("player_items").select("item_key, quantity, metadata").eq("owner_id", userId).gt("quantity", 0),
+    supabase.from("player_items").select("item_key, quantity").eq("owner_id", userId).gt("quantity", 0),
   ]);
   if (!profile) throw new Error("Nie znaleziono profilu trenera.");
 
