@@ -57,6 +57,7 @@ export function expForDefeat(foeLevel: number, kind: "wild" | "bot" | "gym" = "w
 
 type MinimalRow = {
   id: string;
+  species_id: number;
   species_name: string;
   nickname: string | null;
   level: number;
@@ -81,7 +82,7 @@ export async function awardPokemonExp(
 
   const { data } = await supabase
     .from("player_pokemon")
-    .select("id, species_name, nickname, level, exp, hp_current, hp_max, iv_hp")
+    .select("id, species_id, species_name, nickname, level, exp, hp_current, hp_max, iv_hp")
     .eq("owner_id", userId)
     .in(
       "id",
@@ -94,11 +95,12 @@ export async function awardPokemonExp(
   for (const row of rows) {
     const gain = wanted.find((item) => item.id === row.id);
     if (!gain) continue;
+    const growth = await fetchGrowthRate(row.species_id);
     let level = row.level;
     let exp = row.exp + gain.exp;
     let levels = 0;
-    while (level < MAX_POKEMON_LEVEL && exp >= pokemonExpToNext(level)) {
-      exp -= pokemonExpToNext(level);
+    while (level < MAX_POKEMON_LEVEL && exp >= pokemonExpToNext(level, growth)) {
+      exp -= pokemonExpToNext(level, growth);
       level += 1;
       levels += 1;
     }
@@ -113,8 +115,9 @@ export async function awardPokemonExp(
       update['hp_current'] = Math.min(hpMax, row.hp_current + (hpMax - row.hp_max));
       log.push(`${name} awansuje na Lvl ${level}! (+${gain.exp} EXP)`);
     } else {
-      log.push(`${name} zdobywa ${gain.exp} EXP (${exp}/${pokemonExpToNext(level)}).`);
+      log.push(`${name} zdobywa ${gain.exp} EXP (${exp}/${pokemonExpToNext(level, growth)}).`);
     }
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await (supabaseAdmin as any).from("player_pokemon").update(update).eq("id", row.id).eq("owner_id", userId);
