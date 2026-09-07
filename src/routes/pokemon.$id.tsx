@@ -347,7 +347,7 @@ function PokemonDetailPage() {
                   onClick={() => void handleCandy(kind)}
                 >
                   <img
-                    src={itemSprite(candy.sprite)}
+                    src={kind === "xl" ? candyXlIcon.url : itemSprite(candy.sprite)}
                     alt=""
                     width={20}
                     height={20}
