@@ -70,8 +70,8 @@ export async function awardPokemonExp(
     const update: Record<string, any> = { exp, level };
     if (levels > 0) {
       const hpMax = hpFromIv(level, row.iv_hp);
-      update.hp_max = hpMax;
-      update.hp_current = Math.min(hpMax, row.hp_current + (hpMax - row.hp_max));
+      update['hp_max'] = hpMax;
+      update['hp_current'] = Math.min(hpMax, row.hp_current + (hpMax - row.hp_max));
       log.push(`${name} awansuje na Lvl ${level}! (+${gain.exp} EXP)`);
     } else {
       log.push(`${name} zdobywa ${gain.exp} EXP (${exp}/${pokemonExpToNext(level)}).`);
