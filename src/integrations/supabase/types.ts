@@ -82,6 +82,7 @@ export type Database = {
           hp_current: number
           hp_max: number
           id: string
+          is_shiny: boolean
           kind: string
           level: number
           log: Json
@@ -104,6 +105,7 @@ export type Database = {
           hp_current?: number
           hp_max?: number
           id?: string
+          is_shiny?: boolean
           kind: string
           level?: number
           log?: Json
@@ -126,6 +128,7 @@ export type Database = {
           hp_current?: number
           hp_max?: number
           id?: string
+          is_shiny?: boolean
           kind?: string
           level?: number
           log?: Json
@@ -404,6 +407,7 @@ export type Database = {
           hp_max: number
           id: string
           in_party: boolean
+          is_shiny: boolean
           is_starter: boolean
           iv_atk: number
           iv_def: number
@@ -429,6 +433,7 @@ export type Database = {
           hp_max?: number
           id?: string
           in_party?: boolean
+          is_shiny?: boolean
           is_starter?: boolean
           iv_atk?: number
           iv_def?: number
@@ -454,6 +459,7 @@ export type Database = {
           hp_max?: number
           id?: string
           in_party?: boolean
+          is_shiny?: boolean
           is_starter?: boolean
           iv_atk?: number
           iv_def?: number
