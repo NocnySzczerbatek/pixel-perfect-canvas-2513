@@ -1,7 +1,7 @@
 import { REGIONS } from "@/lib/game-data";
 import { warsawClock } from "@/lib/time";
 
-export const TRAVEL_TICKET_PRICE = 350;
+export const TRAVEL_TICKET_PRICE = 20000;
 
 export const TRAVEL_WINDOWS = REGIONS.map((region, index) => ({
   ...region,

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plane, Ticket } from "lucide-react";
+import { Plane } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { REGIONS } from "@/lib/game-data";
 import { flyToRegion, getTravelState } from "@/lib/travel.functions";
 import { formatDuration } from "@/lib/time";
-import { travelWindowState } from "@/lib/travel";
+import { TRAVEL_TICKET_PRICE, travelWindowState } from "@/lib/travel";
+import { itemSprite } from "@/lib/pokedex";
 
 export const Route = createFileRoute("/podroze")({
   head: () => ({ meta: [
@@ -47,7 +48,7 @@ function TravelPage() {
     {isLoading || !state ? <p className="text-sm text-muted-foreground">Sprawdzam rozkład lotów…</p> : <div className="space-y-6">
       <div className="glass-panel flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5">
         <div><p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Bilety Podróży</p><p className="font-display text-3xl">{state.travel_tickets}</p></div>
-        <Ticket className="h-9 w-9 text-aurora" aria-hidden />
+        <img src={itemSprite("ss-ticket")} alt="Bilet Podróży" width={48} height={48} className="h-12 w-12 [image-rendering:pixelated]" />
         <p className="text-sm text-muted-foreground">Region domowy: {REGIONS.find((r) => r.slug === state.home_region)?.name ?? "—"}</p>
       </div>
       {state.travel_region && state.travel_until ? <div className="glass-panel rounded-2xl border border-aurora/40 p-5"><p className="font-display text-2xl">Trwa wycieczka: {REGIONS.find((r) => r.slug === state.travel_region)?.name}</p><p className="text-sm text-muted-foreground">Powrót za {formatDuration(new Date(state.travel_until).getTime() - now.getTime())}</p></div> : null}
