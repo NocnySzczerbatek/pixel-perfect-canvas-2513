@@ -11,7 +11,8 @@ import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { artworkUrl } from "@/lib/game-data";
-import { fetchEvolutions, fetchLevelUpMoves } from "@/lib/pokeapi";
+import { fetchEvolutions, fetchLevelUpMoves, fetchMoveDetails } from "@/lib/pokeapi";
+import candyXlIcon from "@/assets/candy-xl.png.asset.json";
 import { STAT_KEYS, STAT_LABELS, itemSprite, speciesType, type StatKey } from "@/lib/pokedex";
 import {
   CANDIES,
