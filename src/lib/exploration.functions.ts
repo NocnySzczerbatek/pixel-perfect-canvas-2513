@@ -429,18 +429,18 @@ export const travel = createServerFn({ method: "POST" })
 
     let payload: { kind: "wild" | "bot" } & Record<string, unknown>;
     if (kind === "wild") {
-      const species: BiomeSpecies = pick(pool);
+      // Bonusy (Shiny Charm, buffy czasowe, trwałe osiągnięcia) — liczone po stronie serwera.
+      const { encounterMultipliers } = await import("@/lib/bonuses.server");
+      const mult = await encounterMultipliers(userId);
+      const rarePool = [...pool].sort((a, b) => b.id - a.id).slice(0, Math.max(1, Math.ceil(pool.length / 4)));
+      const rareChance = Math.min(0.6, 0.15 * mult.rare);
+      const isRareRoll = rarePool.length > 0 && Math.random() < rareChance;
+      const species: BiomeSpecies = isRareRoll ? pick(rarePool) : pick(pool);
       const level = levelFor();
       const hpMax = hpFromIv(level, 16);
-      // Shiny Charm (nagroda za 1. miejsce w turnieju) podwaja szansę na shiny.
-      const { data: charm } = await supabase
-        .from("player_items")
-        .select("quantity")
-        .eq("owner_id", userId)
-        .eq("item_key", "shiny_charm")
-        .maybeSingle();
-      const shinyChance = charm && (charm.quantity ?? 0) > 0 ? SHINY_CHANCE * 2 : SHINY_CHANCE;
+      const shinyChance = SHINY_CHANCE * mult.shiny;
       const isShiny = Math.random() < shinyChance;
+
       payload = {
         kind,
         species_id: species.id,
