@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { GuidedTour, type TourStep } from "@/components/game/GuidedTour";
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,6 +130,20 @@ function TrainerDashboard() {
 
   const trainerExpNext = Math.round(100 * Math.pow(profile?.trainer_level ?? 1, 1.8));
 
+  const [tourOpen, setTourOpen] = useState(false);
+  useEffect(() => {
+    if (!userId || typeof window === "undefined") return;
+    if (window.localStorage.getItem(`cz-tour-${userId}`) === "done") return;
+    setTourOpen(true);
+  }, [userId]);
+  const closeTour = () => {
+    setTourOpen(false);
+    if (userId && typeof window !== "undefined") {
+      window.localStorage.setItem(`cz-tour-${userId}`, "done");
+    }
+  };
+
+
   return (
     <main className="min-h-screen px-5 py-8 md:px-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -140,19 +155,27 @@ function TrainerDashboard() {
             {profile?.trainer_name ?? "Panel trenera"}
           </h1>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            void navigate({ to: "/" });
-          }}
-        >
-          Wyloguj
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setTourOpen(true)}>
+            Samouczek
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              void navigate({ to: "/" });
+            }}
+          >
+            Wyloguj
+          </Button>
+        </div>
       </header>
 
-      <section className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+      <GuidedTour steps={TOUR_STEPS} open={tourOpen} onClose={closeTour} />
+
+
+      <section data-tour="stats" className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
         <Stat
           label="Poziom trenera"
           value={profile?.trainer_level ?? "—"}
@@ -180,7 +203,7 @@ function TrainerDashboard() {
         <Stat label="Poké Balle" value={profile?.poke_balls ?? "—"} />
       </section>
 
-      <section className="mt-10">
+      <section data-tour="party" className="mt-10">
         <div className="flex items-end justify-between gap-3">
           <h2 className="text-2xl">Twoja drużyna</h2>
           <Link to="/druzyna" className="text-xs text-muted-foreground underline">
@@ -241,7 +264,7 @@ function TrainerDashboard() {
         </div>
       </section>
 
-      <section className="mt-10">
+      <section data-tour="howto" className="mt-10">
         <h2 className="text-2xl">Jak się gra</h2>
         <p className="text-xs text-muted-foreground">Pętla rozgrywki w pięciu krokach.</p>
         <ol className="glass-panel mt-4 space-y-2 rounded-2xl p-5 text-sm text-muted-foreground">
@@ -299,6 +322,7 @@ function TrainerDashboard() {
               <Link
                 key={to}
                 to={to}
+                data-tour={to}
                 className="tile-hover glass-panel flex flex-col items-start gap-2 rounded-2xl p-4"
               >
                 <Icon className="h-6 w-6 text-muted-foreground" aria-hidden />
@@ -312,6 +336,63 @@ function TrainerDashboard() {
     </main>
   );
 }
+
+const TOUR_STEPS: TourStep[] = [
+  {
+    target: "stats",
+    title: "Twoje zasoby",
+    body:
+      "Tu widzisz poziom trenera, Energię (paliwo do eksploracji, +1 pkt co 3 minuty), Catch Coins na zakupy i liczbę Poké Balli.",
+  },
+  {
+    target: "party",
+    title: "Drużyna pod ręką",
+    body:
+      "Pasek pokazuje do 6 Pokémonów z drużyny. Kliknij dowolnego, aby zobaczyć jego statystyki, ruchy, trening i ewolucję.",
+  },
+  {
+    target: "/eksploracja",
+    title: "Zacznij tutaj: Eksploracja",
+    body:
+      "Wybierasz biom, spotykasz dzikiego Pokémona lub trenera. Najpierw walka, potem rzut Ballem. Każde wyjście kosztuje Energię.",
+  },
+  {
+    target: "/zadania",
+    title: "Zadania i Profesor Oak",
+    body:
+      "Codzienne cele (łap albo walcz) dają monety i Balle, a badania Profesora Oaka prowadzą Cię przez kolejne etapy gry.",
+  },
+  {
+    target: "/sale",
+    title: "Sale i odznaki",
+    body:
+      "W każdym regionie czeka 8 Liderów. Walki są trudne — przygotuj drużynę, wylecz Pokémony i zdobądź wszystkie odznaki.",
+  },
+  {
+    target: "/podroze",
+    title: "Podróże między regionami",
+    body:
+      "Za Bilet Podróży (20 000 CC) wyruszasz do innego regionu w otwartym oknie czasowym i łapiesz tamtejsze gatunki.",
+  },
+  {
+    target: "/sklep",
+    title: "Sklep i GTS",
+    body:
+      "W Sklepie kupisz Balle, mikstury, Kamienie Mega i bilety za Catch Coins. Na GTS wymieniasz Pokémony z innymi lub sprzedajesz Kupcowi.",
+  },
+  {
+    target: "/pokedex",
+    title: "Pokédex",
+    body:
+      "Każdy spotkany gatunek trafia do Pokédexu razem z typami, statystykami i listą biomów, w których go znajdziesz.",
+  },
+  {
+    target: "howto",
+    title: "Zawsze możesz wrócić",
+    body:
+      "Pod drużyną masz sekcje „Jak się gra” i „Co nowego”. Samouczek uruchomisz ponownie przyciskiem „Samouczek” u góry panelu.",
+  },
+];
 
 const MAX_ENERGY = 100;
 const ENERGY_TICK_MS = 3 * 60 * 1000;
