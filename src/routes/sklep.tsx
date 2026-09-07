@@ -186,11 +186,12 @@ function SklepPage() {
           <section>
             <h2 className="font-display text-2xl">Pakiety w złotówkach</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Bezpieczna płatność kartą. Przedmioty pojawią się po potwierdzeniu wpłaty.
+              Płatności prawdziwymi pieniędzmi są teraz wyłączone — pakiety poniżej to zapowiedź.
+              Wszystko potrzebne do gry kupisz za Catch Coins.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-3">
               {SHOP_PACKAGES.map((pack) => (
-                <div key={pack.id} className="glass-panel rounded-2xl p-5">
+                <div key={pack.id} className="glass-panel rounded-2xl p-5 opacity-60">
                   <ShopIcon sprite={pack.sprite} label={pack.name} />
                   <p className="mt-3 font-display text-xl">{pack.name}</p>
                   <p className="text-xs text-muted-foreground">{pack.description}</p>
@@ -198,8 +199,8 @@ function SklepPage() {
                   <p className="mt-2 font-display text-2xl">
                     {pack.pricePln.toFixed(2).replace(".", ",")} zł
                   </p>
-                  <Button className="mt-3" size="sm" variant="outline" onClick={() => setCheckout({ priceId: pack.priceId, name: pack.name })}>
-                    Kup teraz
+                  <Button className="mt-3" size="sm" variant="outline" disabled>
+                    Wkrótce
                   </Button>
                 </div>
               ))}
