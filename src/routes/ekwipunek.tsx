@@ -7,7 +7,7 @@ import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { itemSprite } from "@/lib/pokedex";
-import { buyPokeBalls, useEnergyBottle } from "@/lib/trainer.functions";
+import { buyPokeBalls, craftMegaStone, useEnergyBottle } from "@/lib/trainer.functions";
 import { BALLS } from "@/lib/items";
 
 export const Route = createFileRoute("/ekwipunek")({
@@ -34,6 +34,7 @@ function EkwipunekPage() {
   const { data, isLoading, setData } = useTrainerData();
   const drinkBottle = useServerFn(useEnergyBottle);
   const buyBalls = useServerFn(buyPokeBalls);
+  const craftStone = useServerFn(craftMegaStone);
   const [busy, setBusy] = useState(false);
 
   const run = async (action: () => Promise<any>, success: string) => {
@@ -86,6 +87,11 @@ function EkwipunekPage() {
             </div>
             <p className="mt-2 text-xs text-muted-foreground">{price} Catch Coins za Balla.</p>
           </div>
+          {(data.items ?? []).filter((item) => item.item_key.startsWith("mega_shard_")).map((item) => {
+            const speciesId = Number(item.item_key.replace("mega_shard_", ""));
+            return <div key={item.item_key} className="glass-panel rounded-2xl p-5"><ItemIcon name="key-stone" label="Fragment Mega" /><p className="mt-3 font-display text-3xl">{item.quantity}/5</p><p className="text-sm text-muted-foreground">Fragmenty Mega · gatunek #{speciesId}</p><Button className="mt-4" size="sm" disabled={busy || item.quantity < 5} onClick={() => void run(() => craftStone({ data: { speciesId } }), "Utworzono gatunkowy Kamień Mega.")}>Utwórz Kamień</Button></div>;
+          })}
+          {(data.items ?? []).filter((item) => item.item_key.startsWith("mega_stone_")).map((item) => <div key={item.item_key} className="glass-panel rounded-2xl p-5"><ItemIcon name="key-stone" label="Kamień Mega" /><p className="mt-3 font-display text-3xl">{item.quantity}</p><p className="text-sm text-muted-foreground">Kamień Mega · gatunek #{item.item_key.replace("mega_stone_", "")}</p></div>)}
 
           <div className="glass-panel rounded-2xl p-5">
             <ItemIcon name="max-elixir" label="Flakon Energii" />

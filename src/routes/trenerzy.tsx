@@ -1,6 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { Swords } from "lucide-react";
 
-import { ComingSoon, GamePage } from "@/components/game/GamePage";
+import { GamePage } from "@/components/game/GamePage";
+import { Button } from "@/components/ui/button";
+import { TRAINER_CLASSES } from "@/lib/pokedex";
 
 export const Route = createFileRoute("/trenerzy")({
   head: () => ({
@@ -16,8 +19,15 @@ export const Route = createFileRoute("/trenerzy")({
 
 function TrenerzyPage() {
   return (
-    <GamePage title="Trenerzy" subtitle={"Walki z trenerami-botami dopasowanymi do Twojego poziomu."}>
-      <ComingSoon note={"Automatyczne walki z logiem tur są w przygotowaniu."} />
+    <GamePage title="Trenerzy" subtitle="Wybierz klasę rywala, a potem znajdź go podczas eksploracji. Wynik, nagrody i pełny przebieg walki zapisują się w dzienniku.">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {TRAINER_CLASSES.map((name, index) => <article key={name} className="glass-panel rounded-2xl p-5">
+          <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/trainers/${index + 1}.png`} alt={`Trener ${name}`} className="h-20 w-20 [image-rendering:pixelated]" />
+          <h2 className="mt-2 font-display text-2xl">{name}</h2>
+          <p className="text-sm text-muted-foreground">Drużyna 3–4 Pokémonów dopasowana do poziomu trenera.</p>
+          <Button asChild className="mt-4"><Link to="/eksploracja"><Swords className="h-4 w-4" /> Szukaj wyzwania</Link></Button>
+        </article>)}
+      </div>
     </GamePage>
   );
 }
