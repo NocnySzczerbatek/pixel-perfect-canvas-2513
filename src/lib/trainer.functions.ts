@@ -77,6 +77,7 @@ export type TrainerData = {
     badge_name: string;
     leader_name: string;
   }[];
+  items: { item_key: string; quantity: number }[];
   ball_price: number;
   bottle_energy: number;
 };
@@ -90,7 +91,7 @@ function expThreshold(level: number) {
 }
 
 async function buildTrainerData(supabase: any, userId: string): Promise<TrainerData> {
-  const [{ data: profile }, { data: pokemon }, { data: badges }] = await Promise.all([
+  const [{ data: profile }, { data: pokemon }, { data: badges }, { data: items }] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -108,6 +109,7 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
       .select("region, gym_index, badge_key, badge_name, leader_name")
       .eq("owner_id", userId)
       .order("gym_index", { ascending: true }),
+    supabase.from("player_items").select("item_key, quantity").eq("owner_id", userId).gt("quantity", 0),
   ]);
   if (!profile) throw new Error("Nie znaleziono profilu trenera.");
 
@@ -151,6 +153,7 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
     },
     pokemon: (pokemon ?? []) as PokemonRow[],
     badges: (badges ?? []) as TrainerData["badges"],
+    items: (items ?? []) as TrainerData["items"],
     ball_price: BALL_PRICE,
     bottle_energy: BOTTLE_ENERGY,
   };
@@ -581,4 +584,24 @@ export const evolvePokemon = createServerFn({ method: "POST" })
     const name = next.species.name.charAt(0).toUpperCase() + next.species.name.slice(1);
     await supabase.from("player_pokemon").update({ species_id: toId, species_name: name }).eq("id", mon.id).eq("owner_id", userId);
     return { ok: true as const, name, data: await buildTrainerData(supabase, userId) };
+  });
+
+export const craftMegaStone = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { speciesId: number }) => {
+    const speciesId = Math.floor(Number(input?.speciesId));
+    if (!Number.isFinite(speciesId) || speciesId < 1) throw new Error("Nieznany gatunek.");
+    return { speciesId };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const shardKey = `mega_shard_${data.speciesId}`;
+    const stoneKey = `mega_stone_${data.speciesId}`;
+    const { data: shard } = await supabase.from("player_items").select("id, quantity, metadata").eq("owner_id", userId).eq("item_key", shardKey).maybeSingle();
+    if (!shard || shard.quantity < 5) return { ok: false as const, reason: "Potrzebujesz 5 fragmentów tego gatunku.", data: await buildTrainerData(supabase, userId) };
+    const { data: stone } = await supabase.from("player_items").select("id, quantity").eq("owner_id", userId).eq("item_key", stoneKey).maybeSingle();
+    await supabase.from("player_items").update({ quantity: shard.quantity - 5 }).eq("id", shard.id).eq("owner_id", userId);
+    if (stone) await supabase.from("player_items").update({ quantity: stone.quantity + 1 }).eq("id", stone.id).eq("owner_id", userId);
+    else await supabase.from("player_items").insert({ owner_id: userId, item_key: stoneKey, quantity: 1, metadata: { species_id: data.speciesId, kind: "mega_stone" } });
+    return { ok: true as const, data: await buildTrainerData(supabase, userId) };
   });

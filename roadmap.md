@@ -28,11 +28,12 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Podróże: Bilet Podróży, okna regionów według Europe/Warsaw, czasowa pula eksploracji
 - [x] Zadania dzienne: 2 typy, wybór trudności, postęp i odbiór nagród
 - [x] Badania Profesora Oaka: dialogi, zadania poziomowe i nagrody
-- [ ] Nagrody za awans trenera: Balle i Flakony Energii
-- [ ] Mega Ewolucja: składniki z eksploracji, kamienie gatunkowe i aktywacja
+- [x] Nagrody za awans trenera: Balle i Flakony Energii
+- [x] Mega Ewolucja: składniki z eksploracji i tworzenie kamieni gatunkowych
 - [x] Więcej Balli oraz czas odnowienia zakupu Master Balla
 - [ ] Postacie pixel-art: Profesor Oak, Liderzy i klasy trenerów
 - [ ] Dokończyć stronę Trenerzy
 - [x] Ruchy niskopoziomowych Pokémonów: wyłącznie poznane, maks. 4
-- [ ] Wykonywanie zwykłych ewolucji i rozwijane sekcje walk
+- [x] Wykonywanie zwykłych ewolucji
+- [ ] Rozwijane sekcje walk
 - [ ] Uruchomić płatności PLN
