@@ -77,7 +77,14 @@ function PokemonDetailPage() {
     queryFn: () => fetchLevelUpMoves(speciesId!),
     enabled: !!speciesId,
     staleTime: Infinity,
+  const moveSlugs = (moves ?? []).map((m) => m.slug);
+  const { data: moveStats } = useQuery({
+    queryKey: ["pokeapi-move-stats", speciesId, moveSlugs.length],
+    queryFn: () => fetchMoveDetails(moveSlugs),
+    enabled: moveSlugs.length > 0,
+    staleTime: Infinity,
   });
+
   const { data: evolutions } = useQuery({
     queryKey: ["pokeapi-evo", speciesId],
     queryFn: () => fetchEvolutions(speciesId!),
