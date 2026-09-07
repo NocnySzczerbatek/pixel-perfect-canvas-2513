@@ -105,6 +105,14 @@ function speciesPool(biomeSlug: string, region: string | null): BiomeSpecies[] {
   return regional.length > 0 ? regional : biome.species;
 }
 
+/** Szeroka pula regionu — drużyny trenerów mieszają typy, nie tylko element biomu. */
+function regionPool(region: string | null): BiomeSpecies[] {
+  const all = [...BIOMES.flatMap((b) => b.species), ...Object.values(REGION_SPECIES).flat()];
+  const regional = all.filter((s) => inRegion(s.id, region));
+  const unique = new Map(regional.map((s) => [s.id, s]));
+  return unique.size > 0 ? [...unique.values()] : all;
+}
+
 /** Dolewa Energię za miniony czas (+1 / 3 min) i zapisuje nowy znacznik. */
 async function syncEnergy(supabase: any, userId: string): Promise<ProfileRow> {
   const { data, error } = await supabase
@@ -257,6 +265,7 @@ export const travel = createServerFn({ method: "POST" })
     const biome = findBiome(data.biome)!;
     const profile = await syncEnergy(supabase, userId);
     const pool = speciesPool(biome.slug, profile.region);
+    const trainerPool = regionPool(profile.region);
 
     const cost = randInt(MIN_TRAVEL_COST, MAX_TRAVEL_COST);
     if (profile.energy < cost) {
@@ -318,7 +327,7 @@ export const travel = createServerFn({ method: "POST" })
     } else if (kind === "bot") {
       const size = randInt(3, 4);
       const team: BotMember[] = Array.from({ length: size }, () => {
-        const species: BiomeSpecies = pick(pool);
+        const species: BiomeSpecies = pick(trainerPool);
         return {
           species_id: species.id,
           species_name: species.name,
