@@ -1,4 +1,5 @@
 import { BIOMES, type BiomeSpecies } from "@/lib/biomes";
+import { FULL_DEX } from "@/lib/full-dex";
 import { REGIONS } from "@/lib/game-data";
 
 /** Zakresy numerów Pokédexu dla każdego regionu (wg generacji). */
@@ -122,9 +123,16 @@ export const REGION_SPECIES: Record<string, BiomeSpecies[]> = {
   ],
 };
 
-/** Mapa typów wszystkich gatunków użytych w grze (biomy + startery). */
+/** Mapa typów wszystkich gatunków (pełny Pokédex + biomy + startery). */
+const TYPES_MAP: Record<number, string[]> = (() => {
+  const map: Record<number, string[]> = {};
+  for (const entry of FULL_DEX) map[entry.id] = entry.types;
+  return map;
+})();
+
 const TYPE_MAP: Record<number, string> = (() => {
   const map: Record<number, string> = {};
+  for (const entry of FULL_DEX) map[entry.id] = entry.type;
   for (const biome of BIOMES) {
     for (const species of biome.species) map[species.id] = species.type;
   }
@@ -139,6 +147,11 @@ const TYPE_MAP: Record<number, string> = (() => {
 
 export function speciesType(speciesId: number) {
   return TYPE_MAP[speciesId] ?? "Normalny";
+}
+
+/** Wszystkie typy gatunku (np. ["Trawa", "Trucizna"]). */
+export function speciesTypes(speciesId: number): string[] {
+  return TYPES_MAP[speciesId] ?? [speciesType(speciesId)];
 }
 
 export const NATURES = [

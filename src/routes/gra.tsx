@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
@@ -211,6 +212,7 @@ function TrainerDashboard() {
                         className={`h-16 w-16 object-contain ${pokemon.fainted ? "opacity-40 grayscale" : ""}`}
                       />
                       <p className="mt-1 truncate text-sm font-medium">{pokemon.species_name}</p>
+                      <TypeBadges speciesId={pokemon.species_id} className="mt-0.5" />
                       <p className="text-[11px] text-muted-foreground">Lvl {pokemon.level}</p>
                       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
                         <div

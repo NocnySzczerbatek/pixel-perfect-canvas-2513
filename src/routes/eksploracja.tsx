@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { GamePage } from "@/components/game/GamePage";
+import { TypeBadges } from "@/components/game/TypeBadges";
 import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
 import { artworkUrl } from "@/lib/game-data";
@@ -575,9 +576,10 @@ function EncounterCard({
                 className="mx-auto h-32 w-32 object-contain"
               />
               <p className="font-display text-xl">{encounter.species_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {encounter.species_type} · Lvl {encounter.level}
-              </p>
+              {encounter.species_id ? (
+                <TypeBadges speciesId={encounter.species_id} className="mt-1" />
+              ) : null}
+              <p className="mt-1 text-xs text-muted-foreground">Lvl {encounter.level}</p>
               <HpBar current={encounter.hp_current} max={encounter.hp_max} className="mt-3" />
               <p className="mt-2 text-xs text-aurora">
                 Szansa złapania: {catchChance}% (HP {hpPct}%)
