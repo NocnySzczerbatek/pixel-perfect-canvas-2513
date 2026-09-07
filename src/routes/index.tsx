@@ -146,7 +146,7 @@ function StartScreen() {
               alt="Catch Zone"
               width={64}
               height={64}
-              className="h-14 w-14 object-contain"
+              className="h-14 w-14 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.55)] ring-1 ring-white/20"
             />
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">

@@ -155,7 +155,7 @@ function TrainerDashboard() {
               alt="Catch Zone"
               width={56}
               height={56}
-              className="h-12 w-12 object-contain"
+              className="h-12 w-12 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.55)] ring-1 ring-white/20"
             />
           </Link>
           <div>
