@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
-import { BALLS, RAZZ, SHOP_PACKAGES } from "@/lib/items";
+import { BALLS, HEAL_ITEMS, RAZZ, SHOP_PACKAGES } from "@/lib/items";
 import { MASTER_BALL_CC, buyItem } from "@/lib/items.functions";
 import { itemSprite } from "@/lib/pokedex";
 
@@ -121,6 +121,30 @@ function SklepPage() {
                   ))}
                 </div>
               </div>
+
+              {HEAL_ITEMS.map((item) => (
+                <div key={item.key} className="glass-panel rounded-2xl p-5">
+                  <ShopIcon sprite={item.sprite} label={item.label} />
+                  <p className="mt-3 font-display text-xl">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.note}</p>
+                  <p className="mt-2 text-sm">
+                    Masz: {(profile as any)[item.field] ?? 0} · {item.price} CC / szt.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {[1, 5, 10].map((amount) => (
+                      <Button
+                        key={amount}
+                        size="sm"
+                        variant={amount === 1 ? "default" : "outline"}
+                        disabled={busy || profile.catch_coins < amount * item.price}
+                        onClick={() => void purchase(item.key, amount, item.label)}
+                      >
+                        +{amount} · {amount * item.price}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
 
               <div className="glass-panel rounded-2xl p-5">
                 <ShopIcon sprite="master-ball" label="Master Ball" />
