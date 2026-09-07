@@ -70,10 +70,11 @@ function RankingPage() {
                     <td className="px-4 py-3">
                       {badge ? (
                         <span className="inline-flex items-center gap-2 text-xs">
-                          <span
-                            className="h-5 w-5 rounded-full"
-                            style={{ background: badge.gradient }}
-                            aria-hidden
+                          <img
+                            src={badge.imageUrl}
+                            alt=""
+                            className="h-7 w-7 object-contain drop-shadow-md"
+                            loading="lazy"
                           />
                           {badge.badgeName}
                         </span>

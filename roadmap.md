@@ -16,10 +16,10 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] IV (0–31), natura, umiejętność przy złapaniu + trening za Catch Coins i nauka ataków
 - [x] Drużyna, PC Box, Ekwipunek (grafiki przedmiotów z PokéAPI), Profil
 
-## Do zrobienia
-- [ ] Razz Berry i dodatkowe rodzaje Balli
-- [ ] PvP: kradzież 5–10% monet, Tarcza BHP (min. 100 Catch Coins)
-- [ ] GTS (5% prowizji) + NPC-Kupiec
-- [ ] Sale (8/region), Liderzy, Kamienie Mega (+30%), odznaki 3D z paralaksą, Featured Badge
-- [ ] Ranking
-- [ ] Sklep PLN: pakiety energii, Master Ball (płatności)
+## Zrobione — dalsze moduły
+- [x] Razz Berry i dodatkowe rodzaje Balli
+- [x] PvP: kradzież 5–10% monet, Tarcza BHP (min. 100 Catch Coins)
+- [x] GTS (5% prowizji) + NPC-Kupiec
+- [x] Sale (8/region), Liderzy, Kamienie Mega (+30%), kanoniczne odznaki 3D z paralaksą, Featured Badge
+- [x] Ranking
+- [x] Sklep PLN: pakiety energii, Master Ball (płatności)
