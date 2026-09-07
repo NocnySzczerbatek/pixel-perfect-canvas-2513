@@ -97,6 +97,7 @@ export type Database = {
           caught_at: string
           exp: number
           fainted: boolean
+          friendship: number
           hp_current: number
           hp_max: number
           id: string
@@ -121,6 +122,7 @@ export type Database = {
           caught_at?: string
           exp?: number
           fainted?: boolean
+          friendship?: number
           hp_current?: number
           hp_max?: number
           id?: string
@@ -145,6 +147,7 @@ export type Database = {
           caught_at?: string
           exp?: number
           fainted?: boolean
+          friendship?: number
           hp_current?: number
           hp_max?: number
           id?: string
@@ -176,6 +179,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          candy_normal: number
+          candy_xl: number
           catch_coins: number
           created_at: string
           energy: number
@@ -192,6 +197,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          candy_normal?: number
+          candy_xl?: number
           catch_coins?: number
           created_at?: string
           energy?: number
@@ -208,6 +215,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          candy_normal?: number
+          candy_xl?: number
           catch_coins?: number
           created_at?: string
           energy?: number

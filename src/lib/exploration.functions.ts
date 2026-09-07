@@ -14,10 +14,12 @@ import {
   TRAINER_CLASSES,
   TRAINER_NAMES,
   abilitiesFor,
+  movePool,
   REGION_SPECIES,
   inRegion,
   speciesType,
 } from "@/lib/pokedex";
+
 
 const MAX_ENERGY = 100;
 const ENERGY_TICK_MS = 3 * 60 * 1000; // +1 Energii co 3 minuty
@@ -52,19 +54,36 @@ export type BotMember = {
   level: number;
 };
 
+export type PartyView = {
+  id: string;
+  name: string;
+  species_id: number;
+  species_name: string;
+  species_type: string;
+  level: number;
+  hp_current: number;
+  hp_max: number;
+  fainted: boolean;
+  moves: { name: string; level: number; power: number }[];
+};
+
 export type ExplorationState = {
   energy: number;
   energy_max: number;
   poke_balls: number;
   catch_coins: number;
+  candy_normal: number;
+  candy_xl: number;
   trainer_level: number;
   trainer_exp: number;
   trainer_exp_next: number;
   party_size: number;
+  party: PartyView[];
   region: string | null;
   active: EncounterView | null;
   history: EncounterView[];
 };
+
 
 function randInt(min: number, max: number) {
   return min + Math.floor(Math.random() * (max - min + 1));
@@ -83,13 +102,16 @@ type ProfileRow = {
   energy_updated_at: string;
   poke_balls: number;
   catch_coins: number;
+  candy_normal: number;
+  candy_xl: number;
   trainer_level: number;
   trainer_exp: number;
   region: string | null;
 };
 
 const PROFILE_COLUMNS =
-  "energy, energy_updated_at, poke_balls, catch_coins, trainer_level, trainer_exp, region";
+  "energy, energy_updated_at, poke_balls, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region";
+
 
 /** Pula gatunków biomu ograniczona do regionu wybranego przez gracza. */
 function speciesPool(biomeSlug: string, region: string | null): BiomeSpecies[] {
@@ -213,20 +235,32 @@ function toFighter(row: PartyRow): Fighter {
   };
 }
 
+function toPartyView(row: PartyRow): PartyView {
+  const type = speciesType(row.species_id);
+  return {
+    id: row.id,
+    name: row.nickname ?? row.species_name,
+    species_id: row.species_id,
+    species_name: row.species_name,
+    species_type: type,
+    level: row.level,
+    hp_current: row.hp_current,
+    hp_max: row.hp_max,
+    fainted: row.fainted,
+    moves: movePool(row.species_id).filter((move) => move.level <= row.level),
+  };
+}
+
 async function buildState(supabase: any, userId: string): Promise<ExplorationState> {
   const profile = await syncEnergy(supabase, userId);
-  const [{ data: encounters }, { count }] = await Promise.all([
+  const [{ data: encounters }, party] = await Promise.all([
     supabase
       .from("encounters")
       .select("*")
       .eq("owner_id", userId)
       .order("created_at", { ascending: false })
       .limit(12),
-    supabase
-      .from("player_pokemon")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_id", userId)
-      .eq("in_party", true),
+    loadParty(supabase, userId),
   ]);
 
   const rows = ((encounters ?? []) as any[]).map(toView);
@@ -237,15 +271,19 @@ async function buildState(supabase: any, userId: string): Promise<ExplorationSta
     energy_max: MAX_ENERGY,
     poke_balls: profile.poke_balls,
     catch_coins: profile.catch_coins,
+    candy_normal: profile.candy_normal ?? 0,
+    candy_xl: profile.candy_xl ?? 0,
     trainer_level: profile.trainer_level,
     trainer_exp: profile.trainer_exp,
     trainer_exp_next: expThreshold(profile.trainer_level),
-    party_size: count ?? 0,
+    party_size: party.length,
+    party: party.map(toPartyView),
     region: profile.region,
     active,
     history: rows.filter((row) => row.status !== "active").slice(0, 6),
   };
 }
+
 
 /** Aktualny stan eksploracji (Energia po regeneracji, aktywne spotkanie, log). */
 export const getExplorationState = createServerFn({ method: "GET" })
@@ -290,22 +328,34 @@ export const travel = createServerFn({ method: "POST" })
       };
     }
 
-    await supabase
-      .from("profiles")
+    // Losowe znaleziska na szlaku: Cukierki do podnoszenia przyjaźni.
+    const candyRoll = Math.random();
+    const foundCandy =
+      candyRoll < 0.05 ? ("xl" as const) : candyRoll < 0.2 ? ("normal" as const) : null;
+
+    await (supabase.from("profiles") as any)
       .update({
         energy: Math.max(0, profile.energy - cost),
         energy_updated_at: new Date().toISOString(),
+        ...(foundCandy === "normal" ? { candy_normal: (profile.candy_normal ?? 0) + 1 } : {}),
+        ...(foundCandy === "xl" ? { candy_xl: (profile.candy_xl ?? 0) + 1 } : {}),
       })
       .eq("id", userId);
 
+    const candyLine =
+      foundCandy === "normal"
+        ? "Na ścieżce leżał Zwykły Cukierek — trafił do ekwipunku."
+        : foundCandy === "xl"
+          ? "Znalazłeś Cukierek XL — rzadkie znalezisko!"
+          : null;
+
     const trainerLevel = profile.trainer_level;
-    const roll = Math.random();
-    const kind: "wild" | "bot" | "pvp" = roll < 0.6 ? "wild" : roll < 0.92 ? "bot" : "pvp";
+    const kind: "wild" | "bot" = Math.random() < 0.62 ? "wild" : "bot";
 
     const levelFor = (bonus = 0) =>
       Math.max(1, Math.min(trainerLevel + 5, trainerLevel + bonus + randInt(-1, 2)));
 
-    let payload: { kind: "wild" | "bot" | "pvp" } & Record<string, unknown>;
+    let payload: { kind: "wild" | "bot" } & Record<string, unknown>;
     if (kind === "wild") {
       const species: BiomeSpecies = pick(pool);
       const level = levelFor();
@@ -320,11 +370,12 @@ export const travel = createServerFn({ method: "POST" })
         hp_current: hpMax,
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
+          ...(candyLine ? [candyLine] : []),
           `Z zarośli wyszedł dziki ${species.name} (typ ${species.type}, Lvl ${level}).`,
-          "Osłab go w walce, a potem rzuć Poké Ballem — im mniej HP, tym większa szansa.",
+          "Wybierz Pokémona i atak — po pokonaniu dzikiego możesz go złapać.",
         ],
       };
-    } else if (kind === "bot") {
+    } else {
       const size = randInt(3, 4);
       const team: BotMember[] = Array.from({ length: size }, () => {
         const species: BiomeSpecies = pick(trainerPool);
@@ -350,19 +401,12 @@ export const travel = createServerFn({ method: "POST" })
         reward_coins: 25 + avg * 9,
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
+          ...(candyLine ? [candyLine] : []),
           `${trainerClass} ${person} wyzywa Cię na walkę: ${size} Pokémony (średni Lvl ${avg}).`,
         ],
       };
-    } else {
-      payload = {
-        kind,
-        level: trainerLevel,
-        log: [
-          `Krok w biomie ${biome.name} (−${cost} Energii).`,
-          "Na szlaku pojawił się żywy gracz — PvP dochodzi w kolejnym etapie.",
-        ],
-      };
     }
+
 
     const { data: created, error } = await supabase
       .from("encounters")
@@ -385,12 +429,18 @@ export const travel = createServerFn({ method: "POST" })
     };
   });
 
-/** Runda walki z dzikim Pokémonem — osłabia go przed rzutem Ballem. */
-export const fightWild = createServerFn({ method: "POST" })
+/** Jedna tura interaktywnej walki 1 na 1 z dzikim Pokémonem (gracz wybiera atak). */
+export const fightWildMove = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { encounterId: string }) => {
+  .inputValidator((input: { encounterId: string; pokemonId: string; move: string }) => {
     if (!input?.encounterId) throw new Error("Brak spotkania.");
-    return { encounterId: input.encounterId };
+    if (!input?.pokemonId) throw new Error("Wybierz Pokémona do walki.");
+    if (!input?.move) throw new Error("Wybierz atak.");
+    return {
+      encounterId: input.encounterId,
+      pokemonId: input.pokemonId,
+      move: String(input.move).slice(0, 40),
+    };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -403,21 +453,30 @@ export const fightWild = createServerFn({ method: "POST" })
     if (!row || row.status !== "active" || row.kind !== "wild") {
       throw new Error("To spotkanie już się zakończyło.");
     }
-
-    const party = await loadParty(supabase, userId);
-    const lead = party.find((p) => !p.fainted && p.hp_current > 0);
-    const log: string[] = [...((row.log as string[]) ?? [])];
-    if (!lead) {
-      log.push("Cała drużyna jest zemdlona — ulecz Pokémony w zakładce Drużyna.");
-      await supabase.from("encounters").update({ status: "lost", log }).eq("id", row.id);
+    if (row.hp_current <= 0) {
       return {
         ok: false as const,
-        reason: "Cała drużyna jest zemdlona. Ulecz Pokémony i wracaj na szlak.",
+        reason: "Dziki Pokémon jest już pokonany — rzuć Ballem albo idź dalej.",
         state: await buildState(supabase, userId),
       };
     }
 
-    const me = toFighter(lead);
+    const party = await loadParty(supabase, userId);
+    const mine = party.find((p) => p.id === data.pokemonId);
+    const log: string[] = [...((row.log as string[]) ?? [])];
+    if (!mine || mine.fainted || mine.hp_current <= 0) {
+      return {
+        ok: false as const,
+        reason: "Ten Pokémon nie może walczyć. Wybierz innego lub ulecz drużynę.",
+        state: await buildState(supabase, userId),
+      };
+    }
+
+    const me = toFighter(mine);
+    const myMoves = movePool(mine.species_id).filter((m) => m.level <= mine.level);
+    const move = myMoves.find((m) => m.name === data.move);
+    if (!move) throw new Error("Ten Pokémon nie zna tego ataku.");
+
     const wildType = (row.species_type as string) ?? "Normalny";
     const foe: Fighter = {
       name: row.species_name ?? "Dziki Pokémon",
@@ -430,40 +489,67 @@ export const fightWild = createServerFn({ method: "POST" })
       spe: statFromIv(row.level, 16),
     };
 
+    const noteFor = (mult: number) =>
+      mult > 1 ? " Super skuteczny!" : mult < 1 ? " Nieskuteczny…" : "";
+
     const myMult = typeMultiplier(me.type, foe.type);
-    const foeMult = typeMultiplier(foe.type, me.type);
-    const myDmg = Math.max(2, Math.round((me.atk * 1.05 - foe.def * 0.5) * myMult));
-    const foeDmg = Math.max(2, Math.round((foe.atk * 0.9 - me.def * 0.5) * foeMult));
-
-    const wildHp = Math.max(1, foe.hp - myDmg);
-    const allyHp = Math.max(0, me.hp - foeDmg);
-
-    log.push(
-      `${me.name} atakuje ${foe.name} za ${myDmg}${myMult > 1 ? " (super skuteczne!)" : myMult < 1 ? " (niewiele dało)" : ""}. HP dzikiego: ${wildHp}/${foe.hpMax}.`,
+    const myDmg = Math.max(
+      2,
+      Math.round((me.atk * (move.power / 55) - foe.def * 0.5) * myMult * (0.9 + Math.random() * 0.2)),
     );
+    const wildHp = Math.max(0, foe.hp - myDmg);
     log.push(
-      `${foe.name} kontratakuje za ${foeDmg}. HP ${me.name}: ${allyHp}/${me.hpMax}.`,
+      `${me.name} używa ${move.name} i zadaje ${myDmg} obrażeń.${noteFor(myMult)} HP ${foe.name}: ${wildHp}/${foe.hpMax}.`,
     );
-    if (allyHp === 0) log.push(`${me.name} pada — wysyłasz kolejnego Pokémona.`);
+
+    let allyHp = me.hp;
+    if (wildHp > 0) {
+      const foeMoves = movePool(row.species_id ?? 0).filter((m) => m.level <= row.level);
+      const foeMove = foeMoves.length > 0 ? pick(foeMoves) : { name: "Tackle", power: 35, level: 1 };
+      const foeMult = typeMultiplier(foe.type, me.type);
+      const foeDmg = Math.max(
+        2,
+        Math.round(
+          (foe.atk * (foeMove.power / 60) - me.def * 0.5) * foeMult * (0.9 + Math.random() * 0.2),
+        ),
+      );
+      allyHp = Math.max(0, me.hp - foeDmg);
+      log.push(
+        `${foe.name} odpowiada ${foeMove.name} za ${foeDmg}.${noteFor(foeMult)} HP ${me.name}: ${allyHp}/${me.hpMax}.`,
+      );
+    } else {
+      log.push(`${foe.name} pada! Możesz rzucić Poké Ballem albo iść dalej.`);
+    }
+
+    if (allyHp === 0) log.push(`${me.name} jest Zemdlony — ulecz go w zakładce Drużyna.`);
 
     await supabase
       .from("player_pokemon")
       .update({ hp_current: allyHp, fainted: allyHp === 0 })
-      .eq("id", lead.id)
+      .eq("id", mine.id)
       .eq("owner_id", userId);
 
+    const lost = allyHp === 0 && wildHp > 0;
     await supabase
       .from("encounters")
-      .update({ hp_current: wildHp, log: log.slice(-30) })
+      .update({
+        hp_current: wildHp,
+        log: log.slice(-30),
+        ...(lost ? { status: "lost" } : {}),
+      })
       .eq("id", row.id);
 
     return {
       ok: true as const,
       wildHp,
       allyHp,
+      wildDefeated: wildHp === 0,
+      allyFainted: allyHp === 0,
+      lost,
       state: await buildState(supabase, userId),
     };
   });
+
 
 /** Rzut Poké Ballem — szansa złapania liczona serwerowo z aktualnego HP. */
 export const throwBall = createServerFn({ method: "POST" })
