@@ -400,6 +400,7 @@ function PokemonDetailPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {moves.map((move) => {
                 const known = pokemon.level >= move.level;
+                const stats = moveStats?.[move.slug];
                 return (
                   <div
                     key={move.name}
@@ -407,7 +408,19 @@ function PokemonDetailPage() {
                       known ? "border-aurora/40 bg-aurora/10" : "border-border/60 opacity-70"
                     }`}
                   >
-                    <p className="font-medium">{move.name}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium">{move.name}</p>
+                      {stats ? <TypeBadges types={[stats.type]} /> : null}
+                    </div>
+                    {stats ? (
+                      <p className="mt-1 text-xs">
+                        {stats.category} · Moc {stats.power ?? "—"} · Celność{" "}
+                        {stats.accuracy ? `${stats.accuracy}%` : "—"}
+                        {stats.pp ? ` · PP ${stats.pp}` : ""}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted-foreground">Wczytuję statystyki…</p>
+                    )}
                     <p className="mt-1 text-xs text-muted-foreground">
                       {known
                         ? `Opanowany (Lvl ${move.level || 1})`
