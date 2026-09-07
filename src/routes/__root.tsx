@@ -85,6 +85,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Przeglądarkowe RPG: eksploruj biomy, łap Pokémony, walcz w PvP i zdobywaj odznaki Sal.",
       },
+      {
+        name: "google-site-verification",
+        content: "fLr42L6DyXeRyhV9hiiZrITMTSbN6J4NjfAQmmszFmc",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
