@@ -358,6 +358,97 @@ export type Database = {
         }
         Relationships: []
       }
+      player_bonuses: {
+        Row: {
+          bonus_key: string
+          created_at: string
+          id: string
+          label: string
+          owner_id: string
+          rare_bonus_pct: number
+          shiny_bonus_pct: number
+          unlocked_at: string
+          updated_at: string
+        }
+        Insert: {
+          bonus_key: string
+          created_at?: string
+          id?: string
+          label: string
+          owner_id: string
+          rare_bonus_pct?: number
+          shiny_bonus_pct?: number
+          unlocked_at?: string
+          updated_at?: string
+        }
+        Update: {
+          bonus_key?: string
+          created_at?: string
+          id?: string
+          label?: string
+          owner_id?: string
+          rare_bonus_pct?: number
+          shiny_bonus_pct?: number
+          unlocked_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_bonuses_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_buffs: {
+        Row: {
+          buff_key: string
+          created_at: string
+          expires_at: string
+          id: string
+          label: string
+          owner_id: string
+          rare_bonus_pct: number
+          shiny_bonus_pct: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          buff_key: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          label: string
+          owner_id: string
+          rare_bonus_pct?: number
+          shiny_bonus_pct?: number
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          buff_key?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          label?: string
+          owner_id?: string
+          rare_bonus_pct?: number
+          shiny_bonus_pct?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_buffs_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_items: {
         Row: {
           created_at: string
