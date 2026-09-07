@@ -17,10 +17,18 @@ export function PokemonCard({
     Math.min(100, Math.round((pokemon.hp_current / Math.max(1, pokemon.hp_max)) * 100)),
   );
   return (
-    <article className="glass-panel rounded-2xl p-5 text-center">
+    <article className="glass-panel relative rounded-2xl p-5 text-center">
+      {pokemon.is_shiny ? (
+        <span
+          title="Shiny — rzadka odmiana kolorystyczna"
+          className="absolute right-3 top-3 rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-semibold text-amber-300 ring-1 ring-amber-300/50"
+        >
+          ★ Shiny
+        </span>
+      ) : null}
       <Link to="/pokemon/$id" params={{ id: pokemon.id }} className="block tile-hover">
         <img
-          src={artworkUrl(pokemon.species_id)}
+          src={artworkUrl(pokemon.species_id, pokemon.is_shiny)}
           alt={pokemon.nickname ?? pokemon.species_name}
           loading="lazy"
           width={220}

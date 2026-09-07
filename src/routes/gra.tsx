@@ -240,7 +240,7 @@ function TrainerDashboard() {
                       className="tile-hover glass-panel flex w-32 flex-col items-center rounded-xl p-2 text-center"
                     >
                       <img
-                        src={artworkUrl(pokemon.species_id)}
+                        src={artworkUrl(pokemon.species_id, pokemon.is_shiny)}
                         alt={pokemon.species_name}
                         loading="lazy"
                         width={96}
