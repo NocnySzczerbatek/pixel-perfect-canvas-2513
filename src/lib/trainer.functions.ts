@@ -30,6 +30,12 @@ export type PokemonRow = {
   iv_spa: number;
   iv_spd: number;
   iv_spe: number;
+  train_hp: number;
+  train_atk: number;
+  train_def: number;
+  train_spa: number;
+  train_spd: number;
+  train_spe: number;
   nature: string | null;
   ability: string | null;
   training_points: number;
