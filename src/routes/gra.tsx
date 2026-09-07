@@ -247,7 +247,10 @@ function TrainerDashboard() {
                         height={96}
                         className={`h-16 w-16 object-contain ${pokemon.fainted ? "opacity-40 grayscale" : ""}`}
                       />
-                      <p className="mt-1 truncate text-sm font-medium">{pokemon.species_name}</p>
+                      <p className="mt-1 truncate text-sm font-medium">
+                        {pokemon.is_shiny ? <span className="text-amber-300">★ </span> : null}
+                        {pokemon.species_name}
+                      </p>
                       <TypeBadges speciesId={pokemon.species_id} className="mt-0.5" />
                       <p className="text-[11px] text-muted-foreground">Lvl {pokemon.level}</p>
                       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
