@@ -82,14 +82,21 @@ function OdznakiPage() {
                 }`}
               >
                 <div
-                  className="mx-auto flex h-24 w-24 items-center justify-center rounded-full shadow-xl transition-transform duration-300 group-hover:[transform:rotateY(24deg)_rotateX(12deg)_scale(1.08)]"
+                  className="mx-auto flex h-24 w-24 items-center justify-center transition-transform duration-300 group-hover:[transform:rotateY(24deg)_rotateX(12deg)_scale(1.08)]"
                   style={{
                     background: badge.gradient,
-                    boxShadow: `0 12px 30px -10px ${badge.accent}`,
+                    clipPath: badge.shape,
+                    filter: `drop-shadow(0 10px 16px ${badge.accent}55)`,
+                    border: `2px solid ${badge.accent}`,
                   }}
                   aria-hidden
                 >
-                  <span className="font-display text-2xl text-[#0b1020]">{badge.index}</span>
+                  <span
+                    className="font-display text-2xl"
+                    style={{ color: "#0b1020", textShadow: `0 1px 0 ${badge.accent}` }}
+                  >
+                    {badge.index}
+                  </span>
                 </div>
                 <p className="mt-4 font-display text-lg">{badge.badgeName}</p>
                 <p className="text-xs text-muted-foreground">
