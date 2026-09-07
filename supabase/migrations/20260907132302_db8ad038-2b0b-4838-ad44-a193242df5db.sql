@@ -1,0 +1,2 @@
+ALTER TABLE public.encounters DROP CONSTRAINT IF EXISTS encounters_status_check;
+ALTER TABLE public.encounters ADD CONSTRAINT encounters_status_check CHECK (status = ANY (ARRAY['active'::text, 'caught'::text, 'fled'::text, 'resolved'::text, 'skipped'::text, 'lost'::text]));
