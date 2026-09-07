@@ -122,9 +122,16 @@ export const REGION_SPECIES: Record<string, BiomeSpecies[]> = {
   ],
 };
 
-/** Mapa typów wszystkich gatunków użytych w grze (biomy + startery). */
+/** Mapa typów wszystkich gatunków (pełny Pokédex + biomy + startery). */
+const TYPES_MAP: Record<number, string[]> = (() => {
+  const map: Record<number, string[]> = {};
+  for (const entry of FULL_DEX) map[entry.id] = entry.types;
+  return map;
+})();
+
 const TYPE_MAP: Record<number, string> = (() => {
   const map: Record<number, string> = {};
+  for (const entry of FULL_DEX) map[entry.id] = entry.type;
   for (const biome of BIOMES) {
     for (const species of biome.species) map[species.id] = species.type;
   }
