@@ -5,6 +5,7 @@ import { BookOpen, CheckCircle2, Target } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import oakPortrait from "@/assets/profesor-oak.png.asset.json";
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
 import { OAK_STAGES, QUEST_PRESETS, type QuestDifficulty } from "@/lib/quests";
