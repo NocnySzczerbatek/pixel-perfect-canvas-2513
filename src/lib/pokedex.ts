@@ -206,7 +206,21 @@ export function abilitiesFor(type: string) {
   return ABILITIES_BY_TYPE[type] ?? ABILITIES_BY_TYPE["Normalny"]!;
 }
 
-export type Move = { name: string; level: number; power: number };
+export type Move = {
+  name: string;
+  level: number;
+  power: number;
+  type: string;
+  category: "Fizyczny" | "Specjalny";
+  accuracy: number;
+};
+
+/** Kategoria ataku wynika z typu, jak w klasycznych generacjach. */
+const SPECIAL_TYPES = ["Ogień", "Woda", "Trawa", "Elektryczny", "Psychiczny", "Lód", "Smok"];
+
+export function categoryForType(type: string): "Fizyczny" | "Specjalny" {
+  return SPECIAL_TYPES.includes(type) ? "Specjalny" : "Fizyczny";
+}
 
 const TYPE_MOVES: Record<string, string[]> = {
   Trawa: ["Absorb", "Vine Whip", "Razor Leaf", "Mega Drain", "Seed Bomb", "Energy Ball", "Leaf Blade", "Solar Beam"],
@@ -238,6 +252,9 @@ export function movePool(speciesId: number): Move[] {
     name,
     level: MOVE_LEVELS[index] ?? 60,
     power: MOVE_POWERS[index] ?? 110,
+    type,
+    category: categoryForType(type),
+    accuracy: index >= 7 ? 80 : index >= 6 ? 90 : 100,
   }));
 }
 

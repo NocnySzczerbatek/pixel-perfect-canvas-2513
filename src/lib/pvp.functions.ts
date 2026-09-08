@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
+import { allyFighter } from "@/lib/fighters";
 import { speciesType } from "@/lib/pokedex";
 
 async function writeDb(): Promise<any> {
@@ -47,22 +48,11 @@ export type PvpState = {
 };
 
 function toFighter(row: any): Fighter {
-  const type = (row.species_type as string) ?? speciesType(row.species_id);
-  return {
-    id: row.id,
-    name: row.nickname ?? row.species_name,
-    type,
-    level: row.level,
-    hp: row.hp_current,
-    hpMax: row.hp_max,
-    atk: statFromIv(row.level, row.iv_atk ?? 0, 9),
-    def: statFromIv(row.level, row.iv_def ?? 0, 8),
-    spe: statFromIv(row.level, row.iv_spe ?? 0, 8),
-  };
+  return allyFighter(row);
 }
 
 const PARTY_COLUMNS =
-  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_atk, iv_def, iv_spe, iv_hp";
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, ability, is_shiny";
 
 async function buildState(supabase: any, userId: string): Promise<PvpState> {
   const now = Date.now();
@@ -217,6 +207,7 @@ export const raidTrainer = createServerFn({ method: "POST" })
           ];
 
     const result = simulateTeamBattle(allies, foes);
+    const report = result.report;
     const percent = 5 + Math.floor(Math.random() * 6); // 5–10%
 
     for (const [id, hp] of Object.entries(result.allyHp)) {
@@ -267,9 +258,17 @@ export const raidTrainer = createServerFn({ method: "POST" })
       coins_stolen: stolen,
     });
 
+    report.coins = result.won ? stolen : 0;
+    report.extras.push(
+      result.won
+        ? `Zabierasz rywalowi ${stolen} Catch Coins (${percent}%).`
+        : `Rywal zabiera Ci ${stolen} Catch Coins (${percent}%).`,
+    );
+
     return {
       ok: true as const,
       won: result.won,
+      report,
       stolen,
       percent,
       log: [

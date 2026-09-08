@@ -1,6 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+
+import { BallPicker } from "@/components/game/BallPicker";
+import { BattleTheatre } from "@/components/game/BattleTheatre";
+import type { BattleReport } from "@/lib/battle";
 import { useEffect, useMemo, useState } from "react";
 import { Swords } from "lucide-react";
 import { toast } from "sonner";
@@ -12,11 +16,11 @@ import { TrainerAvatar } from "@/components/game/TrainerAvatar";
 import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
 import { artworkUrl } from "@/lib/game-data";
-import { BALLS, HEAL_ITEMS, RAZZ, ballByKey } from "@/lib/items";
+import { HEAL_ITEMS } from "@/lib/items";
 import { itemSprite } from "@/lib/pokedex";
 import {
   dismissEncounter,
-  fightWildMove,
+  autoFightWild,
   getExplorationState,
   resolveBotBattle,
   throwBall,
@@ -58,6 +62,7 @@ function EksploracjaPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [report, setReport] = useState<BattleReport | null>(null);
   const [lastBiome, setLastBiome] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<BattleOutcome | null>(null);
   const [activeMonId, setActiveMonId] = useState<string | null>(null);
@@ -71,7 +76,7 @@ function EksploracjaPage() {
   const fetchState = useServerFn(getExplorationState);
   const travelFn = useServerFn(travel);
   const throwBallFn = useServerFn(throwBall);
-  const fightMoveFn = useServerFn(fightWildMove);
+  const autoFightFn = useServerFn(autoFightWild);
   const resolveBotFn = useServerFn(resolveBotBattle);
   const dismissFn = useServerFn(dismissEncounter);
   const healFn = useServerFn(useHealItem);
@@ -90,6 +95,7 @@ function EksploracjaPage() {
   };
 
   const handleTravel = async (biomeSlug: string) => {
+    setReport(null);
     if (!userId || busy) return;
     setBusy(true);
     setOutcome(null);
@@ -110,22 +116,17 @@ function EksploracjaPage() {
     }
   };
 
-  const handleMove = async (encounter: EncounterView, pokemonId: string, move: string) => {
+  const handleAutoFight = async (encounter: EncounterView, pokemonId: string) => {
     if (!userId || busy) return;
     setBusy(true);
     try {
-      const result = await fightMoveFn({ data: { encounterId: encounter.id, pokemonId, move } });
+      const result = await autoFightFn({ data: { encounterId: encounter.id, pokemonId } });
       if (!result.ok) {
         toast.error(result.reason);
-      } else if (result.wildDefeated) {
-        toast.success(`${encounter.species_name} pokonany — łap albo idź dalej!`);
-      } else if (result.allyFainted) {
-        toast.error("Twój Pokémon jest Zemdlony.");
-        setOutcome({
-          won: false,
-          biome: encounter.biome,
-          label: encounter.species_name ?? "dziki Pokémon",
-        });
+      } else {
+        setReport(result.report);
+        if (result.wildDefeated) toast.success(`${encounter.species_name} pokonany — łap albo idź dalej!`);
+        else toast.error("Twój Pokémon jest Zemdlony.");
       }
       updateState(result.state);
     } catch (err) {
@@ -141,6 +142,7 @@ function EksploracjaPage() {
     setBusy(true);
     try {
       const result = await throwBallFn({ data: { encounterId, ball, razz } });
+      if (result.ok && (result.caught || result.fled)) setReport(null);
       if (!result.ok) {
         toast.error(result.reason);
       } else if (result.caught) {
@@ -183,7 +185,8 @@ function EksploracjaPage() {
       const label = `${encounter.trainer_class ?? "Trener"} ${encounter.trainer_person ?? "Bot"}`;
       if (result.won) toast.success(`Wygrana z ${label}!`);
       else toast.error(`Przegrana z ${label}.`);
-      setOutcome({ won: result.won, biome: encounter.biome, label });
+      if (result.report) setReport(result.report);
+      else setOutcome({ won: result.won, biome: encounter.biome, label });
       updateState(result.state);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Błąd walki");
@@ -271,7 +274,9 @@ function EksploracjaPage() {
               activeMonId={activeMonId}
               onSelectMon={setActiveMonId}
               onThrowBall={handleThrowBall}
-              onMove={handleMove}
+              report={report}
+              onFight={handleAutoFight}
+              onCloseReport={() => setReport(null)}
               onBattle={handleBattle}
               onDismiss={handleDismiss}
               onNext={handleNext}
@@ -481,7 +486,9 @@ function EncounterCard({
   activeMonId,
   onSelectMon,
   onThrowBall,
-  onMove,
+  report,
+  onFight,
+  onCloseReport,
   onBattle,
   onDismiss,
   onNext,
@@ -496,7 +503,9 @@ function EncounterCard({
   activeMonId: string | null;
   onSelectMon: (id: string) => void;
   onThrowBall: (id: string, ball?: string, razz?: boolean) => void;
-  onMove: (encounter: EncounterView, pokemonId: string, move: string) => void;
+  report: BattleReport | null;
+  onFight: (encounter: EncounterView, pokemonId: string) => void;
+  onCloseReport: () => void;
   onBattle: (encounter: EncounterView) => void;
   onDismiss: (id: string) => void;
   onNext: (encounter: EncounterView) => void;
@@ -515,10 +524,7 @@ function EncounterCard({
       ),
     ),
   );
-  const [ballKey, setBallKey] = useState<string>("poke");
   const [useRazz, setUseRazz] = useState(false);
-  const selectedBall = ballByKey(ballKey) ?? BALLS[0]!;
-  const ballCount = balls[selectedBall.key] ?? 0;
   const ready = party.filter((mon) => !mon.fainted && mon.hp_current > 0);
   const active = ready.find((mon) => mon.id === activeMonId) ?? ready[0] ?? null;
   const defeated = encounter.hp_current <= 0;
@@ -628,103 +634,51 @@ function EncounterCard({
             </div>
           ) : null}
 
-          {encounter.kind === "wild" ? (
-            <div className="mt-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Ball</p>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {BALLS.map((ball) => {
-                  const count = balls[ball.key] ?? 0;
-                  return (
-                    <button
-                      key={ball.key}
-                      onClick={() => setBallKey(ball.key)}
-                      disabled={busy || count <= 0}
-                      title={ball.note}
-                      className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs disabled:opacity-40 ${
-                        ballKey === ball.key
-                          ? "border-aurora bg-aurora/15 text-aurora"
-                          : "border-border/60 text-muted-foreground"
-                      }`}
-                    >
-                      <img
-                        src={itemSprite(ball.sprite)}
-                        alt=""
-                        width={20}
-                        height={20}
-                        className="h-5 w-5 [image-rendering:pixelated]"
-                      />
-                      {ball.label} · {count}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => setUseRazz((value) => !value)}
-                  disabled={busy || razzBerries <= 0}
-                  title={RAZZ.note}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs disabled:opacity-40 ${
-                    useRazz
-                      ? "border-ember bg-ember/15 text-ember"
-                      : "border-border/60 text-muted-foreground"
-                  }`}
-                >
-                  <img
-                    src={itemSprite(RAZZ.sprite)}
-                    alt=""
-                    width={20}
-                    height={20}
-                    className="h-5 w-5 [image-rendering:pixelated]"
-                  />
-                  {RAZZ.label} · {razzBerries}
-                </button>
-              </div>
-              {active ? (
-                <>
-                  <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Leczenie w walce
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {HEAL_ITEMS.map((item) => {
-                      const count = heals[item.key] ?? 0;
-                      return (
-                        <button
-                          key={item.key}
-                          onClick={() => onHeal(active.id, item.key, encounter.id)}
-                          disabled={busy || count <= 0 || item.revive}
-                          title={item.note}
-                          className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground disabled:opacity-40"
-                        >
-                          <img
-                            src={itemSprite(item.sprite)}
-                            alt=""
-                            width={20}
-                            height={20}
-                            className="h-5 w-5 [image-rendering:pixelated]"
-                          />
-                          {item.label} · {count}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              ) : null}
-            </div>
-          ) : null}
-
-          {defeated ? (
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button
-                onClick={() => onThrowBall(encounter.id, selectedBall.key, useRazz)}
-                disabled={busy || ballCount <= 0}
+          {report ? (
+            <div className="mt-6">
+              <BattleTheatre
+                report={report}
+                allyLabel={active?.name ?? "Twój Pokémon"}
+                foeLabel={encounter.species_name ?? "Dziki Pokémon"}
               >
-                <img
-                  src={itemSprite(selectedBall.sprite)}
-                  alt=""
-                  width={20}
-                  height={20}
-                  className="h-5 w-5 [image-rendering:pixelated]"
-                />
-                Złap go — {selectedBall.label} ({ballCount})
-              </Button>
+                {defeated ? (
+                  <div className="space-y-4">
+                    <BallPicker
+                      balls={balls}
+                      razzBerries={razzBerries}
+                      useRazz={useRazz}
+                      onToggleRazz={setUseRazz}
+                      busy={busy}
+                      onThrow={(ball) => onThrowBall(encounter.id, ball, useRazz)}
+                    />
+                    <Button variant="outline" onClick={() => onNext(encounter)} disabled={busy}>
+                      Dalej
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      onCloseReport();
+                      onNext(encounter);
+                    }}
+                    disabled={busy}
+                  >
+                    Dalej
+                  </Button>
+                )}
+              </BattleTheatre>
+            </div>
+          ) : defeated ? (
+            <div className="mt-6 space-y-4">
+              <BallPicker
+                balls={balls}
+                razzBerries={razzBerries}
+                useRazz={useRazz}
+                onToggleRazz={setUseRazz}
+                busy={busy}
+                onThrow={(ball) => onThrowBall(encounter.id, ball, useRazz)}
+              />
               <Button variant="outline" onClick={() => onNext(encounter)} disabled={busy}>
                 Dalej
               </Button>
@@ -732,43 +686,43 @@ function EncounterCard({
           ) : active ? (
             <div className="mt-6">
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Wybierz atak
+                Leczenie przed walką
               </p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                {active.moves.map((move) => (
-                  <Button
-                    key={move.name}
-                    variant="secondary"
-                    className="h-auto flex-col items-start py-2"
-                    disabled={busy}
-                    onClick={() => onMove(encounter, active.id, move.name)}
-                  >
-                    <span className="font-medium">{move.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      moc {move.power} · {active.species_type}
-                    </span>
-                  </Button>
-                ))}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {HEAL_ITEMS.map((item) => {
+                  const count = heals[item.key] ?? 0;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => onHeal(active.id, item.key, encounter.id)}
+                      disabled={busy || count <= 0 || item.revive}
+                      title={item.note}
+                      className="flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground disabled:opacity-40"
+                    >
+                      <img
+                        src={itemSprite(item.sprite)}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="h-5 w-5 [image-rendering:pixelated]"
+                      />
+                      {item.label} · {count}
+                    </button>
+                  );
+                })}
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
-                <Button
-                  variant="secondary"
-                  onClick={() => onThrowBall(encounter.id, selectedBall.key, useRazz)}
-                  disabled={busy || ballCount <= 0}
-                >
-                  <img
-                    src={itemSprite(selectedBall.sprite)}
-                    alt=""
-                    width={20}
-                    height={20}
-                    className="h-5 w-5 [image-rendering:pixelated]"
-                  />
-                  Rzut {selectedBall.label} ({ballCount})
+                <Button onClick={() => onFight(encounter, active.id)} disabled={busy}>
+                  <Swords className="h-4 w-4" aria-hidden />
+                  Walcz automatycznie
                 </Button>
                 <Button variant="outline" onClick={() => onDismiss(encounter.id)} disabled={busy}>
                   Uciekaj
                 </Button>
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Twój Pokémon sam wybiera ataki. Po wygranej wybierzesz Poké Balla.
+              </p>
             </div>
           ) : (
             <div className="mt-6">
@@ -834,8 +788,29 @@ function EncounterCard({
             </div>
           </div>
 
+          {report ? (
+            <div className="mt-6">
+              <BattleTheatre
+                report={report}
+                allyLabel="Twoja drużyna"
+                foeLabel={`${encounter.trainer_class ?? "Trener"} ${encounter.trainer_person ?? ""}`}
+              >
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    onCloseReport();
+                    onNext(encounter);
+                  }}
+                  disabled={busy}
+                >
+                  Dalej
+                </Button>
+              </BattleTheatre>
+            </div>
+          ) : null}
+
           <div className="mt-6 flex flex-wrap gap-3">
-            {encounter.kind === "bot" && (
+            {encounter.kind === "bot" && !report && (
               <Button onClick={() => onBattle(encounter)} disabled={busy}>
                 <Swords className="h-4 w-4" aria-hidden />
                 Walcz

@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
+import { simulateTeamBattle, type Fighter } from "@/lib/battle";
+import { allyFighter, foeFighter } from "@/lib/fighters";
 import { gymsForRegion, type Gym } from "@/lib/gyms";
 import { MEGA_STONE } from "@/lib/items";
 import { speciesType } from "@/lib/pokedex";
@@ -50,36 +51,16 @@ function leaderTeam(gym: Gym) {
   }));
 }
 
-function toFoe(member: { species_name: string; species_type: string; level: number }): Fighter {
-  return {
-    name: member.species_name,
-    type: member.species_type,
-    level: member.level,
-    hp: hpFromIv(member.level, 12),
-    hpMax: hpFromIv(member.level, 12),
-    atk: statFromIv(member.level, 12, 9),
-    def: statFromIv(member.level, 10, 8),
-    spe: statFromIv(member.level, 10, 8),
-  };
+function toFoe(member: { species_id: number; species_name: string; level: number }): Fighter {
+  return foeFighter(member, 14, 1.05);
 }
 
 function toAlly(row: any, boost: number): Fighter {
-  const type = speciesType(row.species_id);
-  return {
-    id: row.id,
-    name: row.nickname ?? row.species_name,
-    type,
-    level: row.level,
-    hp: row.hp_current,
-    hpMax: row.hp_max,
-    atk: Math.round(statFromIv(row.level, row.iv_atk ?? 0, 9) * (1 + boost)),
-    def: statFromIv(row.level, row.iv_def ?? 0, 8),
-    spe: statFromIv(row.level, row.iv_spe ?? 0, 8),
-  };
+  return allyFighter(row, boost);
 }
 
 const PARTY_COLUMNS =
-  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_atk, iv_def, iv_spe";
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, ability, is_shiny";
 
 async function buildState(supabase: any, userId: string): Promise<GymsState> {
   const [{ data: profile }, { data: badges }] = await Promise.all([
@@ -192,6 +173,7 @@ export const challengeGym = createServerFn({ method: "POST" })
 
     const foes = leaderTeam(gym).map(toFoe);
     const result = simulateTeamBattle(allies, foes);
+    const report = result.report;
     const log = [
       `${gym.leader} (Sala ${gym.index}, typ ${gym.type}) przyjmuje wyzwanie!`,
       ...(useMega ? [`Aktywujesz ${MEGA_STONE.label}: +30% siły ataku.`] : []),
@@ -234,15 +216,20 @@ export const challengeGym = createServerFn({ method: "POST" })
       if (gym.index === 8) {
         updates.mega_stones = (updates.mega_stones ?? profile.mega_stones ?? 0) + 1;
       }
+      report.trainer_exp = gym.rewardExp;
+      report.coins = gym.rewardCoins;
+      report.extras.push(`Zdobywasz odznakę ${gym.badgeName}.`);
       log.push(
         `Zdobywasz ${gym.badgeName}! +${gym.rewardExp} EXP, +${gym.rewardCoins} Catch Coins.`,
       );
       if (gym.index === 8) log.push(`${gym.leader} wręcza Ci ${MEGA_STONE.label}.`);
+      const gymGain = expForDefeat(gym.level, "gym");
+      for (const ally of allies) report.pokemon_exp.push({ name: ally.name, exp: gymGain });
       log.push(
         ...(await awardPokemonExp(
           supabase,
           userId,
-          Object.keys(result.allyHp).map((id) => ({ id, exp: expForDefeat(gym.level, "gym") })),
+          Object.keys(result.allyHp).map((id) => ({ id, exp: gymGain })),
         )),
       );
 
@@ -286,6 +273,7 @@ export const challengeGym = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       won: result.won,
+      report,
       badge: result.won ? gym.badgeName : null,
       log,
       state: await buildState(supabase, userId),

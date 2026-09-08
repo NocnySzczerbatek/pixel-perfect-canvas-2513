@@ -9,11 +9,13 @@ import { progressActivities } from "@/lib/quests.functions";
 import { effectiveRegion } from "@/lib/travel";
 import {
   hpFromIv,
+  pickWeather,
   simulateTeamBattle,
   statFromIv,
-  typeMultiplier,
+  type BattleReport,
   type Fighter,
 } from "@/lib/battle";
+import { allyFighter, foeFighter, wildFighter } from "@/lib/fighters";
 import {
   NATURES,
   TRAINER_CLASSES,
@@ -242,13 +244,18 @@ type PartyRow = {
   hp_current: number;
   hp_max: number;
   fainted: boolean;
+  iv_hp: number;
   iv_atk: number;
   iv_def: number;
+  iv_spa: number;
+  iv_spd: number;
   iv_spe: number;
+  ability: string | null;
+  is_shiny: boolean | null;
 };
 
 const PARTY_COLUMNS =
-  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_atk, iv_def, iv_spe";
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, ability, is_shiny";
 
 async function loadParty(supabase: any, userId: string): Promise<PartyRow[]> {
   const { data } = await supabase
@@ -261,18 +268,9 @@ async function loadParty(supabase: any, userId: string): Promise<PartyRow[]> {
 }
 
 function toFighter(row: PartyRow): Fighter {
-  return {
-    id: row.id,
-    name: row.nickname ?? row.species_name,
-    type: speciesType(row.species_id),
-    level: row.level,
-    hp: row.hp_current,
-    hpMax: row.hp_max,
-    atk: statFromIv(row.level, row.iv_atk),
-    def: statFromIv(row.level, row.iv_def),
-    spe: statFromIv(row.level, row.iv_spe),
-  };
+  return allyFighter(row);
 }
+
 
 function toPartyView(row: PartyRow): PartyView {
   const type = speciesType(row.species_id);
@@ -516,18 +514,13 @@ export const travel = createServerFn({ method: "POST" })
     };
   });
 
-/** Jedna tura interaktywnej walki 1 na 1 z dzikim Pokémonem (gracz wybiera atak). */
-export const fightWildMove = createServerFn({ method: "POST" })
+/** Automatyczna walka 1 na 1 z dzikim Pokémonem — Pokémon sam wybiera ataki. */
+export const autoFightWild = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { encounterId: string; pokemonId: string; move: string }) => {
+  .inputValidator((input: { encounterId: string; pokemonId: string }) => {
     if (!input?.encounterId) throw new Error("Brak spotkania.");
     if (!input?.pokemonId) throw new Error("Wybierz Pokémona do walki.");
-    if (!input?.move) throw new Error("Wybierz atak.");
-    return {
-      encounterId: input.encounterId,
-      pokemonId: input.pokemonId,
-      move: String(input.move).slice(0, 40),
-    };
+    return { encounterId: input.encounterId, pokemonId: input.pokemonId };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -550,7 +543,6 @@ export const fightWildMove = createServerFn({ method: "POST" })
 
     const party = await loadParty(supabase, userId);
     const mine = party.find((p) => p.id === data.pokemonId);
-    const log: string[] = [...((row.log as string[]) ?? [])];
     if (!mine || mine.fainted || mine.hp_current <= 0) {
       return {
         ok: false as const,
@@ -559,85 +551,49 @@ export const fightWildMove = createServerFn({ method: "POST" })
       };
     }
 
-    const me = toFighter(mine);
-    const myMoves = battleMoves(mine.species_id, mine.level);
-    const move = myMoves.find((m) => m.name === data.move);
-    if (!move) throw new Error("Ten Pokémon nie zna tego ataku.");
+    const me = allyFighter(mine);
+    const foe = wildFighter(row);
+    const result = simulateTeamBattle([me], [foe], { weather: pickWeather() });
+    const report: BattleReport = result.report;
 
-    const wildType = (row.species_type as string) ?? "Normalny";
-    const foe: Fighter = {
-      name: row.species_name ?? "Dziki Pokémon",
-      type: wildType,
-      level: row.level,
-      hp: row.hp_current,
-      hpMax: row.hp_max,
-      atk: statFromIv(row.level, 16),
-      def: statFromIv(row.level, 16),
-      spe: statFromIv(row.level, 16),
-    };
-
-    const noteFor = (mult: number) =>
-      mult > 1 ? " Super skuteczny!" : mult < 1 ? " Nieskuteczny…" : "";
-
-    const myMult = typeMultiplier(me.type, foe.type);
-    const myDmg = Math.max(
-      2,
-      Math.round((me.atk * (move.power / 55) - foe.def * 0.5) * myMult * (0.9 + Math.random() * 0.2)),
-    );
-    const wildHp = Math.max(0, foe.hp - myDmg);
-    log.push(
-      `${me.name} używa ${move.name} i zadaje ${myDmg} obrażeń.${noteFor(myMult)} HP ${foe.name}: ${wildHp}/${foe.hpMax}.`,
-    );
-
-    let allyHp = me.hp;
-    if (wildHp > 0) {
-      const foeMoves = battleMoves(row.species_id ?? 0, row.level);
-      const foeMove = foeMoves.length > 0 ? pick(foeMoves) : { name: "Tackle", power: 35, level: 1 };
-      const foeMult = typeMultiplier(foe.type, me.type);
-      const foeDmg = Math.max(
-        2,
-        Math.round(
-          (foe.atk * (foeMove.power / 60) - me.def * 0.5) * foeMult * (0.9 + Math.random() * 0.2),
-        ),
-      );
-      allyHp = Math.max(0, me.hp - foeDmg);
-      log.push(
-        `${foe.name} odpowiada ${foeMove.name} za ${foeDmg}.${noteFor(foeMult)} HP ${me.name}: ${allyHp}/${me.hpMax}.`,
-      );
-    } else {
-      log.push(`${foe.name} pada! Możesz rzucić Poké Ballem albo iść dalej.`);
-      log.push(
-        ...(await awardPokemonExp(supabase, userId, [
-          { id: mine.id, exp: expForDefeat(row.level, "wild") },
-        ])),
-      );
-    }
-
-    if (allyHp === 0) log.push(`${me.name} jest Zemdlony — ulecz go w zakładce Drużyna.`);
+    const allyHp = result.allyHp[mine.id] ?? 0;
+    const finalWildHp = report.won ? 0 : row.hp_current;
+    const log: string[] = [...((row.log as string[]) ?? []), ...result.log];
 
     await (await writeDb())
       .from("player_pokemon")
-      .update({ hp_current: allyHp, fainted: allyHp === 0 })
+      .update({ hp_current: allyHp, fainted: allyHp <= 0 })
       .eq("id", mine.id)
       .eq("owner_id", userId);
 
-    const lost = allyHp === 0 && wildHp > 0;
+    if (report.won) {
+      const trainerExp = Math.max(2, Math.round(row.level / 2));
+      report.trainer_exp = trainerExp;
+      report.extras.push(...(await applyTrainerReward(supabase, userId, trainerExp, 0)));
+      const gain = expForDefeat(row.level, "wild");
+      report.pokemon_exp.push({ name: me.name, exp: gain });
+      log.push(...(await awardPokemonExp(supabase, userId, [{ id: mine.id, exp: gain }])));
+      log.push(`${foe.name} pada! Możesz rzucić Poké Ballem albo iść dalej.`);
+      report.extras.push("Dziki Pokémon jest osłabiony — teraz wybierz Poké Balla.");
+    } else {
+      log.push(`${me.name} jest Zemdlony — ulecz go w Centrum Pokémon.`);
+    }
+
     await (await writeDb())
       .from("encounters")
       .update({
-        hp_current: wildHp,
-        log: log.slice(-30),
-        ...(lost ? { status: "lost" } : {}),
+        hp_current: finalWildHp,
+        log: log.slice(-40),
+        ...(report.won ? {} : { status: "lost" }),
       })
       .eq("id", row.id);
 
     return {
       ok: true as const,
-      wildHp,
-      allyHp,
-      wildDefeated: wildHp === 0,
-      allyFainted: allyHp === 0,
-      lost,
+      report,
+      wildDefeated: report.won,
+      allyFainted: allyHp <= 0,
+      lost: !report.won,
       state: await buildState(supabase, userId),
     };
   });
@@ -809,18 +765,12 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
       };
     }
 
-    const team = ((row.bot_team as BotMember[] | null) ?? []).map((member) => ({
-      name: `${member.species_name} bota`,
-      type: member.species_type,
-      level: member.level,
-      hp: hpFromIv(member.level, 24),
-      hpMax: hpFromIv(member.level, 24),
-      atk: Math.round(statFromIv(member.level, 24) * 1.15),
-      def: Math.round(statFromIv(member.level, 24) * 1.1),
-      spe: statFromIv(member.level, 24),
-    })) as Fighter[];
+    const team = ((row.bot_team as BotMember[] | null) ?? []).map((member) =>
+      foeFighter(member, 24, 1.12, " bota"),
+    );
 
     const result = simulateTeamBattle(allies, team);
+    const report = result.report;
     log.push(`Walka z ${label}:`);
     log.push(...result.log);
 
@@ -836,14 +786,18 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
       log.push(
         `Nagroda: +${row.reward_exp} EXP trenera, +${row.reward_coins} Catch Coins.`,
       );
-      log.push(...(await applyTrainerReward(supabase, userId, row.reward_exp, row.reward_coins)));
+      report.trainer_exp = row.reward_exp;
+      report.coins = row.reward_coins;
+      report.extras.push(...(await applyTrainerReward(supabase, userId, row.reward_exp, row.reward_coins)));
       await progressActivities(supabase, userId, "battle", 1, "bot");
       const foeLevel = Math.max(1, ...team.map((f) => f.level));
+      const gain = expForDefeat(foeLevel, "bot");
+      for (const ally of allies) report.pokemon_exp.push({ name: ally.name, exp: gain });
       log.push(
         ...(await awardPokemonExp(
           supabase,
           userId,
-          Object.keys(result.allyHp).map((id) => ({ id, exp: expForDefeat(foeLevel, "bot") })),
+          Object.keys(result.allyHp).map((id) => ({ id, exp: gain })),
         )),
       );
     } else {
@@ -859,6 +813,7 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
       ok: true as const,
       won: result.won,
       log,
+      report,
       state: await buildState(supabase, userId),
     };
   });

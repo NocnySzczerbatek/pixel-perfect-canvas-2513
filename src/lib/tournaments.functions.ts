@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
+import { simulateTeamBattle, type Fighter } from "@/lib/battle";
+import { allyFighter } from "@/lib/fighters";
 import { speciesType } from "@/lib/pokedex";
 import { warsawClock } from "@/lib/time";
 import {
@@ -13,7 +14,7 @@ import {
 } from "@/lib/tournaments";
 
 const PARTY_COLUMNS =
-  "id, species_id, species_name, species_type, nickname, level, hp_current, hp_max, fainted, iv_atk, iv_def, iv_spe, iv_hp, is_shiny";
+  "id, species_id, species_name, species_type, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, ability, is_shiny";
 
 async function admin(): Promise<any> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -21,18 +22,8 @@ async function admin(): Promise<any> {
 }
 
 function toFighter(row: any, freshHp = false): Fighter {
-  const type = (row.species_type as string) ?? speciesType(row.species_id);
-  return {
-    id: row.id,
-    name: row.nickname ?? row.species_name,
-    type,
-    level: row.level,
-    hp: freshHp ? row.hp_max : row.hp_current,
-    hpMax: row.hp_max,
-    atk: statFromIv(row.level, row.iv_atk ?? 0, 9),
-    def: statFromIv(row.level, row.iv_def ?? 0, 8),
-    spe: statFromIv(row.level, row.iv_spe ?? 0, 8),
-  };
+  const fighter = allyFighter(row);
+  return freshHp ? { ...fighter, hp: row.hp_max } : fighter;
 }
 
 export type TournamentRow = {
@@ -343,6 +334,7 @@ export const fightTournamentRound = createServerFn({ method: "POST" })
     const allies = ((myMons ?? []) as any[])
       .filter((row) => !row.fainted && row.hp_current > 0)
       .map((row) => toFighter(row));
+
     if (allies.length === 0) {
       return {
         ok: false as const,
@@ -364,6 +356,7 @@ export const fightTournamentRound = createServerFn({ method: "POST" })
     }
 
     const result = simulateTeamBattle(allies, foes);
+    const report = result.report;
 
     for (const [id, hp] of Object.entries(result.allyHp)) {
       await db
@@ -397,6 +390,11 @@ export const fightTournamentRound = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       won: result.won,
+      report: (() => {
+        if (result.won) report.extras.push(`+${TOURNAMENT_WIN_POINTS} punkty turniejowe.`);
+        else report.extras.push(`Punkty trafiają do ${rivalName}.`);
+        return report;
+      })(),
       opponent: rivalName,
       log: [
         `Runda turniejowa: ${rivalName}.`,

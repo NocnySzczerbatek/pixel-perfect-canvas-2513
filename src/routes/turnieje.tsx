@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+
+import { BattleTheatre } from "@/components/game/BattleTheatre";
+import type { BattleReport } from "@/lib/battle";
 import { useQuery } from "@tanstack/react-query";
 import { Crown, Swords, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -43,6 +46,7 @@ function TournamentPage() {
   const [state, setState] = useState<TournamentState | null>(null);
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<string[]>([]);
+  const [report, setReport] = useState<BattleReport | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -105,6 +109,7 @@ function TournamentPage() {
                         () => fight(),
                         (result) => {
                           setLog(result.log);
+                          if (result.report) setReport(result.report);
                           if (result.won) toast.success(`Wygrana z ${result.opponent}! +3 punkty.`);
                           else toast.warning(`Porażka z ${result.opponent}.`);
                         },
@@ -170,6 +175,10 @@ function TournamentPage() {
                 </ul>
               )}
             </div>
+
+            {report ? (
+              <BattleTheatre report={report} allyLabel="Twoja drużyna" foeLabel="Rywal turniejowy" />
+            ) : null}
 
             {log.length > 0 ? (
               <div className="glass-panel rounded-2xl p-5">
