@@ -207,6 +207,7 @@ export const raidTrainer = createServerFn({ method: "POST" })
           ];
 
     const result = simulateTeamBattle(allies, foes);
+    const report = result.report;
     const percent = 5 + Math.floor(Math.random() * 6); // 5–10%
 
     for (const [id, hp] of Object.entries(result.allyHp)) {
@@ -257,9 +258,17 @@ export const raidTrainer = createServerFn({ method: "POST" })
       coins_stolen: stolen,
     });
 
+    report.coins = result.won ? stolen : 0;
+    report.extras.push(
+      result.won
+        ? `Zabierasz rywalowi ${stolen} Catch Coins (${percent}%).`
+        : `Rywal zabiera Ci ${stolen} Catch Coins (${percent}%).`,
+    );
+
     return {
       ok: true as const,
       won: result.won,
+      report,
       stolen,
       percent,
       log: [
