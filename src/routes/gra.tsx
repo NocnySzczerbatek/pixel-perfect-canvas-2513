@@ -479,7 +479,8 @@ const NAV_GROUPS = [
     title: "Drużyna",
     note: "Twoje Pokémony, torba i skrzynia.",
     tiles: [
-      { to: "/druzyna", label: "Drużyna", Icon: Shield, desc: "Skład i leczenie" },
+      { to: "/druzyna", label: "Drużyna", Icon: Shield, desc: "Skład i pseudonimy" },
+      { to: "/centrum", label: "Siostra Joy", Icon: HeartPulse, desc: "Centrum Pokémon: leczenie" },
       { to: "/pc-box", label: "PC Box", Icon: Boxes, desc: "Reszta kolekcji" },
       { to: "/ekwipunek", label: "Ekwipunek", Icon: Backpack, desc: "Balle i mikstury" },
       { to: "/odznaki", label: "Odznaki", Icon: Medal, desc: "Zdobyte odznaki" },
@@ -498,21 +499,3 @@ const NAV_GROUPS = [
     ],
   },
 ] as const;
-
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string | number;
-  hint?: string | undefined;
-}) {
-  return (
-    <div className="glass-panel rounded-xl p-4">
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-      <p className="mt-1 font-display text-3xl">{value}</p>
-      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-    </div>
-  );
-}
