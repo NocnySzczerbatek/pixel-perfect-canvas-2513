@@ -16,7 +16,7 @@ import { TrainerAvatar } from "@/components/game/TrainerAvatar";
 import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
 import { artworkUrl } from "@/lib/game-data";
-import { BALLS, HEAL_ITEMS, RAZZ, ballByKey } from "@/lib/items";
+import { HEAL_ITEMS } from "@/lib/items";
 import { itemSprite } from "@/lib/pokedex";
 import {
   dismissEncounter,
@@ -94,7 +94,8 @@ function EksploracjaPage() {
     queryClient.setQueryData([EXPLORATION_QUERY_KEY, userId], next);
   };
 
-  const handleTravelInner = async (biomeSlug: string) => {
+  const handleTravel = async (biomeSlug: string) => {
+    setReport(null);
     if (!userId || busy) return;
     setBusy(true);
     setOutcome(null);
