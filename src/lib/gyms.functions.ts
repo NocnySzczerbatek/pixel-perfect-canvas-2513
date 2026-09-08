@@ -79,7 +79,7 @@ function toAlly(row: any, boost: number): Fighter {
 }
 
 const PARTY_COLUMNS =
-  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_atk, iv_def, iv_spe";
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, ability, is_shiny";
 
 async function buildState(supabase: any, userId: string): Promise<GymsState> {
   const [{ data: profile }, { data: badges }] = await Promise.all([

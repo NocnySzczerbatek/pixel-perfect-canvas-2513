@@ -16,7 +16,7 @@ import { BALLS, HEAL_ITEMS, RAZZ, ballByKey } from "@/lib/items";
 import { itemSprite } from "@/lib/pokedex";
 import {
   dismissEncounter,
-  fightWildMove,
+  autoFightWild,
   getExplorationState,
   resolveBotBattle,
   throwBall,
@@ -71,7 +71,7 @@ function EksploracjaPage() {
   const fetchState = useServerFn(getExplorationState);
   const travelFn = useServerFn(travel);
   const throwBallFn = useServerFn(throwBall);
-  const fightMoveFn = useServerFn(fightWildMove);
+  const autoFightFn = useServerFn(autoFightWild);
   const resolveBotFn = useServerFn(resolveBotBattle);
   const dismissFn = useServerFn(dismissEncounter);
   const healFn = useServerFn(useHealItem);
@@ -110,22 +110,17 @@ function EksploracjaPage() {
     }
   };
 
-  const handleMove = async (encounter: EncounterView, pokemonId: string, move: string) => {
+  const handleAutoFight = async (encounter: EncounterView, pokemonId: string) => {
     if (!userId || busy) return;
     setBusy(true);
     try {
-      const result = await fightMoveFn({ data: { encounterId: encounter.id, pokemonId, move } });
+      const result = await autoFightFn({ data: { encounterId: encounter.id, pokemonId } });
       if (!result.ok) {
         toast.error(result.reason);
-      } else if (result.wildDefeated) {
-        toast.success(`${encounter.species_name} pokonany — łap albo idź dalej!`);
-      } else if (result.allyFainted) {
-        toast.error("Twój Pokémon jest Zemdlony.");
-        setOutcome({
-          won: false,
-          biome: encounter.biome,
-          label: encounter.species_name ?? "dziki Pokémon",
-        });
+      } else {
+        setReport(result.report);
+        if (result.wildDefeated) toast.success(`${encounter.species_name} pokonany — łap albo idź dalej!`);
+        else toast.error("Twój Pokémon jest Zemdlony.");
       }
       updateState(result.state);
     } catch (err) {
@@ -183,7 +178,8 @@ function EksploracjaPage() {
       const label = `${encounter.trainer_class ?? "Trener"} ${encounter.trainer_person ?? "Bot"}`;
       if (result.won) toast.success(`Wygrana z ${label}!`);
       else toast.error(`Przegrana z ${label}.`);
-      setOutcome({ won: result.won, biome: encounter.biome, label });
+      if (result.report) setReport(result.report);
+      else setOutcome({ won: result.won, biome: encounter.biome, label });
       updateState(result.state);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Błąd walki");
@@ -271,7 +267,9 @@ function EksploracjaPage() {
               activeMonId={activeMonId}
               onSelectMon={setActiveMonId}
               onThrowBall={handleThrowBall}
-              onMove={handleMove}
+              report={report}
+              onFight={handleAutoFight}
+              onCloseReport={() => setReport(null)}
               onBattle={handleBattle}
               onDismiss={handleDismiss}
               onNext={handleNext}
@@ -481,7 +479,9 @@ function EncounterCard({
   activeMonId,
   onSelectMon,
   onThrowBall,
-  onMove,
+  report,
+  onFight,
+  onCloseReport,
   onBattle,
   onDismiss,
   onNext,
@@ -496,7 +496,9 @@ function EncounterCard({
   activeMonId: string | null;
   onSelectMon: (id: string) => void;
   onThrowBall: (id: string, ball?: string, razz?: boolean) => void;
-  onMove: (encounter: EncounterView, pokemonId: string, move: string) => void;
+  report: BattleReport | null;
+  onFight: (encounter: EncounterView, pokemonId: string) => void;
+  onCloseReport: () => void;
   onBattle: (encounter: EncounterView) => void;
   onDismiss: (id: string) => void;
   onNext: (encounter: EncounterView) => void;
