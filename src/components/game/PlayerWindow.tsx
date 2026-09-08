@@ -38,7 +38,7 @@ export function PlayerWindow({
   open: boolean;
   onClose: () => void;
   profile: PlayerWindowProfile | null;
-  energyHint?: string;
+  energyHint?: string | undefined;
   onTour: () => void;
   onLogout: () => void;
   onPickAvatar: (key: string) => void;
