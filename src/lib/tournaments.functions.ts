@@ -334,7 +334,7 @@ export const fightTournamentRound = createServerFn({ method: "POST" })
     const allies = ((myMons ?? []) as any[])
       .filter((row) => !row.fainted && row.hp_current > 0)
       .map((row) => toFighter(row));
-    void 0;
+
     if (allies.length === 0) {
       return {
         ok: false as const,
