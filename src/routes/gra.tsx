@@ -6,6 +6,7 @@ import {
   Compass,
   Crown,
   Landmark,
+  Map,
   Medal,
   Plane,
   Repeat,
