@@ -14,6 +14,7 @@ import { artworkUrl } from "@/lib/game-data";
 import { challengeGym, getGymsState, type GymsState } from "@/lib/gyms.functions";
 import { MEGA_STONE } from "@/lib/items";
 import { itemSprite } from "@/lib/pokedex";
+import { leaderArt } from "@/lib/trainerArt";
 
 export const Route = createFileRoute("/sale")({
   head: () => ({
@@ -88,7 +89,16 @@ function SalePage() {
             {state.gyms.map((gym) => (
               <div key={gym.index} className="glass-panel rounded-2xl p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={leaderArt(gym.type)}
+                      alt={`Lider Sali: ${gym.leader}`}
+                      loading="lazy"
+                      width={512}
+                      height={512}
+                      className="h-20 w-20 rounded-xl border border-border/60 object-cover [image-rendering:pixelated]"
+                    />
+                    <div>
                     <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                       Sala {gym.index} · typ {gym.type}
                     </p>
@@ -97,6 +107,7 @@ function SalePage() {
                       Drużyna Lvl {gym.level} ({gym.teamSize} Pokémony) · nagroda {gym.rewardExp} EXP
                       i {gym.rewardCoins} CC
                     </p>
+                    </div>
                   </div>
                   <img
                     src={gym.imageUrl}

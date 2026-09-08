@@ -35,6 +35,7 @@ import { avatarSrc } from "@/lib/avatars";
 import { artworkUrl, findRegion } from "@/lib/game-data";
 import { setAvatar } from "@/lib/trainer.functions";
 import logoAsset from "@/assets/logo.png.asset.json";
+import { announcementsFor } from "@/lib/announcements";
 
 export const Route = createFileRoute("/gra")({
   head: () => ({
@@ -142,6 +143,7 @@ function TrainerDashboard() {
 
   const trainerExpNext = Math.round(100 * Math.pow(profile?.trainer_level ?? 1, 1.8));
 
+  const [news] = useState(() => announcementsFor());
   const [playerOpen, setPlayerOpen] = useState(false);
   const pickAvatar = useServerFn(setAvatar);
   const [tourOpen, setTourOpen] = useState(false);
@@ -365,10 +367,19 @@ function TrainerDashboard() {
 
       <section className="mt-10">
         <h2 className="text-2xl">Ogłoszenia</h2>
-        <div className="glass-panel mt-4 rounded-2xl p-5 text-sm text-muted-foreground">
-          Pogoda: mroźnie, aurora nad doliną. Wydarzenie tygodnia: +10% szansy na rzadkie
-          spotkania na Śnieżnej Polanie. Kolejne moduły — eksploracja biomów, Catch Zone,
-          walki z botami, PvP i Sale — dochodzą w następnych etapach.
+        <div className="glass-panel mt-4 space-y-2 rounded-2xl p-5 text-sm text-muted-foreground">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            {news.dayLabel} · {news.weekLabel}
+          </p>
+          <p>
+            <span className="text-foreground">Pogoda dnia:</span> {news.weather}
+          </p>
+          <p>
+            <span className="text-foreground">Wydarzenie tygodnia:</span> {news.event}
+          </p>
+          <p>
+            <span className="text-foreground">Rada:</span> {news.tip}
+          </p>
         </div>
       </section>
 

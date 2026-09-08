@@ -40,7 +40,7 @@ function TrenerzyPage() {
   const [board, setBoard] = useState<TrainerBoard | null>(null);
   const [report, setReport] = useState<BattleReport | null>(null);
   const [opponent, setOpponent] = useState<string>("Rywal");
-  const [log, setLog] = useState<string[]>([]);
+  
   const [busy, setBusy] = useState(false);
 
   const { isLoading } = useQuery({
@@ -64,7 +64,6 @@ function TrenerzyPage() {
       } else {
         setReport(result.report);
         setOpponent(result.opponent);
-        setLog(result.log);
         if (result.won) toast.success(`Wygrana z ${result.opponent}!`);
         else toast.warning(`Porażka z ${result.opponent}.`);
       }
@@ -152,17 +151,37 @@ function TrenerzyPage() {
             </div>
           )}
 
-          {log.length > 0 && !report ? (
-            <div className="glass-panel max-h-72 overflow-y-auto rounded-2xl p-5">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                Dziennik ostatniej walki
+          {board.history.length > 0 ? (
+            <section className="glass-panel rounded-2xl p-5">
+              <h2 className="font-display text-xl">Dziennik walk z Trenerami</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Zapisany na koncie — zostaje po odświeżeniu strony.
               </p>
-              <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-                {log.map((line, idx) => (
-                  <li key={idx}>{line}</li>
+              <div className="mt-4 space-y-3">
+                {board.history.map((entry) => (
+                  <details key={entry.id} className="group rounded-xl border border-border/60 p-3">
+                    <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 text-sm">
+                      <span className="flex items-center gap-2">
+                        <span className={entry.won ? "text-aurora" : "text-destructive"}>
+                          {entry.won ? "Wygrana" : "Porażka"}
+                        </span>
+                        <span>{entry.opponent}</span>
+                      </span>
+                      <span className="flex items-center gap-3 text-xs text-muted-foreground">
+                        {entry.won ? `+${entry.reward_exp} EXP · +${entry.reward_coins} CC` : "bez nagrody"}
+                        <span>{new Date(entry.created_at).toLocaleString("pl-PL")}</span>
+                        <span className="transition-transform group-open:rotate-180">▾</span>
+                      </span>
+                    </summary>
+                    <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
+                      {entry.log.map((line, idx) => (
+                        <li key={idx}>{line}</li>
+                      ))}
+                    </ul>
+                  </details>
                 ))}
-              </ul>
-            </div>
+              </div>
+            </section>
           ) : null}
         </div>
       )}
