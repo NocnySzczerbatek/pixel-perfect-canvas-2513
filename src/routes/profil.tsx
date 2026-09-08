@@ -48,6 +48,7 @@ function ProfilPage() {
   const { data, isLoading, setData } = useTrainerData();
   const rename = useServerFn(renameTrainer);
   const removeAccount = useServerFn(deleteAccount);
+  const chooseAvatar = useServerFn(setAvatar);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
