@@ -32,9 +32,9 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Mega Ewolucja: składniki z eksploracji i tworzenie kamieni gatunkowych
 - [x] Więcej Balli oraz czas odnowienia zakupu Master Balla
 - [ ] Postacie pixel-art: Profesor Oak, Liderzy i klasy trenerów
-- [ ] Dokończyć stronę Trenerzy
+- [x] Dokończyć stronę Trenerzy (wybór rywala, auto-walka, nagrody, dziennik)
 - [x] Ruchy niskopoziomowych Pokémonów: wyłącznie poznane, maks. 4
 - [x] Wykonywanie zwykłych ewolucji
-- [ ] Rozwijane sekcje walk
+- [x] Wizualny ekran walki (BattleTheatre) w eksploracji, Salach, PvP, turniejach i u Trenerów
 - [x] Pokédex regionu: spotkane/złapane gatunki, typy, statystyki bazowe, biomy występowania
 - [ ] Płatności PLN — kod gotowy, celowo wyłączone na życzenie (pakiety oznaczone „Wkrótce”)
