@@ -57,10 +57,28 @@ export function multiplierFromPct(totalPct: number): number {
   return 1 + Math.max(0, totalPct) / 100;
 }
 
-export function chanceText(multiplier: number): string {
-  const denom = Math.max(1, Math.round(1 / (SHINY_BASE_CHANCE * multiplier)));
-  return `1 / ${denom}`;
+export function shinyDenom(multiplier: number): number {
+  return Math.max(1, Math.round(1 / (SHINY_BASE_CHANCE * multiplier)));
 }
+
+export function chanceText(multiplier: number): string {
+  return `1 / ${shinyDenom(multiplier)}`;
+}
+
+export type BonusHistoryRow = {
+  id: string;
+  kind: "timed" | "permanent" | string;
+  bonus_key: string;
+  label: string;
+  source: string;
+  shiny_bonus_pct: number;
+  rare_bonus_pct: number;
+  duration_minutes: number | null;
+  started_at: string;
+  expires_at: string | null;
+  shiny_denom_before: number | null;
+  shiny_denom_after: number | null;
+};
 
 export function bonusLabelForRegionSweep(region: string): string {
   return `Wszystkie Sale regionu ${region}`;
