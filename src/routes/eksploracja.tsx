@@ -302,7 +302,6 @@ function EksploracjaPage() {
         </section>
 
         <aside className="space-y-6">
-          <LogPanel state={state} />
           <TrainerLevelPanel state={state} />
         </aside>
       </div>
@@ -825,41 +824,6 @@ function EncounterCard({
     </div>
   );
 
-}
-
-function LogPanel({ state }: { state: ExplorationState | undefined }) {
-  const entries = useMemo(() => {
-    const list: { id: string; text: string; time: string }[] = [];
-    if (state?.active?.log.length) {
-      state.active.log.forEach((line, idx) =>
-        list.push({ id: `active-${idx}`, text: line, time: state.active!.created_at }),
-      );
-    }
-    (state?.history ?? []).forEach((enc) => {
-      enc.log.forEach((line, idx) =>
-        list.push({ id: `${enc.id}-${idx}`, text: line, time: enc.created_at }),
-      );
-    });
-    return list.slice(0, 20);
-  }, [state]);
-
-  return (
-    <div className="glass-panel rounded-2xl p-5">
-      <h2 className="text-2xl">Dziennik</h2>
-      {entries.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">Jeszcze nic się nie wydarzyło. Wybierz biom!</p>
-      ) : (
-        <ul className="mt-4 space-y-3">
-          {entries.map((entry) => (
-            <li key={entry.id} className="flex gap-3 text-sm">
-              <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-aurora" />
-              <span className="text-muted-foreground">{entry.text}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
 }
 
 function TrainerLevelPanel({ state }: { state: ExplorationState | undefined }) {
