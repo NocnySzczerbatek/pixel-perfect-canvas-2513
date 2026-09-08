@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useTrainerData } from "@/hooks/useTrainerData";
+import { AVATARS } from "@/lib/avatars";
 import { findRegion } from "@/lib/game-data";
-import { deleteAccount, renameTrainer } from "@/lib/trainer.functions";
+import { deleteAccount, renameTrainer, setAvatar } from "@/lib/trainer.functions";
 
 export const Route = createFileRoute("/profil")({
   head: () => ({
@@ -66,6 +67,19 @@ function ProfilPage() {
       toast.success("Nick zaktualizowany.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udało się zapisać nicku.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleAvatar = async (key: string) => {
+    setBusy(true);
+    try {
+      const result = await chooseAvatar({ data: { key } });
+      if (result?.data) setData(result.data);
+      toast.success("Postać zmieniona.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się zapisać postaci.");
     } finally {
       setBusy(false);
     }
