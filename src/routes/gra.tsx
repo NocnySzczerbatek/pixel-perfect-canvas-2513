@@ -23,13 +23,16 @@ import { useEffect, useState } from "react";
 
 import { BonusPanel } from "@/components/game/BonusPanel";
 import { GuidedTour, type TourStep } from "@/components/game/GuidedTour";
+import { PlayerWindow } from "@/components/game/PlayerWindow";
 
 import { TypeBadges } from "@/components/game/TypeBadges";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/useSession";
+import { useServerFn } from "@tanstack/react-start";
 import { CHANGELOG, GAME_LOOP } from "@/lib/changelog";
+import { avatarSrc } from "@/lib/avatars";
 import { artworkUrl, findRegion } from "@/lib/game-data";
+import { setAvatar } from "@/lib/trainer.functions";
 import logoAsset from "@/assets/logo.png.asset.json";
 
 export const Route = createFileRoute("/gra")({
