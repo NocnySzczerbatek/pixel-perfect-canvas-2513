@@ -173,6 +173,7 @@ export const challengeGym = createServerFn({ method: "POST" })
 
     const foes = leaderTeam(gym).map(toFoe);
     const result = simulateTeamBattle(allies, foes);
+    const report = result.report;
     const log = [
       `${gym.leader} (Sala ${gym.index}, typ ${gym.type}) przyjmuje wyzwanie!`,
       ...(useMega ? [`Aktywujesz ${MEGA_STONE.label}: +30% siły ataku.`] : []),
@@ -215,15 +216,20 @@ export const challengeGym = createServerFn({ method: "POST" })
       if (gym.index === 8) {
         updates.mega_stones = (updates.mega_stones ?? profile.mega_stones ?? 0) + 1;
       }
+      report.trainer_exp = gym.rewardExp;
+      report.coins = gym.rewardCoins;
+      report.extras.push(`Zdobywasz odznakę ${gym.badgeName}.`);
       log.push(
         `Zdobywasz ${gym.badgeName}! +${gym.rewardExp} EXP, +${gym.rewardCoins} Catch Coins.`,
       );
       if (gym.index === 8) log.push(`${gym.leader} wręcza Ci ${MEGA_STONE.label}.`);
+      const gymGain = expForDefeat(gym.level, "gym");
+      for (const ally of allies) report.pokemon_exp.push({ name: ally.name, exp: gymGain });
       log.push(
         ...(await awardPokemonExp(
           supabase,
           userId,
-          Object.keys(result.allyHp).map((id) => ({ id, exp: expForDefeat(gym.level, "gym") })),
+          Object.keys(result.allyHp).map((id) => ({ id, exp: gymGain })),
         )),
       );
 
@@ -267,6 +273,7 @@ export const challengeGym = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       won: result.won,
+      report,
       badge: result.won ? gym.badgeName : null,
       log,
       state: await buildState(supabase, userId),
