@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BonusyRouteImport } from './routes/bonusy'
+import { Route as CentrumRouteImport } from './routes/centrum'
 import { Route as DruzynaRouteImport } from './routes/druzyna'
 import { Route as EksploracjaRouteImport } from './routes/eksploracja'
 import { Route as EkwipunekRouteImport } from './routes/ekwipunek'
@@ -34,6 +36,16 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BonusyRoute = BonusyRouteImport.update({
+  id: '/bonusy',
+  path: '/bonusy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentrumRoute = CentrumRouteImport.update({
+  id: '/centrum',
+  path: '/centrum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DruzynaRoute = DruzynaRouteImport.update({
@@ -140,6 +152,8 @@ const ApiPublicPaymentsWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bonusy': typeof BonusyRoute
+  '/centrum': typeof CentrumRoute
   '/druzyna': typeof DruzynaRoute
   '/eksploracja': typeof EksploracjaRoute
   '/ekwipunek': typeof EkwipunekRoute
@@ -163,6 +177,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bonusy': typeof BonusyRoute
+  '/centrum': typeof CentrumRoute
   '/druzyna': typeof DruzynaRoute
   '/eksploracja': typeof EksploracjaRoute
   '/ekwipunek': typeof EkwipunekRoute
@@ -187,6 +203,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bonusy': typeof BonusyRoute
+  '/centrum': typeof CentrumRoute
   '/druzyna': typeof DruzynaRoute
   '/eksploracja': typeof EksploracjaRoute
   '/ekwipunek': typeof EkwipunekRoute
@@ -212,6 +230,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bonusy'
+    | '/centrum'
     | '/druzyna'
     | '/eksploracja'
     | '/ekwipunek'
@@ -235,6 +255,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bonusy'
+    | '/centrum'
     | '/druzyna'
     | '/eksploracja'
     | '/ekwipunek'
@@ -258,6 +280,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/bonusy'
+    | '/centrum'
     | '/druzyna'
     | '/eksploracja'
     | '/ekwipunek'
@@ -282,6 +306,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BonusyRoute: typeof BonusyRoute
+  CentrumRoute: typeof CentrumRoute
   DruzynaRoute: typeof DruzynaRoute
   EksploracjaRoute: typeof EksploracjaRoute
   EkwipunekRoute: typeof EkwipunekRoute
@@ -311,6 +337,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bonusy': {
+      id: '/bonusy'
+      path: '/bonusy'
+      fullPath: '/bonusy'
+      preLoaderRoute: typeof BonusyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centrum': {
+      id: '/centrum'
+      path: '/centrum'
+      fullPath: '/centrum'
+      preLoaderRoute: typeof CentrumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/druzyna': {
@@ -458,6 +498,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BonusyRoute: BonusyRoute,
+  CentrumRoute: CentrumRoute,
   DruzynaRoute: DruzynaRoute,
   EksploracjaRoute: EksploracjaRoute,
   EkwipunekRoute: EkwipunekRoute,

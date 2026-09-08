@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { ExpBar } from "@/components/game/ExpBar";
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { artworkUrl } from "@/lib/game-data";
 import type { PokemonRow } from "@/lib/trainer.functions";
@@ -61,6 +62,12 @@ export function PokemonCard({
       <p className="mt-1 text-xs text-muted-foreground">
         HP {pokemon.hp_current}/{pokemon.hp_max}
       </p>
+      <ExpBar
+        speciesId={pokemon.species_id}
+        level={pokemon.level}
+        exp={pokemon.exp}
+        className="mt-2 text-left"
+      />
       <Link
         to="/pokemon/$id"
         params={{ id: pokemon.id }}

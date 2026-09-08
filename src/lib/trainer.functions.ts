@@ -79,6 +79,7 @@ export type TrainerData = {
     candy_xl: number;
     region: string | null;
     featured_badge: string | null;
+    avatar_key: string | null;
     created_at: string;
   };
   pokemon: PokemonRow[];
@@ -107,7 +108,7 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
     supabase
       .from("profiles")
       .select(
-        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, great_balls, ultra_balls, master_balls, premier_balls, net_balls, dive_balls, dusk_balls, quick_balls, timer_balls, repeat_balls, luxury_balls, travel_tickets, master_ball_bought_at, razz_berries, potions, super_potions, revives, mega_stones, shield_until, pvp_wins, pvp_losses, catch_coins, candy_normal, candy_xl, region, featured_badge, created_at",
+        "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, great_balls, ultra_balls, master_balls, premier_balls, net_balls, dive_balls, dusk_balls, quick_balls, timer_balls, repeat_balls, luxury_balls, travel_tickets, master_ball_bought_at, razz_berries, potions, super_potions, revives, mega_stones, shield_until, pvp_wins, pvp_losses, catch_coins, candy_normal, candy_xl, region, featured_badge, avatar_key, created_at",
       )
       .eq("id", userId)
       .maybeSingle(),
@@ -161,6 +162,7 @@ async function buildTrainerData(supabase: any, userId: string): Promise<TrainerD
       candy_xl: profile.candy_xl ?? 0,
       region: profile.region,
       featured_badge: profile.featured_badge ?? null,
+      avatar_key: profile.avatar_key ?? null,
       created_at: profile.created_at,
     },
     pokemon: (pokemon ?? []) as PokemonRow[],
@@ -232,6 +234,51 @@ export const healParty = createServerFn({ method: "POST" })
       data: await buildTrainerData(supabase, userId),
     };
   });
+
+/** Darmowe leczenie jednego Pokémona (Centrum Pokémon, bez limitu). */
+export const healPokemon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => {
+    if (!input?.id) throw new Error("Brak Pokémona.");
+    return { id: input.id };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row } = await supabase
+      .from("player_pokemon")
+      .select("id, hp_max, hp_current, fainted")
+      .eq("owner_id", userId)
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!row) {
+      return {
+        ok: false as const,
+        reason: "Nie znaleziono tego Pokémona.",
+        data: await buildTrainerData(supabase, userId),
+      };
+    }
+    await (await writeDb())
+      .from("player_pokemon")
+      .update({ hp_current: row.hp_max, fainted: false })
+      .eq("id", row.id)
+      .eq("owner_id", userId);
+    return { ok: true as const, data: await buildTrainerData(supabase, userId) };
+  });
+
+/** Wybór sylwetki trenera (awatara). */
+export const setAvatar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { key: string }) => {
+    const key = String(input?.key ?? "");
+    if (!["m1", "m2", "k1", "k2"].includes(key)) throw new Error("Nieznany awatar.");
+    return { key };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await (await writeDb()).from("profiles").update({ avatar_key: data.key }).eq("id", userId);
+    return { ok: true as const, data: await buildTrainerData(supabase, userId) };
+  });
+
 
 /** Nadaje lub czyści pseudonim Pokémona. */
 export const renamePokemon = createServerFn({ method: "POST" })

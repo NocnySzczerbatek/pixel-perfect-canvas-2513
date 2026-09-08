@@ -163,14 +163,14 @@ const PROFILE_COLUMNS =
 
 
 
-/** Pula gatunków biomu: cały Pokédex regionu przefiltrowany typami biomu. */
-function speciesPool(biomeSlug: string, region: string | null): BiomeSpecies[] {
-  return biomePool(biomeSlug, region);
+/** Pula gatunków biomu: cały Pokédex regionu przefiltrowany typami biomu i poziomem trenera. */
+function speciesPool(biomeSlug: string, region: string | null, trainerLevel: number): BiomeSpecies[] {
+  return biomePool(biomeSlug, region, trainerLevel);
 }
 
 /** Szeroka pula regionu — drużyny trenerów mieszają typy, nie tylko element biomu. */
-function regionPool(region: string | null): BiomeSpecies[] {
-  return regionWidePool(region);
+function regionPool(region: string | null, trainerLevel: number): BiomeSpecies[] {
+  return regionWidePool(region, trainerLevel);
 }
 
 /** Dolewa Energię za miniony czas (+1 / 3 min) i zapisuje nowy znacznik. */
@@ -364,8 +364,8 @@ export const travel = createServerFn({ method: "POST" })
     const biome = findBiome(data.biome)!;
     const profile = await syncEnergy(supabase, userId);
     const activeRegion = effectiveRegion(profile.region, profile.travel_region, profile.travel_until);
-    const pool = speciesPool(biome.slug, activeRegion);
-    const trainerPool = regionPool(activeRegion);
+    const pool = speciesPool(biome.slug, activeRegion, profile.trainer_level);
+    const trainerPool = regionPool(activeRegion, profile.trainer_level);
 
     const cost = randInt(MIN_TRAVEL_COST, MAX_TRAVEL_COST);
     if (profile.energy < cost) {

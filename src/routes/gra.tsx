@@ -61,6 +61,7 @@ type Profile = {
   catch_coins: number;
   region: string | null;
   energy_updated_at: string;
+  avatar_key: string | null;
 };
 
 type Pokemon = {
@@ -93,7 +94,7 @@ function TrainerDashboard() {
         supabase
           .from("profiles")
           .select(
-            "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, catch_coins, region, energy_updated_at",
+            "trainer_name, trainer_level, trainer_exp, energy, energy_bottles, poke_balls, catch_coins, region, energy_updated_at, avatar_key",
           )
           .eq("id", userId)
           .maybeSingle(),

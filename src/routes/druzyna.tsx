@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { HeartPulse, Loader2 } from "lucide-react";
+import { HeartPulse } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -9,7 +9,7 @@ import { PokemonCard } from "@/components/game/PokemonCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTrainerData } from "@/hooks/useTrainerData";
-import { healParty, renamePokemon, setInParty } from "@/lib/trainer.functions";
+import { renamePokemon, setInParty } from "@/lib/trainer.functions";
 
 export const Route = createFileRoute("/druzyna")({
   head: () => ({
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/druzyna")({
 
 function DruzynaPage() {
   const { data, isLoading, setData } = useTrainerData();
-  const heal = useServerFn(healParty);
+  
   const move = useServerFn(setInParty);
   const rename = useServerFn(renamePokemon);
   const [busy, setBusy] = useState(false);
@@ -60,23 +60,18 @@ function DruzynaPage() {
   return (
     <GamePage
       title="Drużyna"
-      subtitle="Do sześciu Pokémonów walczy przy Tobie. Leczenie jest darmowe i bez limitu."
+      subtitle="Do sześciu Pokémonów walczy przy Tobie. Leczenie znajdziesz w Centrum Pokémon."
     >
       <div className="flex flex-wrap items-center gap-3">
-        <Button
-          onClick={() => void run(() => heal(), "Drużyna wyleczona.")}
-          disabled={busy || !needsHeal}
-        >
-          {busy ? (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          ) : (
+        <Button variant="outline" asChild>
+          <Link to="/centrum">
             <HeartPulse className="h-4 w-4" aria-hidden />
-          )}
-          Wylecz drużynę
+            Centrum Pokémon
+          </Link>
         </Button>
         <p className="text-sm text-muted-foreground">
           {party.length}/6 w drużynie
-          {needsHeal ? " · ktoś potrzebuje leczenia" : " · wszyscy w pełni sił"}
+          {needsHeal ? " · ktoś potrzebuje leczenia u Siostry Joy" : " · wszyscy w pełni sił"}
         </p>
       </div>
 
