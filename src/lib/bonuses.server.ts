@@ -4,6 +4,8 @@ import {
   multiplierFromPct,
   PERMANENT_BONUS_PCT,
   PERMANENT_CAP_PCT,
+  shinyDenom,
+  type BonusHistoryRow,
   type BonusRow,
   type BonusState,
   type BuffRow,
@@ -98,6 +100,7 @@ export async function grantTimedBuff(
   },
 ): Promise<string> {
   const db = await writeDb();
+  const before = shinyDenom((await encounterMultipliers(userId)).shiny);
   const expiresAt = new Date(Date.now() + def.minutes * 60_000).toISOString();
   const { data: existing } = await db
     .from("player_buffs")
@@ -118,6 +121,20 @@ export async function grantTimedBuff(
       expires_at: expiresAt,
     });
   }
+  const after = shinyDenom((await encounterMultipliers(userId)).shiny);
+  await db.from("bonus_history").insert({
+    owner_id: userId,
+    kind: "timed",
+    bonus_key: def.key,
+    label: def.label,
+    source: def.source,
+    shiny_bonus_pct: def.shiny_bonus_pct,
+    rare_bonus_pct: def.rare_bonus_pct,
+    duration_minutes: def.minutes,
+    expires_at: expiresAt,
+    shiny_denom_before: before,
+    shiny_denom_after: after,
+  });
   return expiresAt;
 }
 
@@ -135,6 +152,7 @@ export async function grantPermanentBonus(
     .eq("bonus_key", bonusKey)
     .maybeSingle();
   if (existing) return false;
+  const before = shinyDenom((await encounterMultipliers(userId)).shiny);
   await db.from("player_bonuses").insert({
     owner_id: userId,
     bonus_key: bonusKey,
@@ -142,5 +160,36 @@ export async function grantPermanentBonus(
     shiny_bonus_pct: PERMANENT_BONUS_PCT,
     rare_bonus_pct: PERMANENT_BONUS_PCT,
   });
+  const after = shinyDenom((await encounterMultipliers(userId)).shiny);
+  await db.from("bonus_history").insert({
+    owner_id: userId,
+    kind: "permanent",
+    bonus_key: bonusKey,
+    label,
+    source: "Osiągnięcie",
+    shiny_bonus_pct: PERMANENT_BONUS_PCT,
+    rare_bonus_pct: PERMANENT_BONUS_PCT,
+    duration_minutes: null,
+    expires_at: null,
+    shiny_denom_before: before,
+    shiny_denom_after: after,
+  });
   return true;
+}
+
+/** Historia zdobytych bonusów (najnowsze pierwsze). */
+export async function bonusHistoryFor(
+  userId: string,
+  limit = 60,
+): Promise<BonusHistoryRow[]> {
+  const db = await writeDb();
+  const { data } = await db
+    .from("bonus_history")
+    .select(
+      "id, kind, bonus_key, label, source, shiny_bonus_pct, rare_bonus_pct, duration_minutes, started_at, expires_at, shiny_denom_before, shiny_denom_after",
+    )
+    .eq("owner_id", userId)
+    .order("started_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []) as BonusHistoryRow[];
 }
