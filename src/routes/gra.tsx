@@ -4,6 +4,7 @@ import {
   BookOpen,
   Boxes,
   Compass,
+  HeartPulse,
   Crown,
   Landmark,
   Map as MapIcon,
