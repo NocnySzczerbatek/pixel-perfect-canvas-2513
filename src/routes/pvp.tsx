@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+
+import { BattleTheatre } from "@/components/game/BattleTheatre";
+import type { BattleReport } from "@/lib/battle";
 import { useQuery } from "@tanstack/react-query";
 import { Shield, Swords } from "lucide-react";
 import { useState } from "react";
@@ -39,6 +42,7 @@ function PvpPage() {
   const [state, setState] = useState<PvpState | null>(null);
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<string[]>([]);
+  const [report, setReport] = useState<BattleReport | null>(null);
 
   const { isLoading, refetch } = useQuery({
     queryKey: ["pvp"],
@@ -58,6 +62,7 @@ function PvpPage() {
       if (!result.ok) toast.error(result.reason);
       else {
         setLog(result.log);
+        if (result.report) setReport(result.report);
         if (result.won) toast.success(`Wygrałeś! Zabierasz ${result.stolen} CC.`);
         else toast.warning(`Przegrałeś napad — tracisz ${result.stolen} CC.`);
       }
@@ -157,6 +162,10 @@ function PvpPage() {
                 Tarcza BHP · {SHIELD_COST} CC
               </Button>
             </div>
+
+            {report ? (
+              <BattleTheatre report={report} allyLabel="Twoja drużyna" foeLabel="Rywal" />
+            ) : null}
 
             {log.length > 0 ? (
               <div className="glass-panel max-h-80 overflow-y-auto rounded-2xl p-5">
