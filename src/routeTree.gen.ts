@@ -15,6 +15,7 @@ import { Route as EksploracjaRouteImport } from './routes/eksploracja'
 import { Route as EkwipunekRouteImport } from './routes/ekwipunek'
 import { Route as GraRouteImport } from './routes/gra'
 import { Route as GtsRouteImport } from './routes/gts'
+import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as OdznakiRouteImport } from './routes/odznaki'
 import { Route as PcBoxRouteImport } from './routes/pc-box'
 import { Route as PodrozeRouteImport } from './routes/podroze'
@@ -58,6 +59,11 @@ const GraRoute = GraRouteImport.update({
 const GtsRoute = GtsRouteImport.update({
   id: '/gts',
   path: '/gts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapaRoute = MapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OdznakiRoute = OdznakiRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
   '/gts': typeof GtsRoute
+  '/mapa': typeof MapaRoute
   '/odznaki': typeof OdznakiRoute
   '/pc-box': typeof PcBoxRoute
   '/podroze': typeof PodrozeRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
   '/gts': typeof GtsRoute
+  '/mapa': typeof MapaRoute
   '/odznaki': typeof OdznakiRoute
   '/pc-box': typeof PcBoxRoute
   '/podroze': typeof PodrozeRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
   '/gts': typeof GtsRoute
+  '/mapa': typeof MapaRoute
   '/odznaki': typeof OdznakiRoute
   '/pc-box': typeof PcBoxRoute
   '/podroze': typeof PodrozeRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/ekwipunek'
     | '/gra'
     | '/gts'
+    | '/mapa'
     | '/odznaki'
     | '/pc-box'
     | '/podroze'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/ekwipunek'
     | '/gra'
     | '/gts'
+    | '/mapa'
     | '/odznaki'
     | '/pc-box'
     | '/podroze'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/ekwipunek'
     | '/gra'
     | '/gts'
+    | '/mapa'
     | '/odznaki'
     | '/pc-box'
     | '/podroze'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   EkwipunekRoute: typeof EkwipunekRoute
   GraRoute: typeof GraRoute
   GtsRoute: typeof GtsRoute
+  MapaRoute: typeof MapaRoute
   OdznakiRoute: typeof OdznakiRoute
   PcBoxRoute: typeof PcBoxRoute
   PodrozeRoute: typeof PodrozeRoute
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/gts'
       fullPath: '/gts'
       preLoaderRoute: typeof GtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mapa': {
+      id: '/mapa'
+      path: '/mapa'
+      fullPath: '/mapa'
+      preLoaderRoute: typeof MapaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/odznaki': {
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   EkwipunekRoute: EkwipunekRoute,
   GraRoute: GraRoute,
   GtsRoute: GtsRoute,
+  MapaRoute: MapaRoute,
   OdznakiRoute: OdznakiRoute,
   PcBoxRoute: PcBoxRoute,
   PodrozeRoute: PodrozeRoute,
