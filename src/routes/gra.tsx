@@ -397,10 +397,10 @@ function TrainerDashboard() {
 
 const TOUR_STEPS: TourStep[] = [
   {
-    target: "stats",
-    title: "Twoje zasoby",
+    target: "player",
+    title: "Okno gracza",
     body:
-      "Tu widzisz poziom trenera, Energię (paliwo do eksploracji, +1 pkt co 3 minuty), Catch Coins na zakupy i liczbę Poké Balli.",
+      "Kliknij swoją postać, aby otworzyć okno gracza: poziom i EXP trenera, Energia (+1 pkt co 3 minuty), Catch Coins, Poké Balle, wybór postaci i skróty do Ekwipunku, Pokédexu, Centrum Pokémon i Profilu.",
   },
   {
     target: "party",
