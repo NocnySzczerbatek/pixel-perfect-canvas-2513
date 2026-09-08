@@ -6,7 +6,7 @@ import {
   Compass,
   Crown,
   Landmark,
-  Map,
+  Map as MapIcon,
   Medal,
   Plane,
   Repeat,
@@ -442,7 +442,7 @@ const NAV_GROUPS = [
     tiles: [
       { to: "/eksploracja", label: "Eksploracja", Icon: Compass, desc: "Biomy, dzicy i trenerzy" },
       { to: "/podroze", label: "Podróże", Icon: Plane, desc: "Czasowe wyprawy do regionów" },
-      { to: "/mapa", label: "Mapa regionów", Icon: Map, desc: "Sale, Liderzy i odznaki" },
+      { to: "/mapa", label: "Mapa regionów", Icon: MapIcon, desc: "Sale, Liderzy i odznaki" },
       { to: "/sale", label: "Sale", Icon: Landmark, desc: "8 Liderów regionu" },
       { to: "/pvp", label: "PvP", Icon: Swords, desc: "Napady na innych trenerów" },
       { to: "/turnieje", label: "Turnieje", Icon: Crown, desc: "Tygodniowa liga o puchar" },
