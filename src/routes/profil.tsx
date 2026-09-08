@@ -129,6 +129,38 @@ function ProfilPage() {
           </section>
 
           <section className="glass-panel rounded-2xl p-6 lg:col-span-2">
+            <h2 className="font-display text-2xl">Twoja postać</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Wybierz sylwetkę trenera — pojawi się w oknie gracza.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {AVATARS.map((avatar) => {
+                const active = (profile.avatar_key ?? "m1") === avatar.key;
+                return (
+                  <button
+                    key={avatar.key}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void handleAvatar(avatar.key)}
+                    className={`rounded-2xl border p-2 transition ${active ? "border-primary bg-primary/10" : "border-border/60 hover:border-primary/60"}`}
+                  >
+                    <img
+                      src={avatar.src}
+                      alt={avatar.label}
+                      loading="lazy"
+                      width={512}
+                      height={768}
+                      className="mx-auto h-32 w-auto object-contain"
+                    />
+                    <span className="mt-2 block text-xs text-muted-foreground">{avatar.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+
+          <section className="glass-panel rounded-2xl p-6 lg:col-span-2">
             <h2 className="font-display text-2xl">Konto</h2>
             <div className="mt-4 flex flex-wrap gap-3">
               <Button
