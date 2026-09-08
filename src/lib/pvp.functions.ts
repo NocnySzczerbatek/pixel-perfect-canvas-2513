@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
+import { simulateTeamBattle, type Fighter } from "@/lib/battle";
+import { allyFighter } from "@/lib/fighters";
 import { speciesType } from "@/lib/pokedex";
 
 async function writeDb(): Promise<any> {
@@ -47,18 +48,7 @@ export type PvpState = {
 };
 
 function toFighter(row: any): Fighter {
-  const type = (row.species_type as string) ?? speciesType(row.species_id);
-  return {
-    id: row.id,
-    name: row.nickname ?? row.species_name,
-    type,
-    level: row.level,
-    hp: row.hp_current,
-    hpMax: row.hp_max,
-    atk: statFromIv(row.level, row.iv_atk ?? 0, 9),
-    def: statFromIv(row.level, row.iv_def ?? 0, 8),
-    spe: statFromIv(row.level, row.iv_spe ?? 0, 8),
-  };
+  return allyFighter(row);
 }
 
 const PARTY_COLUMNS =
