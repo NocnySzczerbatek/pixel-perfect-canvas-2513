@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      bonus_history: {
+        Row: {
+          bonus_key: string
+          created_at: string
+          duration_minutes: number | null
+          expires_at: string | null
+          id: string
+          kind: string
+          label: string
+          owner_id: string
+          rare_bonus_pct: number
+          shiny_bonus_pct: number
+          shiny_denom_after: number | null
+          shiny_denom_before: number | null
+          source: string
+          started_at: string
+        }
+        Insert: {
+          bonus_key: string
+          created_at?: string
+          duration_minutes?: number | null
+          expires_at?: string | null
+          id?: string
+          kind: string
+          label: string
+          owner_id: string
+          rare_bonus_pct?: number
+          shiny_bonus_pct?: number
+          shiny_denom_after?: number | null
+          shiny_denom_before?: number | null
+          source: string
+          started_at?: string
+        }
+        Update: {
+          bonus_key?: string
+          created_at?: string
+          duration_minutes?: number | null
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          label?: string
+          owner_id?: string
+          rare_bonus_pct?: number
+          shiny_bonus_pct?: number
+          shiny_denom_after?: number | null
+          shiny_denom_before?: number | null
+          source?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bonus_history_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_quests: {
         Row: {
           created_at: string
