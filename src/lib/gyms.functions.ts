@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
+import { simulateTeamBattle, type Fighter } from "@/lib/battle";
+import { allyFighter, foeFighter } from "@/lib/fighters";
 import { gymsForRegion, type Gym } from "@/lib/gyms";
 import { MEGA_STONE } from "@/lib/items";
 import { speciesType } from "@/lib/pokedex";
@@ -50,32 +51,12 @@ function leaderTeam(gym: Gym) {
   }));
 }
 
-function toFoe(member: { species_name: string; species_type: string; level: number }): Fighter {
-  return {
-    name: member.species_name,
-    type: member.species_type,
-    level: member.level,
-    hp: hpFromIv(member.level, 12),
-    hpMax: hpFromIv(member.level, 12),
-    atk: statFromIv(member.level, 12, 9),
-    def: statFromIv(member.level, 10, 8),
-    spe: statFromIv(member.level, 10, 8),
-  };
+function toFoe(member: { species_id: number; species_name: string; level: number }): Fighter {
+  return foeFighter(member, 14, 1.05);
 }
 
 function toAlly(row: any, boost: number): Fighter {
-  const type = speciesType(row.species_id);
-  return {
-    id: row.id,
-    name: row.nickname ?? row.species_name,
-    type,
-    level: row.level,
-    hp: row.hp_current,
-    hpMax: row.hp_max,
-    atk: Math.round(statFromIv(row.level, row.iv_atk ?? 0, 9) * (1 + boost)),
-    def: statFromIv(row.level, row.iv_def ?? 0, 8),
-    spe: statFromIv(row.level, row.iv_spe ?? 0, 8),
-  };
+  return allyFighter(row, boost);
 }
 
 const PARTY_COLUMNS =
