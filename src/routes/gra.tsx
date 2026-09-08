@@ -174,59 +174,77 @@ function TrainerDashboard() {
             </h1>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setTourOpen(true)}>
-            Samouczek
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/profil">Profil</Link>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              void navigate({ to: "/" });
-            }}
-          >
-            Wyloguj
-          </Button>
-        </div>
+        <button
+          type="button"
+          data-tour="player"
+          onClick={() => setPlayerOpen(true)}
+          className="tile-hover glass-panel flex items-center gap-3 rounded-2xl px-3 py-2 text-left"
+        >
+          <img
+            src={avatarSrc(profile?.avatar_key)}
+            alt="Twoja postać"
+            width={512}
+            height={768}
+            className="h-14 w-auto object-contain"
+          />
+          <span>
+            <span className="block font-display text-lg">
+              {profile?.trainer_name ?? "Trener"}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Lvl {profile?.trainer_level ?? "—"} · Energia {energyNow ?? profile?.energy ?? "—"}/
+              {MAX_ENERGY} · {profile?.catch_coins ?? "—"} CC
+            </span>
+            <span className="block text-[11px] text-primary">Otwórz okno gracza</span>
+          </span>
+        </button>
       </header>
+
+      <PlayerWindow
+        open={playerOpen}
+        onClose={() => setPlayerOpen(false)}
+        energyHint={
+          !profile
+            ? undefined
+            : (energyNow ?? profile.energy) >= MAX_ENERGY
+              ? "Pełna Energia"
+              : `+1 pkt za ${formatCountdown(energyLeft)}`
+        }
+        profile={
+          profile
+            ? {
+                trainer_name: profile.trainer_name,
+                trainer_level: profile.trainer_level,
+                trainer_exp: profile.trainer_exp,
+                trainer_exp_next: trainerExpNext,
+                energy: energyNow ?? profile.energy,
+                energy_max: MAX_ENERGY,
+                energy_bottles: profile.energy_bottles,
+                catch_coins: profile.catch_coins,
+                poke_balls: profile.poke_balls,
+                avatar_key: profile.avatar_key,
+                region_name: region ? region.name : null,
+              }
+            : null
+        }
+        onTour={() => {
+          setPlayerOpen(false);
+          setTourOpen(true);
+        }}
+        onLogout={async () => {
+          await supabase.auth.signOut();
+          void navigate({ to: "/" });
+        }}
+        onPickAvatar={(key) => {
+          setProfile((current) => (current ? { ...current, avatar_key: key } : current));
+          void pickAvatar({ data: { key } });
+        }}
+      />
 
       <BonusPanel enabled={!!userId} />
 
 
       <GuidedTour steps={TOUR_STEPS} open={tourOpen} onClose={closeTour} />
-
-
-      <section data-tour="stats" className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Stat
-          label="Poziom trenera"
-          value={profile?.trainer_level ?? "—"}
-          hint={
-            profile
-              ? `${profile.trainer_exp} / ${trainerExpNext} EXP · brakuje ${Math.max(
-                  0,
-                  trainerExpNext - profile.trainer_exp,
-                )}`
-              : undefined
-          }
-        />
-        <Stat
-          label="Energia"
-          value={`${energyNow ?? profile?.energy ?? "—"} / ${MAX_ENERGY}`}
-          hint={
-            !profile
-              ? undefined
-              : (energyNow ?? profile.energy) >= MAX_ENERGY
-                ? "Pełna Energia"
-                : `+1 pkt za ${formatCountdown(energyLeft)}`
-          }
-        />
-        <Stat label="Catch Coins" value={profile?.catch_coins ?? "—"} />
-        <Stat label="Poké Balle" value={profile?.poke_balls ?? "—"} />
-      </section>
 
       <section data-tour="party" className="mt-10">
         <div className="flex items-end justify-between gap-3">
