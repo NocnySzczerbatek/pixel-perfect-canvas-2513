@@ -655,6 +655,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_key: string | null
           candy_normal: number
           candy_xl: number
           catch_coins: number
@@ -697,6 +698,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_key?: string | null
           candy_normal?: number
           candy_xl?: number
           catch_coins?: number
@@ -739,6 +741,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_key?: string | null
           candy_normal?: number
           candy_xl?: number
           catch_coins?: number

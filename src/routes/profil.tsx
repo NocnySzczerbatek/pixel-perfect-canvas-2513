@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useTrainerData } from "@/hooks/useTrainerData";
+import { AVATARS } from "@/lib/avatars";
 import { findRegion } from "@/lib/game-data";
-import { deleteAccount, renameTrainer } from "@/lib/trainer.functions";
+import { deleteAccount, renameTrainer, setAvatar } from "@/lib/trainer.functions";
 
 export const Route = createFileRoute("/profil")({
   head: () => ({
@@ -47,6 +48,7 @@ function ProfilPage() {
   const { data, isLoading, setData } = useTrainerData();
   const rename = useServerFn(renameTrainer);
   const removeAccount = useServerFn(deleteAccount);
+  const chooseAvatar = useServerFn(setAvatar);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -66,6 +68,19 @@ function ProfilPage() {
       toast.success("Nick zaktualizowany.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Nie udało się zapisać nicku.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleAvatar = async (key: string) => {
+    setBusy(true);
+    try {
+      const result = await chooseAvatar({ data: { key } });
+      if (result?.data) setData(result.data);
+      toast.success("Postać zmieniona.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się zapisać postaci.");
     } finally {
       setBusy(false);
     }
@@ -127,6 +142,38 @@ function ProfilPage() {
               />
             </dl>
           </section>
+
+          <section className="glass-panel rounded-2xl p-6 lg:col-span-2">
+            <h2 className="font-display text-2xl">Twoja postać</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Wybierz sylwetkę trenera — pojawi się w oknie gracza.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {AVATARS.map((avatar) => {
+                const active = (profile.avatar_key ?? "m1") === avatar.key;
+                return (
+                  <button
+                    key={avatar.key}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void handleAvatar(avatar.key)}
+                    className={`rounded-2xl border p-2 transition ${active ? "border-primary bg-primary/10" : "border-border/60 hover:border-primary/60"}`}
+                  >
+                    <img
+                      src={avatar.src}
+                      alt={avatar.label}
+                      loading="lazy"
+                      width={512}
+                      height={768}
+                      className="mx-auto h-32 w-auto object-contain"
+                    />
+                    <span className="mt-2 block text-xs text-muted-foreground">{avatar.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
 
           <section className="glass-panel rounded-2xl p-6 lg:col-span-2">
             <h2 className="font-display text-2xl">Konto</h2>

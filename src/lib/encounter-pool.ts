@@ -1,4 +1,5 @@
 import { findBiome, type BiomeSpecies } from "@/lib/biomes";
+import { minLevelForSpecies } from "@/lib/evo-gates";
 import { FULL_DEX, type DexEntry } from "@/lib/full-dex";
 import { REGION_DEX_RANGES } from "@/lib/pokedex";
 
@@ -16,13 +17,31 @@ function toSpecies(entry: DexEntry): BiomeSpecies {
 const MIN_POOL = 8;
 
 /**
+ * Formy rozwinięte pojawiają się dopiero, gdy trener osiągnie ich próg ewolucji.
+ * Formy bazowe zostają w puli na każdym poziomie.
+ */
+export function allowedForTrainer(entry: { id: number }, trainerLevel: number | null | undefined) {
+  if (!trainerLevel || trainerLevel <= 0) return minLevelForSpecies(entry.id) <= 1;
+  return minLevelForSpecies(entry.id) <= trainerLevel;
+}
+
+function gate<T extends { id: number }>(list: T[], trainerLevel: number | null | undefined): T[] {
+  const filtered = list.filter((entry) => allowedForTrainer(entry, trainerLevel));
+  return filtered.length > 0 ? filtered : list.filter((entry) => minLevelForSpecies(entry.id) <= 1);
+}
+
+/**
  * Pula dzikich spotkań: wszystkie Pokémony regionu, których typ pasuje do biomu.
  * Gdy region ma mało pasujących gatunków, pula jest dopełniana innymi z regionu,
  * żeby w biomie nigdy nie respił się tylko jeden gatunek.
  */
-export function biomePool(biomeSlug: string, region: string | null | undefined): BiomeSpecies[] {
+export function biomePool(
+  biomeSlug: string,
+  region: string | null | undefined,
+  trainerLevel?: number | null,
+): BiomeSpecies[] {
   const biome = findBiome(biomeSlug);
-  const dex = regionDex(region);
+  const dex = gate(regionDex(region), trainerLevel);
   if (!biome) return dex.map(toSpecies);
   const affinity = biome.types.length > 0 ? biome.types : [biome.element];
   const matching = dex.filter((entry) => entry.types.some((type) => affinity.includes(type)));
@@ -36,7 +55,10 @@ export function biomePool(biomeSlug: string, region: string | null | undefined):
       ids.add(entry.id);
     }
   }
-  const local = biome.species.filter((species) => dex.some((entry) => entry.id === species.id));
+  const local = gate(
+    biome.species.filter((species) => dex.some((entry) => entry.id === species.id)),
+    trainerLevel,
+  );
   const merged = new Map<number, BiomeSpecies>();
   for (const species of local) merged.set(species.id, species);
   for (const entry of pool) if (!merged.has(entry.id)) merged.set(entry.id, toSpecies(entry));
@@ -44,6 +66,9 @@ export function biomePool(biomeSlug: string, region: string | null | undefined):
 }
 
 /** Szeroka pula regionu — drużyny trenerów mieszają wszystkie typy. */
-export function regionWidePool(region: string | null | undefined): BiomeSpecies[] {
-  return regionDex(region).map(toSpecies);
+export function regionWidePool(
+  region: string | null | undefined,
+  trainerLevel?: number | null,
+): BiomeSpecies[] {
+  return gate(regionDex(region), trainerLevel).map(toSpecies);
 }
