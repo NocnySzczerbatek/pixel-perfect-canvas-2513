@@ -141,6 +141,8 @@ function TrainerDashboard() {
 
   const trainerExpNext = Math.round(100 * Math.pow(profile?.trainer_level ?? 1, 1.8));
 
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const pickAvatar = useServerFn(setAvatar);
   const [tourOpen, setTourOpen] = useState(false);
   useEffect(() => {
     if (!userId || typeof window === "undefined") return;
