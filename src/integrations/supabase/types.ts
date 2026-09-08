@@ -911,6 +911,56 @@ export type Database = {
         }
         Relationships: []
       }
+      trainer_battles: {
+        Row: {
+          created_at: string
+          id: string
+          log: Json
+          opponent: string
+          owner_id: string
+          person: string | null
+          report: Json | null
+          reward_coins: number
+          reward_exp: number
+          trainer_class: string | null
+          won: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          log?: Json
+          opponent: string
+          owner_id: string
+          person?: string | null
+          report?: Json | null
+          reward_coins?: number
+          reward_exp?: number
+          trainer_class?: string | null
+          won?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          log?: Json
+          opponent?: string
+          owner_id?: string
+          person?: string | null
+          report?: Json | null
+          reward_coins?: number
+          reward_exp?: number
+          trainer_class?: string | null
+          won?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_battles_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

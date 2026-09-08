@@ -42,6 +42,16 @@ export type TrainerFoe = {
   reward_coins: number;
 };
 
+export type TrainerBattleEntry = {
+  id: string;
+  opponent: string;
+  won: boolean;
+  reward_coins: number;
+  reward_exp: number;
+  log: string[];
+  created_at: string;
+};
+
 export type TrainerBoard = {
   energy: number;
   energy_cost: number;
@@ -50,6 +60,7 @@ export type TrainerBoard = {
   party_ready: number;
   day: string;
   opponents: TrainerFoe[];
+  history: TrainerBattleEntry[];
 };
 
 function dayKey() {
@@ -90,9 +101,15 @@ function buildBoard(userId: string, region: string, trainerLevel: number): Train
 }
 
 async function boardState(supabase: any, userId: string): Promise<TrainerBoard> {
-  const [{ data: profile }, { data: party }] = await Promise.all([
+  const [{ data: profile }, { data: party }, { data: battles }] = await Promise.all([
     supabase.from("profiles").select("energy, trainer_level, trainer_exp, region").eq("id", userId).maybeSingle(),
     supabase.from("player_pokemon").select("id, fainted, hp_current").eq("owner_id", userId).eq("in_party", true),
+    supabase
+      .from("trainer_battles")
+      .select("id, opponent, won, reward_coins, reward_exp, log, created_at")
+      .eq("owner_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(15),
   ]);
   if (!profile) throw new Error("Nie znaleziono profilu trenera.");
   const region = profile.region ?? "kanto";
@@ -104,6 +121,15 @@ async function boardState(supabase: any, userId: string): Promise<TrainerBoard> 
     party_ready: ((party ?? []) as any[]).filter((p) => !p.fainted && p.hp_current > 0).length,
     day: dayKey(),
     opponents: buildBoard(userId, region, profile.trainer_level),
+    history: ((battles ?? []) as any[]).map((row) => ({
+      id: row.id,
+      opponent: row.opponent,
+      won: row.won,
+      reward_coins: row.reward_coins,
+      reward_exp: row.reward_exp,
+      log: Array.isArray(row.log) ? (row.log as string[]) : [],
+      created_at: row.created_at,
+    })),
   };
 }
 
@@ -208,6 +234,19 @@ export const fightTrainer = createServerFn({ method: "POST" })
     }
 
     await (await writeDb()).from("profiles").update(updates).eq("id", userId);
+
+    // Trwały dziennik walk — widoczny po odświeżeniu strony.
+    await (await writeDb()).from("trainer_battles").insert({
+      owner_id: userId,
+      opponent: label,
+      trainer_class: foeData.trainer_class,
+      person: foeData.person,
+      won: result.won,
+      reward_coins: result.won ? foeData.reward_coins : 0,
+      reward_exp: result.won ? foeData.reward_exp : 0,
+      log,
+      report,
+    });
 
     return {
       ok: true as const,

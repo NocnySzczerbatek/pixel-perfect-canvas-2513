@@ -31,7 +31,9 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Nagrody za awans trenera: Balle i Flakony Energii
 - [x] Mega Ewolucja: składniki z eksploracji i tworzenie kamieni gatunkowych
 - [x] Więcej Balli oraz czas odnowienia zakupu Master Balla
-- [ ] Postacie pixel-art: Profesor Oak, Liderzy i klasy trenerów
+- [x] Postacie pixel-art: Profesor Oak, Liderzy i klasy trenerów
+- [x] Trwały dziennik walk z Trenerami (tabela trainer_battles)
+- [x] Dynamiczne ogłoszenia w panelu trenera
 - [x] Dokończyć stronę Trenerzy (wybór rywala, auto-walka, nagrody, dziennik)
 - [x] Ruchy niskopoziomowych Pokémonów: wyłącznie poznane, maks. 4
 - [x] Wykonywanie zwykłych ewolucji
