@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { simulateTeamBattle, type Fighter } from "@/lib/battle";
+import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
 import { allyFighter } from "@/lib/fighters";
 import { speciesType } from "@/lib/pokedex";
 
