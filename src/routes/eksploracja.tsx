@@ -94,7 +94,7 @@ function EksploracjaPage() {
     queryClient.setQueryData([EXPLORATION_QUERY_KEY, userId], next);
   };
 
-  const handleTravel = async (biomeSlug: string) => {
+  const handleTravelInner = async (biomeSlug: string) => {
     if (!userId || busy) return;
     setBusy(true);
     setOutcome(null);
@@ -141,6 +141,7 @@ function EksploracjaPage() {
     setBusy(true);
     try {
       const result = await throwBallFn({ data: { encounterId, ball, razz } });
+      if (result.ok && (result.caught || result.fled)) setReport(null);
       if (!result.ok) {
         toast.error(result.reason);
       } else if (result.caught) {
@@ -522,10 +523,7 @@ function EncounterCard({
       ),
     ),
   );
-  const [ballKey, setBallKey] = useState<string>("poke");
   const [useRazz, setUseRazz] = useState(false);
-  const selectedBall = ballByKey(ballKey) ?? BALLS[0]!;
-  const ballCount = balls[selectedBall.key] ?? 0;
   const ready = party.filter((mon) => !mon.fainted && mon.hp_current > 0);
   const active = ready.find((mon) => mon.id === activeMonId) ?? ready[0] ?? null;
   const defeated = encounter.hp_current <= 0;
