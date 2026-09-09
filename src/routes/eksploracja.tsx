@@ -101,6 +101,7 @@ function EksploracjaPage() {
     if (!userId || busy) return;
     setBusy(true);
     setOutcome(null);
+    setFind(null);
     try {
       const result = await travelFn({ data: { biome: biomeSlug } });
       if (!result.ok) {
@@ -109,6 +110,10 @@ function EksploracjaPage() {
         setLastBiome(biomeSlug);
         const biome = findBiome(biomeSlug);
         toast.success(`Dotarłeś do biomu ${biome?.name ?? biomeSlug}`);
+        if (result.find) {
+          setFind(result.find);
+          toast.success(`Znalezisko: ${result.find.label}`);
+        }
       }
       updateState(result.state);
     } catch (err) {
