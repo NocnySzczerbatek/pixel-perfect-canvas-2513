@@ -6,6 +6,7 @@ import {
   Compass,
   HeartPulse,
   Crown,
+  Flame,
   Landmark,
   Map as MapIcon,
   Medal,

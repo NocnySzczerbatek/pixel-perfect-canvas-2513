@@ -83,7 +83,7 @@ async function buildState(supabase: any, userId: string): Promise<RaidsState> {
     attempts_left: Math.max(0, RAID_ATTEMPTS_PER_DAY - runs.length),
     bosses: raidsForDay(date).map((boss) => {
       const scale = raidScaling(boss.tier);
-      const foe = foeFighter(boss, 31, scale.power);
+      const foe = foeFighter({ ...boss, species_name: boss.name }, 31, scale.power);
       const rewards = raidRewards(boss.tier);
       return {
         key: boss.key,
@@ -153,7 +153,12 @@ export const fightRaid = createServerFn({ method: "POST" })
     }
 
     const scale = raidScaling(boss.tier);
-    const bossFighter = foeFighter(boss, 31, scale.power, ` (Boss T${boss.tier})`);
+    const bossFighter = foeFighter(
+      { ...boss, species_name: boss.name },
+      31,
+      scale.power,
+      ` (Boss T${boss.tier})`,
+    );
     bossFighter.hpMax = Math.round(bossFighter.hpMax * scale.hpMult);
     bossFighter.hp = bossFighter.hpMax;
 
