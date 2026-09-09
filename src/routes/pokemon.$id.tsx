@@ -14,9 +14,10 @@ import { artworkUrl } from "@/lib/game-data";
 import {
   fetchEvolutionLine,
   fetchEvolutions,
-  fetchLevelUpMoves,
+  fetchLearnableMoves,
   fetchMoveDetails,
-  type LevelUpMove,
+  type LearnableMove,
+  type LearnMethod,
 } from "@/lib/pokeapi";
 import candyXlIcon from "@/assets/candy-xl.png.asset.json";
 import {
@@ -576,7 +577,20 @@ function ActiveMovesPanel({
   );
 }
 
-/** Pełna lista ataków z poziomowania dla obecnej formy i wszystkich dalszych ewolucji. */
+const METHOD_LABEL: Record<LearnMethod, string> = {
+  "level-up": "poziomowanie",
+  machine: "wymagana TM",
+  tutor: "od instruktora ataków",
+  egg: "atak z jaja (dziedziczony)",
+  other: "specjalny sposób nauki",
+};
+
+function methodLabel(move: LearnableMove) {
+  if (move.method === "level-up") return `Lvl ${move.level || 1}`;
+  return METHOD_LABEL[move.method];
+}
+
+/** Pełna lista ataków dla obecnej formy i wszystkich dalszych ewolucji. */
 function AllMovesSection({ pokemon }: { pokemon: PokemonRow }) {
   const speciesId = pokemon.species_id;
 
@@ -591,10 +605,10 @@ function AllMovesSection({ pokemon }: { pokemon: PokemonRow }) {
   const { data: movesByStage } = useQuery({
     queryKey: ["pokeapi-line-moves", stages.map((s) => s.id).join("-")],
     queryFn: async () => {
-      const out: Record<number, LevelUpMove[]> = {};
+      const out: Record<number, LearnableMove[]> = {};
       for (const stage of stages) {
         try {
-          out[stage.id] = await fetchLevelUpMoves(stage.id);
+          out[stage.id] = await fetchLearnableMoves(stage.id);
         } catch {
           out[stage.id] = [];
         }
@@ -619,8 +633,8 @@ function AllMovesSection({ pokemon }: { pokemon: PokemonRow }) {
     <section className="glass-panel rounded-2xl p-5 lg:col-span-3">
       <h2 className="text-2xl">Pełna lista ataków (wszystkie formy)</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Każdy atak wymaga odpowiedniej formy Pokémona i poziomu. Ataki dalszych ewolucji zobaczysz
-        z góry — odblokujesz je po ewolucji.
+        Każdy atak wymaga odpowiedniej formy Pokémona oraz poziomu albo TM. Ataki dalszych
+        ewolucji zobaczysz z góry — odblokujesz je po ewolucji.
       </p>
 
       {line === undefined ? (
@@ -650,7 +664,8 @@ function AllMovesSection({ pokemon }: { pokemon: PokemonRow }) {
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {moves.map((move) => {
                       const detail = stats?.[move.slug];
-                      const available = isCurrent && pokemon.level >= move.level;
+                      const available =
+                        isCurrent && move.method === "level-up" && pokemon.level >= move.level;
                       return (
                         <div
                           key={`${stage.id}-${move.slug}`}
@@ -676,7 +691,7 @@ function AllMovesSection({ pokemon }: { pokemon: PokemonRow }) {
                             </p>
                           )}
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Wymaga: {stage.name} · Lvl {move.level || 1}
+                            Wymaga: {stage.name} · {methodLabel(move)}
                             {available ? " — dostępny" : ""}
                           </p>
                         </div>
