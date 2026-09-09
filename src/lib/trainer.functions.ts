@@ -542,15 +542,10 @@ export const useCandy = createServerFn({ method: "POST" })
   });
 
 
-/** Wrodzona moc gatunku (losowana przy złapaniu) — wpływa na walkę, nie na pasek treningu. */
-const IV_FIELDS = {
-  hp: "iv_hp",
-  atk: "iv_atk",
-  def: "iv_def",
-  spa: "iv_spa",
-  spd: "iv_spd",
-  spe: "iv_spe",
-} as const;
+/**
+ * Wrodzona moc gatunku (IV 0–31) jest losowana raz przy złapaniu i NIGDY nie zmienia się
+ * później — trening dokłada osobne punkty (train_*), które nie dotykają IV.
+ */
 
 /** Kupione punkty treningu (0–31 na statystykę) — TYLKO to widać na pasku Poziomu Treningu. */
 export const TRAIN_FIELDS = {
@@ -572,7 +567,6 @@ export const trainPokemon = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const ivField = IV_FIELDS[data.stat];
     const trainField = TRAIN_FIELDS[data.stat];
     const { data: row } = await supabase
       .from("player_pokemon")
@@ -701,4 +695,39 @@ export const craftMegaStone = createServerFn({ method: "POST" })
     if (stone) await (await writeDb()).from("player_items").update({ quantity: stone.quantity + 1 }).eq("id", stone.id).eq("owner_id", userId);
     else await (await writeDb()).from("player_items").insert({ owner_id: userId, item_key: stoneKey, quantity: 1, metadata: { species_id: data.speciesId, kind: "mega_stone" } });
     return { ok: true as const, data: await buildTrainerData(supabase, userId) };
+  });
+
+
+/** Gracz sam wybiera do 4 aktywnych ataków — tylko one są używane w walce. */
+export const setActiveMoves = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; moves: string[] }) => {
+    if (!input?.id) throw new Error("Brak Pokémona.");
+    const moves = Array.from(new Set((input.moves ?? []).filter((m) => typeof m === "string")));
+    if (moves.length > 4) throw new Error("Maksymalnie 4 aktywne ataki.");
+    return { id: input.id, moves };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row } = await supabase
+      .from("player_pokemon")
+      .select("id, species_id, level")
+      .eq("id", data.id)
+      .eq("owner_id", userId)
+      .maybeSingle();
+    if (!row) throw new Error("Nie znaleziono Pokémona.");
+    const allowed = learnedMoves(row.species_id as number, row.level as number).map((m) => m.name);
+    const moves = data.moves.filter((name) => allowed.includes(name));
+    if (moves.length !== data.moves.length) {
+      return {
+        ok: false as const,
+        reason: "Ten Pokémon nie opanował jeszcze wszystkich wybranych ataków.",
+        data: await buildTrainerData(supabase, userId),
+      };
+    }
+    await ((await writeDb()).from("player_pokemon") as any)
+      .update({ active_moves: moves })
+      .eq("id", data.id)
+      .eq("owner_id", userId);
+    return { ok: true as const, moves, data: await buildTrainerData(supabase, userId) };
   });
