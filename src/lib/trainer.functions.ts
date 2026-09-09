@@ -610,21 +610,22 @@ export const trainPokemon = createServerFn({ method: "POST" })
       Math.floor(pokemon.training_points / TRAINING_LEVEL_STEP);
     const maxLevel = (profile.trainer_level as number) + 5;
     const level = Math.min(maxLevel, pokemon.level + gainedLevels);
-    const newIvHp = data.stat === "hp" ? pokemon.iv_hp + 1 : pokemon.iv_hp;
-    const hpMax = Math.round(20 + level * 4 + newIvHp * 0.8);
+    // HP liczone tą samą formułą co w walce: baza gatunku + poziom + wrodzone HP + trening HP.
+    const trainHp = data.stat === "hp" ? currentTrain + 1 : (pokemon.train_hp ?? 0);
+    const hpMax = hpValue(level, baseStats(pokemon.species_id)[0], pokemon.iv_hp, trainHp);
 
     await ((await writeDb()).from("player_pokemon") as any)
       .update({
+        // Trening zmienia WYŁĄCZNIE punkty treningu — wrodzone IV pozostają nietknięte.
         [trainField]: currentTrain + 1,
-        // Wrodzona moc + kupiony punkt trafia do statystyk używanych w walce.
-        [ivField]: currentIv + 1,
         training_points: points,
         level,
         hp_max: hpMax,
-        hp_current: Math.min(hpMax, pokemon.hp_current + (hpMax - pokemon.hp_max)),
+        hp_current: Math.min(hpMax, pokemon.hp_current + Math.max(0, hpMax - pokemon.hp_max)),
       })
       .eq("id", data.id)
       .eq("owner_id", userId);
+
 
     await (await writeDb())
       .from("profiles")
