@@ -20,6 +20,8 @@ import { artworkUrl } from "@/lib/game-data";
 import { HEAL_ITEMS } from "@/lib/items";
 import type { FindView } from "@/lib/finds";
 import { itemSprite } from "@/lib/pokedex";
+import { DAY_PHASES, currentWeather, dayPhase, msToWeatherChange } from "@/lib/world";
+import { formatDuration } from "@/lib/time";
 import {
   dismissEncounter,
   autoFightWild,
@@ -258,7 +260,9 @@ function EksploracjaPage() {
     >
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="space-y-6 lg:col-span-2">
+          <WorldPanel />
           <ResourcesPanel state={state} />
+
           {find ? <FindCard find={find} onClose={() => setFind(null)} /> : null}
           {state?.active ? (
             <EncounterCard
@@ -944,6 +948,44 @@ function FindCard({ find, onClose }: { find: FindView; onClose: () => void }) {
           OK
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** Pora dnia i pogoda świata — wspólne dla wszystkich graczy, zmiana co 3 godziny. */
+function WorldPanel() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const phase = DAY_PHASES[dayPhase(now)];
+  const weather = currentWeather(now);
+  return (
+    <div className="glass-panel rounded-2xl p-5">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Pora dnia</p>
+          <p className="font-display text-xl">
+            {phase.icon} {phase.label}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Pogoda</p>
+          <p className="font-display text-xl">
+            {weather.icon} {weather.label}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Zmiana pogody za</p>
+          <p className="font-display text-xl">{formatDuration(msToWeatherChange(now))}</p>
+        </div>
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">{weather.note}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{phase.note}</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Częstsze typy: {weather.types.join(", ")}.
+      </p>
     </div>
   );
 }

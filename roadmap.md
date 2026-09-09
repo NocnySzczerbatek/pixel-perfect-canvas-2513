@@ -48,4 +48,5 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Flakon Energii uzupełnia do pełna (limit 100), bez drugiego magazynu
 - [x] Quest Engine: 30 zadań dziennie (10/10/10), 8 typów, jedno przelosowanie, przycisk „Udaj się do lokacji"
 - [x] Plecak: kategorie (Balle, Jagody, Leczenie, TM, Ewolucja, Mega, Zadania), szukajka, sortowanie
-- [ ] Kolejne etapy specyfikacji: pogoda i pora dnia, Liga, Raidy, osiągnięcia, logowanie dzienne
+- [x] Świat: pora dnia (ranek/dzień/wieczór/noc) i pogoda co 3 h — wpływ na typy, rzadkość i Shiny
+- [ ] Kolejne etapy specyfikacji: Liga, Raidy, osiągnięcia, logowanie dzienne

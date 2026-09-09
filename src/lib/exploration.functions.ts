@@ -9,6 +9,7 @@ import { RAZZ, ballByKey, healByKey } from "@/lib/items";
 import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
 import { emitQuestEvent, progressActivities } from "@/lib/quests.functions";
 import { effectiveRegion } from "@/lib/travel";
+import { DAY_PHASES, isNightNow, worldEncounterEffects } from "@/lib/world";
 import {
   hpValue,
   pickWeather,
@@ -506,15 +507,22 @@ export const travel = createServerFn({ method: "POST" })
       // Bonusy (Shiny Charm, buffy czasowe, trwałe osiągnięcia) — liczone po stronie serwera.
       const { encounterMultipliers } = await import("@/lib/bonuses.server");
       const mult = await encounterMultipliers(userId);
+      const world = worldEncounterEffects();
       const rarePool = [...pool].sort((a, b) => b.id - a.id).slice(0, Math.max(1, Math.ceil(pool.length / 4)));
-      const rareChance = Math.min(0.6, 0.15 * mult.rare);
+      const rareChance = Math.min(0.6, 0.15 * mult.rare * world.rare);
       const isRareRoll = rarePool.length > 0 && Math.random() < rareChance;
-      const species: BiomeSpecies = isRareRoll ? pick(rarePool) : pick(pool);
+      // Pogoda przyciąga pasujące typy — jeśli są w puli, losujemy właśnie z nich.
+      const favored = pool.filter((entry) => world.favoredTypes.includes(entry.type));
+      const drawPool =
+        !isRareRoll && favored.length > 0 && Math.random() < world.favorChance ? favored : pool;
+      const species: BiomeSpecies = isRareRoll ? pick(rarePool) : pick(drawPool);
       const level = levelFor();
       const hpMax = hpValue(level, baseStats(species.id)[0], 16);
-      const shinyChance = SHINY_CHANCE * mult.shiny;
+      const shinyChance = SHINY_CHANCE * mult.shiny * world.shiny;
       const isShiny = Math.random() < shinyChance;
       if (isShiny) await emitQuestEvent(supabase, userId, "shiny", { biome: biome.slug });
+      const weatherLine = `${DAY_PHASES[world.phase].icon} ${DAY_PHASES[world.phase].label} · ${world.weather.icon} ${world.weather.label} — ${world.weather.note}`;
+
 
 
       payload = {
@@ -528,6 +536,8 @@ export const travel = createServerFn({ method: "POST" })
         hp_current: hpMax,
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
+          weatherLine,
+
           ...(candyLine ? [candyLine] : []),
           ...(findLine ? [findLine] : []),
           ...(isShiny
@@ -565,6 +575,11 @@ export const travel = createServerFn({ method: "POST" })
 
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
+          (() => {
+            const world = worldEncounterEffects();
+            return `${DAY_PHASES[world.phase].icon} ${DAY_PHASES[world.phase].label} · ${world.weather.icon} ${world.weather.label} — ${world.weather.note}`;
+          })(),
+
           ...(candyLine ? [candyLine] : []),
           ...(findLine ? [findLine] : []),
           `${trainerClass} ${person} wyzywa Cię na walkę: ${size} Pokémony (średni Lvl ${avg}).`,
@@ -712,8 +727,7 @@ export const throwBall = createServerFn({ method: "POST" })
     const useRazz = data.razz && (profile.razz_berries ?? 0) > 0;
 
     const hpFactor = (3 * row.hp_max - 2 * row.hp_current) / (3 * row.hp_max);
-    const hour = new Date().getHours();
-    const isNight = hour >= 20 || hour < 6;
+    const isNight = isNightNow();
     const { count: ownedSpecies } = await supabase.from("player_pokemon").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("species_id", row.species_id ?? 0);
     const turns = ((row.log as string[]) ?? []).filter((line: string) => line.includes("zadaje")).length;
     const situational = data.ball === "net" && ["Woda", "Robak"].includes(row.species_type ?? "") ? 3 / ball.multiplier
