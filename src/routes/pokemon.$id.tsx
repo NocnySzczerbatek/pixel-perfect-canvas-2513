@@ -11,7 +11,13 @@ import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { artworkUrl } from "@/lib/game-data";
-import { fetchEvolutions } from "@/lib/pokeapi";
+import {
+  fetchEvolutionLine,
+  fetchEvolutions,
+  fetchLevelUpMoves,
+  fetchMoveDetails,
+  type LevelUpMove,
+} from "@/lib/pokeapi";
 import candyXlIcon from "@/assets/candy-xl.png.asset.json";
 import {
   STAT_KEYS,
@@ -566,6 +572,123 @@ function ActiveMovesPanel({
           </div>
         </div>
       ) : null}
+    </section>
+  );
+}
+
+/** Pełna lista ataków z poziomowania dla obecnej formy i wszystkich dalszych ewolucji. */
+function AllMovesSection({ pokemon }: { pokemon: PokemonRow }) {
+  const speciesId = pokemon.species_id;
+
+  const { data: line } = useQuery({
+    queryKey: ["pokeapi-line", speciesId],
+    queryFn: () => fetchEvolutionLine(speciesId),
+    staleTime: Infinity,
+  });
+
+  const stages = line ?? [];
+
+  const { data: movesByStage } = useQuery({
+    queryKey: ["pokeapi-line-moves", stages.map((s) => s.id).join("-")],
+    queryFn: async () => {
+      const out: Record<number, LevelUpMove[]> = {};
+      for (const stage of stages) {
+        try {
+          out[stage.id] = await fetchLevelUpMoves(stage.id);
+        } catch {
+          out[stage.id] = [];
+        }
+      }
+      return out;
+    },
+    enabled: stages.length > 0,
+    staleTime: Infinity,
+  });
+
+  const allSlugs = Object.values(movesByStage ?? {})
+    .flat()
+    .map((m) => m.slug);
+  const { data: stats } = useQuery({
+    queryKey: ["pokeapi-line-move-stats", allSlugs.length, speciesId],
+    queryFn: () => fetchMoveDetails([...new Set(allSlugs)]),
+    enabled: allSlugs.length > 0,
+    staleTime: Infinity,
+  });
+
+  return (
+    <section className="glass-panel rounded-2xl p-5 lg:col-span-3">
+      <h2 className="text-2xl">Pełna lista ataków (wszystkie formy)</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Każdy atak wymaga odpowiedniej formy Pokémona i poziomu. Ataki dalszych ewolucji zobaczysz
+        z góry — odblokujesz je po ewolucji.
+      </p>
+
+      {line === undefined ? (
+        <p className="mt-4 text-sm text-muted-foreground">Wczytuję linię ewolucyjną…</p>
+      ) : (
+        <div className="mt-4 space-y-6">
+          {stages.map((stage, index) => {
+            const isCurrent = stage.id === speciesId;
+            const moves = movesByStage?.[stage.id];
+            return (
+              <div key={stage.id}>
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <h3 className="text-lg">
+                    {index + 1}. {stage.name}
+                  </h3>
+                  <span className="text-xs text-muted-foreground">
+                    {isCurrent
+                      ? "obecna forma"
+                      : `wymaga formy ${stage.name} — ${stage.requirement}`}
+                  </span>
+                </div>
+                {moves === undefined ? (
+                  <p className="mt-2 text-sm text-muted-foreground">Wczytuję ataki…</p>
+                ) : moves.length === 0 ? (
+                  <p className="mt-2 text-sm text-muted-foreground">Brak danych o atakach.</p>
+                ) : (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {moves.map((move) => {
+                      const detail = stats?.[move.slug];
+                      const available = isCurrent && pokemon.level >= move.level;
+                      return (
+                        <div
+                          key={`${stage.id}-${move.slug}`}
+                          className={`rounded-xl border p-3 ${
+                            available
+                              ? "border-aurora/40 bg-aurora/10"
+                              : "border-border/60 opacity-70"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-medium">{move.name}</p>
+                            {detail ? <TypeBadges types={[detail.type]} /> : null}
+                          </div>
+                          {detail ? (
+                            <p className="mt-1 text-xs">
+                              {detail.category} · Moc {detail.power ?? "—"} · Celność{" "}
+                              {detail.accuracy ? `${detail.accuracy}%` : "—"}
+                              {detail.pp ? ` · PP ${detail.pp}` : ""}
+                            </p>
+                          ) : (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Wczytuję statystyki…
+                            </p>
+                          )}
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Wymaga: {stage.name} · Lvl {move.level || 1}
+                            {available ? " — dostępny" : ""}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
