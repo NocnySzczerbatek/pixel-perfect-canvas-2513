@@ -152,6 +152,16 @@ export const raidTrainer = createServerFn({ method: "POST" })
       };
     }
 
+    const spent = await spendEnergy(await writeDb(), userId, me.energy, RAID_ENERGY);
+    if (!spent) {
+      return {
+        ok: false as const,
+        reason: "Energia zmieniła się w trakcie — odśwież i spróbuj ponownie.",
+        state: await buildState(supabase, userId),
+      };
+    }
+
+
     const { data: rival } = await supabaseAdmin
       .from("profiles")
       .select("id, trainer_name, catch_coins, shield_until, pvp_wins, pvp_losses")
