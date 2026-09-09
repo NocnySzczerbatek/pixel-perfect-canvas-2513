@@ -37,6 +37,7 @@ import {
   useCandy,
   type CandyKind,
   type PokemonRow,
+  type TrainerData,
 } from "@/lib/trainer.functions";
 
 export const Route = createFileRoute("/pokemon/$id")({
@@ -458,7 +459,7 @@ function ActiveMovesPanel({
   onSaved,
 }: {
   pokemon: PokemonRow;
-  onSaved: (data: Parameters<typeof Object>[0] extends never ? never : any) => void;
+  onSaved: (data: TrainerData) => void;
 }) {
   const save = useServerFn(setActiveMoves);
   const [busy, setBusy] = useState(false);
