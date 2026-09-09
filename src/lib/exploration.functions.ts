@@ -506,15 +506,22 @@ export const travel = createServerFn({ method: "POST" })
       // Bonusy (Shiny Charm, buffy czasowe, trwałe osiągnięcia) — liczone po stronie serwera.
       const { encounterMultipliers } = await import("@/lib/bonuses.server");
       const mult = await encounterMultipliers(userId);
+      const world = worldEncounterEffects();
       const rarePool = [...pool].sort((a, b) => b.id - a.id).slice(0, Math.max(1, Math.ceil(pool.length / 4)));
-      const rareChance = Math.min(0.6, 0.15 * mult.rare);
+      const rareChance = Math.min(0.6, 0.15 * mult.rare * world.rare);
       const isRareRoll = rarePool.length > 0 && Math.random() < rareChance;
-      const species: BiomeSpecies = isRareRoll ? pick(rarePool) : pick(pool);
+      // Pogoda przyciąga pasujące typy — jeśli są w puli, losujemy właśnie z nich.
+      const favored = pool.filter((entry) => world.favoredTypes.includes(entry.type));
+      const drawPool =
+        !isRareRoll && favored.length > 0 && Math.random() < world.favorChance ? favored : pool;
+      const species: BiomeSpecies = isRareRoll ? pick(rarePool) : pick(drawPool);
       const level = levelFor();
       const hpMax = hpValue(level, baseStats(species.id)[0], 16);
-      const shinyChance = SHINY_CHANCE * mult.shiny;
+      const shinyChance = SHINY_CHANCE * mult.shiny * world.shiny;
       const isShiny = Math.random() < shinyChance;
       if (isShiny) await emitQuestEvent(supabase, userId, "shiny", { biome: biome.slug });
+      const weatherLine = `${DAY_PHASES[world.phase].icon} ${DAY_PHASES[world.phase].label} · ${world.weather.icon} ${world.weather.label} — ${world.weather.note}`;
+
 
 
       payload = {
