@@ -58,7 +58,9 @@ export function biomePool(
     }
   }
   const local = gate(
-    biome.species.filter((species) => dex.some((entry) => entry.id === species.id)),
+    biome.species.filter(
+      (species) => !isLegendary(species.id) && dex.some((entry) => entry.id === species.id),
+    ),
     trainerLevel,
   );
   const merged = new Map<number, BiomeSpecies>();
