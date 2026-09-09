@@ -14,7 +14,7 @@ async function writeDb(): Promise<any> {
 const TRAINER_ENERGY = 6;
 const BOARD_SIZE = 6;
 const PARTY_COLUMNS =
-  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, ability, is_shiny";
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, active_moves, ability, is_shiny";
 
 /** Deterministyczny generator — ta sama plansza przeciwników przez cały dzień. */
 function rngFrom(seedText: string) {
@@ -183,7 +183,7 @@ export const fightTrainer = createServerFn({ method: "POST" })
       };
     }
 
-    const foes = foeData.team.map((member) => foeFighter(member, 22, 1.08));
+    const foes = foeData.team.map((member) => foeFighter(member, 24, 1.12));
     const result = simulateTeamBattle(allies, foes);
     const report: BattleReport = result.report;
     const label = `${foeData.trainer_class} ${foeData.person}`;
