@@ -172,6 +172,7 @@ function expThreshold(level: number) {
 type ProfileRow = {
   energy: number;
   energy_updated_at: string;
+  energy_bottles: number;
   poke_balls: number;
   great_balls: number;
   ultra_balls: number;
