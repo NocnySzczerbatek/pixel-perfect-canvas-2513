@@ -404,49 +404,6 @@ function PokemonDetailPage() {
           onSaved={setData}
         />
 
-        <section className="glass-panel rounded-2xl p-5 lg:col-span-3">
-          <h2 className="text-2xl">Ruchy z poziomowania</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Dane z PokéAPI. Opanowane: {knownMoves.length} z {(moves ?? []).length}.
-          </p>
-          {moves === undefined ? (
-            <p className="mt-4 text-sm text-muted-foreground">Wczytuję listę ruchów…</p>
-          ) : (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {moves.map((move) => {
-                const known = pokemon.level >= move.level;
-                const stats = moveStats?.[move.slug];
-                return (
-                  <div
-                    key={move.name}
-                    className={`rounded-xl border p-3 ${
-                      known ? "border-aurora/40 bg-aurora/10" : "border-border/60 opacity-70"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium">{move.name}</p>
-                      {stats ? <TypeBadges types={[stats.type]} /> : null}
-                    </div>
-                    {stats ? (
-                      <p className="mt-1 text-xs">
-                        {stats.category} · Moc {stats.power ?? "—"} · Celność{" "}
-                        {stats.accuracy ? `${stats.accuracy}%` : "—"}
-                        {stats.pp ? ` · PP ${stats.pp}` : ""}
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-xs text-muted-foreground">Wczytuję statystyki…</p>
-                    )}
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {known
-                        ? `Opanowany (Lvl ${move.level || 1})`
-                        : `Nauka na Lvl ${move.level}`}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
       </div>
     </GamePage>
   );
