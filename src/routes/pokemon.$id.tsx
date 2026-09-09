@@ -13,7 +13,15 @@ import { useTrainerData } from "@/hooks/useTrainerData";
 import { artworkUrl } from "@/lib/game-data";
 import { fetchEvolutions, fetchLevelUpMoves, fetchMoveDetails } from "@/lib/pokeapi";
 import candyXlIcon from "@/assets/candy-xl.png.asset.json";
-import { STAT_KEYS, STAT_LABELS, itemSprite, speciesType, type StatKey } from "@/lib/pokedex";
+import {
+  STAT_KEYS,
+  STAT_LABELS,
+  defaultActiveMoves,
+  itemSprite,
+  learnedMoves,
+  speciesType,
+  type StatKey,
+} from "@/lib/pokedex";
 import {
   CANDIES,
   MAX_FRIENDSHIP,
@@ -22,6 +30,7 @@ import {
   TRAINING_LEVEL_STEP,
   trainPokemon,
   evolvePokemon,
+  setActiveMoves,
   trainingCost,
   trainingInvested,
   trainingLevel,
@@ -389,6 +398,11 @@ function PokemonDetailPage() {
           )}
         </section>
 
+        <ActiveMovesPanel
+          pokemon={pokemon}
+          onSaved={setData}
+        />
+
         <section className="glass-panel rounded-2xl p-5 lg:col-span-3">
           <h2 className="text-2xl">Ruchy z poziomowania</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -434,5 +448,164 @@ function PokemonDetailPage() {
         </section>
       </div>
     </GamePage>
+  );
+}
+
+
+/** 4 sloty aktywnych ataków + pełna lista opanowanych ruchów z przyciskiem "Przypisz". */
+function ActiveMovesPanel({
+  pokemon,
+  onSaved,
+}: {
+  pokemon: PokemonRow;
+  onSaved: (data: Parameters<typeof Object>[0] extends never ? never : any) => void;
+}) {
+  const save = useServerFn(setActiveMoves);
+  const [busy, setBusy] = useState(false);
+  const [replacing, setReplacing] = useState<string | null>(null);
+
+  const pool = learnedMoves(pokemon.species_id, pokemon.level);
+  const stored = (pokemon.active_moves ?? []).filter((name) =>
+    pool.some((move) => move.name === name),
+  );
+  const active = stored.length > 0 ? stored : defaultActiveMoves(pokemon.species_id, pokemon.level);
+
+  const commit = async (moves: string[]) => {
+    setBusy(true);
+    try {
+      const result = await save({ data: { id: pokemon.id, moves } });
+      if (result.data) onSaved(result.data);
+      if (!result.ok) toast.error(result.reason);
+      else toast.success("Zestaw aktywnych ataków zapisany.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się zapisać ataków.");
+    } finally {
+      setBusy(false);
+      setReplacing(null);
+    }
+  };
+
+  const assign = (name: string) => {
+    if (active.includes(name)) return;
+    if (active.length < 4) {
+      void commit([...active, name]);
+      return;
+    }
+    setReplacing(name);
+  };
+
+  const replace = (oldName: string) => {
+    if (!replacing) return;
+    void commit(active.map((name) => (name === oldName ? replacing : name)));
+  };
+
+  return (
+    <section className="glass-panel rounded-2xl p-5 lg:col-span-3">
+      <h2 className="text-2xl">Aktywne Ataki</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        W walce Pokémon korzysta wyłącznie z tych 4 ataków. Wybór należy do Ciebie — na start
+        wpisane są 4 ostatnio poznane.
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((slot) => {
+          const name = active[slot];
+          const move = pool.find((entry) => entry.name === name);
+          return (
+            <div
+              key={slot}
+              className={`rounded-xl border p-3 ${
+                move ? "border-aurora/50 bg-aurora/10" : "border-dashed border-border/60"
+              }`}
+            >
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Slot {slot + 1}
+              </p>
+              {move ? (
+                <>
+                  <p className="font-medium">{move.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {move.type} · {move.category} · Moc {move.power} · Celność {move.accuracy}%
+                  </p>
+                  <Button
+                    className="mt-2"
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy || active.length <= 1}
+                    onClick={() => void commit(active.filter((entry) => entry !== move.name))}
+                  >
+                    Zwolnij slot
+                  </Button>
+                </>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">Wolny slot</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <h3 className="mt-6 text-lg">Opanowane ruchy ({pool.length})</h3>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {pool.map((move) => {
+          const isActive = active.includes(move.name);
+          return (
+            <div
+              key={move.name}
+              className="flex items-center justify-between gap-3 rounded-xl border border-border/60 p-3"
+            >
+              <div>
+                <p className="font-medium">{move.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {move.type} · {move.category} · Moc {move.power} · Celność {move.accuracy}% ·
+                  Lvl {move.level || 1}
+                </p>
+              </div>
+              {isActive ? (
+                <span className="shrink-0 rounded-full bg-aurora/20 px-3 py-1 text-xs text-aurora">
+                  Aktywny
+                </span>
+              ) : (
+                <Button size="sm" disabled={busy} onClick={() => assign(move.name)}>
+                  Przypisz
+                </Button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {replacing ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Wybierz atak do zastąpienia"
+        >
+          <div className="glass-panel w-full max-w-md rounded-2xl p-5">
+            <h4 className="text-xl">Wszystkie 4 sloty są zajęte</h4>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Który atak zastąpić przez „{replacing}”?
+            </p>
+            <ul className="mt-4 space-y-2">
+              {active.map((name) => (
+                <li key={name}>
+                  <Button
+                    className="w-full justify-start"
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() => replace(name)}
+                  >
+                    Zastąp {name}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <Button className="mt-4" variant="ghost" onClick={() => setReplacing(null)}>
+              Anuluj
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }
