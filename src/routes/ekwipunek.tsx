@@ -93,6 +93,20 @@ function EkwipunekPage() {
           })}
           {(data.items ?? []).filter((item) => item.item_key.startsWith("mega_stone_")).map((item) => <div key={item.item_key} className="glass-panel rounded-2xl p-5"><ItemIcon name="key-stone" label="Kamień Mega" /><p className="mt-3 font-display text-3xl">{item.quantity}</p><p className="text-sm text-muted-foreground">Kamień Mega · gatunek #{item.item_key.replace("mega_stone_", "")}</p></div>)}
           {(data.items ?? [])
+            .filter((item) => item.item_key.startsWith("tm_") && item.quantity > 0)
+            .map((item) => {
+              const tm = tmById(item.item_key.replace("tm_", ""));
+              if (!tm) return null;
+              return (
+                <div key={item.item_key} className="glass-panel rounded-2xl p-5">
+                  <ItemIcon name={tmSprite(tm.type)} label={tm.label} />
+                  <p className="mt-3 font-display text-3xl">{item.quantity}</p>
+                  <p className="text-sm text-muted-foreground">{tm.label}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{tmDescription(tm)}</p>
+                </div>
+              );
+            })}
+          {(data.items ?? [])
             .filter((item) => item.item_key === "shiny_charm" && item.quantity > 0)
             .map((item) => (
               <div key={item.item_key} className="glass-panel rounded-2xl p-5">
