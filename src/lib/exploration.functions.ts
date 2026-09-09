@@ -9,6 +9,7 @@ import { RAZZ, ballByKey, healByKey } from "@/lib/items";
 import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
 import { emitQuestEvent, progressActivities } from "@/lib/quests.functions";
 import { effectiveRegion } from "@/lib/travel";
+import { DAY_PHASES, isNightNow, worldEncounterEffects } from "@/lib/world";
 import {
   hpValue,
   pickWeather,
@@ -721,8 +722,7 @@ export const throwBall = createServerFn({ method: "POST" })
     const useRazz = data.razz && (profile.razz_berries ?? 0) > 0;
 
     const hpFactor = (3 * row.hp_max - 2 * row.hp_current) / (3 * row.hp_max);
-    const hour = new Date().getHours();
-    const isNight = hour >= 20 || hour < 6;
+    const isNight = isNightNow();
     const { count: ownedSpecies } = await supabase.from("player_pokemon").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("species_id", row.species_id ?? 0);
     const turns = ((row.log as string[]) ?? []).filter((line: string) => line.includes("zadaje")).length;
     const situational = data.ball === "net" && ["Woda", "Robak"].includes(row.species_type ?? "") ? 3 / ball.multiplier
