@@ -840,8 +840,9 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
     }
 
     const team = ((row.bot_team as BotMember[] | null) ?? []).map((member) =>
-      foeFighter(member, 28, 1.3, " bota"),
+      foeFighter(member, 30, 1.45, " bota"),
     );
+
 
 
     const result = simulateTeamBattle(allies, team);
