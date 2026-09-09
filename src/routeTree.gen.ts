@@ -26,6 +26,7 @@ import { Route as PodrozeRouteImport } from './routes/podroze'
 import { Route as PokedexRouteImport } from './routes/pokedex'
 import { Route as ProfilRouteImport } from './routes/profil'
 import { Route as PvpRouteImport } from './routes/pvp'
+import { Route as RaidyRouteImport } from './routes/raidy'
 import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as SaleRouteImport } from './routes/sale'
 import { Route as SklepRouteImport } from './routes/sklep'
@@ -120,6 +121,11 @@ const PvpRoute = PvpRouteImport.update({
   path: '/pvp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RaidyRoute = RaidyRouteImport.update({
+  id: '/raidy',
+  path: '/raidy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RankingRoute = RankingRouteImport.update({
   id: '/ranking',
   path: '/ranking',
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/pokedex': typeof PokedexRoute
   '/profil': typeof ProfilRoute
   '/pvp': typeof PvpRoute
+  '/raidy': typeof RaidyRoute
   '/ranking': typeof RankingRoute
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/pokedex': typeof PokedexRoute
   '/profil': typeof ProfilRoute
   '/pvp': typeof PvpRoute
+  '/raidy': typeof RaidyRoute
   '/ranking': typeof RankingRoute
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/pokedex': typeof PokedexRoute
   '/profil': typeof ProfilRoute
   '/pvp': typeof PvpRoute
+  '/raidy': typeof RaidyRoute
   '/ranking': typeof RankingRoute
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/pokedex'
     | '/profil'
     | '/pvp'
+    | '/raidy'
     | '/ranking'
     | '/sale'
     | '/sklep'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/pokedex'
     | '/profil'
     | '/pvp'
+    | '/raidy'
     | '/ranking'
     | '/sale'
     | '/sklep'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/pokedex'
     | '/profil'
     | '/pvp'
+    | '/raidy'
     | '/ranking'
     | '/sale'
     | '/sklep'
@@ -346,6 +358,7 @@ export interface RootRouteChildren {
   PokedexRoute: typeof PokedexRoute
   ProfilRoute: typeof ProfilRoute
   PvpRoute: typeof PvpRoute
+  RaidyRoute: typeof RaidyRoute
   RankingRoute: typeof RankingRoute
   SaleRoute: typeof SaleRoute
   SklepRoute: typeof SklepRoute
@@ -477,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PvpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/raidy': {
+      id: '/raidy'
+      path: '/raidy'
+      fullPath: '/raidy'
+      preLoaderRoute: typeof RaidyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ranking': {
       id: '/ranking'
       path: '/ranking'
@@ -554,6 +574,7 @@ const rootRouteChildren: RootRouteChildren = {
   PokedexRoute: PokedexRoute,
   ProfilRoute: ProfilRoute,
   PvpRoute: PvpRoute,
+  RaidyRoute: RaidyRoute,
   RankingRoute: RankingRoute,
   SaleRoute: SaleRoute,
   SklepRoute: SklepRoute,
