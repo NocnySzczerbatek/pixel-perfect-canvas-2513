@@ -241,7 +241,7 @@ const TYPE_MOVES: Record<string, string[]> = {
   Normalny: ["Tackle", "Quick Attack", "Bite", "Headbutt", "Slam", "Body Slam", "Take Down", "Hyper Beam"],
 };
 
-const MOVE_LEVELS = [1, 5, 10, 16, 22, 30, 40, 50];
+const MOVE_LEVELS = [1, 1, 1, 1, 15, 25, 35, 45];
 const MOVE_POWERS = [30, 40, 50, 60, 70, 85, 95, 110];
 
 /** Pula ruchów Pokémona wraz z poziomem, na którym się ich uczy. */
