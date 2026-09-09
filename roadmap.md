@@ -44,3 +44,7 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [ ] Płatności PLN — kod gotowy, celowo wyłączone na życzenie (pakiety oznaczone „Wkrótce")
 - [ ] Pełna rozpiska systemu gry — progi, liczby, koszty, nagrody i lokalizacje w kodzie
 
+- [x] Bilet Podróży: jedno źródło prawdy = 10 000 CC
+- [x] Flakon Energii uzupełnia do pełna (limit 100), bez drugiego magazynu
+- [x] Quest Engine: 30 zadań dziennie (10/10/10), 8 typów, jedno przelosowanie, przycisk „Udaj się do lokacji"
+- [ ] Kolejne etapy specyfikacji: Plecak z kategoriami, pogoda i pora dnia, Liga, Raidy, osiągnięcia, logowanie dzienne
