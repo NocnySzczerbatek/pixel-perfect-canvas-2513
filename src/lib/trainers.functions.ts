@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { simulateTeamBattle, type BattleReport } from "@/lib/battle";
+import { ENERGY_COST, spendEnergy } from "@/lib/energy";
 import { allyFighter, foeFighter } from "@/lib/fighters";
 import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
 import { REGION_SPECIES, TRAINER_CLASSES, TRAINER_NAMES, speciesType } from "@/lib/pokedex";
@@ -11,7 +12,7 @@ async function writeDb(): Promise<any> {
   return supabaseAdmin as any;
 }
 
-const TRAINER_ENERGY = 6;
+const TRAINER_ENERGY = ENERGY_COST.trainer;
 const BOARD_SIZE = 6;
 const PARTY_COLUMNS =
   "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, active_moves, ability, is_shiny";
@@ -197,10 +198,15 @@ export const fightTrainer = createServerFn({ method: "POST" })
         .eq("owner_id", userId);
     }
 
-    const updates: Record<string, any> = {
-      energy: profile.energy - TRAINER_ENERGY,
-      energy_updated_at: new Date().toISOString(),
-    };
+    const spent = await spendEnergy(await writeDb(), userId, profile.energy, TRAINER_ENERGY);
+    if (!spent) {
+      return {
+        ok: false as const,
+        reason: "Energia zmieniła się w trakcie — odśwież i spróbuj ponownie.",
+        state: await boardState(supabase, userId),
+      };
+    }
+    const updates: Record<string, any> = {};
 
     if (result.won) {
       let exp = profile.trainer_exp + foeData.reward_exp;

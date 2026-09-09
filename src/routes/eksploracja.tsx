@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { GamePage } from "@/components/game/GamePage";
+import { ENERGY_TICK_MS } from "@/lib/energy";
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { TrainerAvatar } from "@/components/game/TrainerAvatar";
 import { useSession } from "@/hooks/useSession";
@@ -323,7 +324,7 @@ function EksploracjaPage() {
   );
 }
 
-const ENERGY_TICK_DISPLAY_MS = 3 * 60 * 1000;
+const ENERGY_TICK_DISPLAY_MS = ENERGY_TICK_MS;
 
 function formatCountdown(ms: number) {
   const total = Math.max(0, Math.ceil(ms / 1000));

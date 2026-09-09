@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import { BonusPanel } from "@/components/game/BonusPanel";
 import { GuidedTour, type TourStep } from "@/components/game/GuidedTour";
 import { PlayerWindow } from "@/components/game/PlayerWindow";
+import { ENERGY_TICK_MS, MAX_ENERGY } from "@/lib/energy";
 
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { supabase } from "@/integrations/supabase/client";
@@ -464,8 +465,7 @@ const TOUR_STEPS: TourStep[] = [
   },
 ];
 
-const MAX_ENERGY = 100;
-const ENERGY_TICK_MS = 3 * 60 * 1000;
+
 
 function formatCountdown(ms: number) {
   const total = Math.max(0, Math.ceil(ms / 1000));

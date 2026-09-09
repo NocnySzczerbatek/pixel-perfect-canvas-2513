@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { hpValue, simulateTeamBattle, statValue, type Fighter } from "@/lib/battle";
+import { ENERGY_COST, spendEnergy } from "@/lib/energy";
 import { allyFighter } from "@/lib/fighters";
 import { speciesType } from "@/lib/pokedex";
 
@@ -10,7 +11,7 @@ async function writeDb(): Promise<any> {
   return supabaseAdmin as any;
 }
 
-const RAID_ENERGY = 8;
+const RAID_ENERGY = ENERGY_COST.raid;
 
 export type Rival = {
   id: string;
@@ -151,6 +152,16 @@ export const raidTrainer = createServerFn({ method: "POST" })
       };
     }
 
+    const spent = await spendEnergy(await writeDb(), userId, me.energy, RAID_ENERGY);
+    if (!spent) {
+      return {
+        ok: false as const,
+        reason: "Energia zmieniła się w trakcie — odśwież i spróbuj ponownie.",
+        state: await buildState(supabase, userId),
+      };
+    }
+
+
     const { data: rival } = await supabaseAdmin
       .from("profiles")
       .select("id, trainer_name, catch_coins, shield_until, pvp_wins, pvp_losses")
@@ -232,7 +243,6 @@ export const raidTrainer = createServerFn({ method: "POST" })
         .from("profiles")
         .update({
           catch_coins: me.catch_coins + stolen,
-          energy: me.energy - RAID_ENERGY,
           pvp_wins: (me.pvp_wins ?? 0) + 1,
         })
         .eq("id", userId);
@@ -242,7 +252,6 @@ export const raidTrainer = createServerFn({ method: "POST" })
         .from("profiles")
         .update({
           catch_coins: Math.max(0, me.catch_coins - stolen),
-          energy: me.energy - RAID_ENERGY,
           pvp_losses: (me.pvp_losses ?? 0) + 1,
         })
         .eq("id", userId);

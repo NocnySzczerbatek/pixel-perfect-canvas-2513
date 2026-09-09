@@ -2,6 +2,7 @@ import { baseStats } from "@/lib/base-stats";
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { ENERGY_TICK_MS, MAX_ENERGY, clampEnergy } from "@/lib/energy";
 import { BIOMES, findBiome, type BiomeSpecies } from "@/lib/biomes";
 import { biomePool, regionWidePool } from "@/lib/encounter-pool";
 import { RAZZ, ballByKey, healByKey } from "@/lib/items";
@@ -72,8 +73,7 @@ async function addItem(
 
 
 
-const MAX_ENERGY = 100;
-const ENERGY_TICK_MS = 3 * 60 * 1000; // +1 Energii co 3 minuty
+
 const MIN_TRAVEL_COST = 2;
 /** Bazowa szansa na Shiny: 1/512 (standard z gier). */
 const SHINY_CHANCE = 1 / 512;
@@ -240,7 +240,7 @@ async function syncEnergy(supabase: any, userId: string): Promise<ProfileRow> {
   const ticks = Math.floor((now - last) / ENERGY_TICK_MS);
   if (ticks <= 0) return profile;
 
-  const energy = Math.min(MAX_ENERGY, profile.energy + ticks);
+  const energy = clampEnergy(profile.energy + ticks);
   const consumed = energy - profile.energy;
   const stamp = new Date(last + consumed * ENERGY_TICK_MS).toISOString();
   await (await writeDb())
@@ -478,7 +478,7 @@ export const travel = createServerFn({ method: "POST" })
 
     await ((await writeDb()).from("profiles") as any)
       .update({
-        energy: Math.max(0, profile.energy - cost),
+        energy: clampEnergy(profile.energy - cost),
         energy_updated_at: new Date().toISOString(),
         ...(foundCandy === "normal" ? { candy_normal: (profile.candy_normal ?? 0) + 1 } : {}),
         ...(foundCandy === "xl" ? { candy_xl: (profile.candy_xl ?? 0) + 1 } : {}),
