@@ -33,3 +33,16 @@ export const OAK_STAGES = [
   { stage: 2, level: 3, type: "win_battles", targetKey: "bot", target: 4, coins: 500, item: "great_balls", quantity: 5, intro: "Teraz sprawdź więź ze swoją drużyną. Pokonaj czterech trenerów.", complete: "Widziałem zapis walk. Umiesz korzystać z mocnych stron drużyny." },
   { stage: 3, level: 6, type: "deliver_item", targetKey: "candy_normal", target: 3, coins: 900, item: "ultra_balls", quantity: 3, intro: "Potrzebuję trzech Cukierków do analizy przyjaźni Pokémonów.", complete: "Próbki są idealne. To przyspieszy moje badania nad ewolucją." },
 ] as const;
+/** Czytelne nazwy przedmiotów przyznawanych w nagrodach. */
+export const REWARD_ITEM_LABELS: Record<string, string> = {
+  poke_balls: "Poké Ball",
+  great_balls: "Great Ball",
+  ultra_balls: "Ultra Ball",
+  energy_bottles: "Flakon Energii",
+};
+
+/** Nazwa przedmiotu nagrody z zapasowym opisem. */
+export function rewardItemLabel(key: string | null | undefined): string {
+  if (!key) return "przedmiot";
+  return REWARD_ITEM_LABELS[key] ?? key;
+}
