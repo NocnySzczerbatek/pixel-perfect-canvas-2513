@@ -17,6 +17,33 @@ async function writeDb(): Promise<any> {
 
 const GYM_ENERGY = ENERGY_COST.gym;
 
+/** Dopisuje przedmiot do ekwipunku (albo podnosi licznik). */
+async function addItem(
+  userId: string,
+  itemKey: string,
+  metadata: Record<string, unknown>,
+  count = 1,
+) {
+  const db = await writeDb();
+  const { data: owned } = await db
+    .from("player_items")
+    .select("id, quantity")
+    .eq("owner_id", userId)
+    .eq("item_key", itemKey)
+    .maybeSingle();
+  if (owned) {
+    await db
+      .from("player_items")
+      .update({ quantity: owned.quantity + count })
+      .eq("id", owned.id)
+      .eq("owner_id", userId);
+  } else {
+    await db
+      .from("player_items")
+      .insert({ owner_id: userId, item_key: itemKey, quantity: count, metadata });
+  }
+}
+
 export type BadgeRow = {
   id: string;
   region: string;
