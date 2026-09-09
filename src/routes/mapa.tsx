@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Landmark, Medal, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { Landmark, Medal, ShieldCheck, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { GamePage } from "@/components/game/GamePage";
@@ -10,6 +10,7 @@ import { REGIONS, artworkUrl } from "@/lib/game-data";
 import { gymsForRegion } from "@/lib/gyms";
 import { getGymsState } from "@/lib/gyms.functions";
 import { REGION_MAP_POINTS } from "@/lib/region-map";
+import { leaderArt } from "@/lib/trainerArt";
 
 export const Route = createFileRoute("/mapa")({
   head: () => ({
@@ -162,7 +163,14 @@ function MapPage() {
                         Sala {gym.index} · typ {gym.type}
                       </p>
                       <p className="flex items-center gap-2 font-display text-xl">
-                        <UserRound className="h-4 w-4 text-muted-foreground" aria-hidden />
+                        <img
+                          src={leaderArt(gym.type, gym.leader)}
+                          alt={`Lider Sali: ${gym.leader}`}
+                          loading="lazy"
+                          width={512}
+                          height={512}
+                          className="h-8 w-8 rounded-md border border-border/60 object-cover [image-rendering:pixelated]"
+                        />
                         {gym.leader}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">{gym.badgeName}</p>
