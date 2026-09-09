@@ -545,20 +545,28 @@ function ActiveMovesPanel({
         })}
       </div>
 
-      <h3 className="mt-6 text-lg">Opanowane ruchy ({pool.length})</h3>
+      <h3 className="mt-6 text-lg">Ruchy z poziomowania</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Odblokowane ataki możesz od razu wstawić w slot. Kolejne dochodzą wraz z poziomem.
+      </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {pool.map((move) => {
+        {fullPool.map((move) => {
+          const unlocked = move.level <= pokemon.level;
           const isActive = active.includes(move.name);
           return (
             <div
               key={move.name}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border/60 p-3"
+              className={`flex items-center justify-between gap-3 rounded-xl border p-3 ${
+                unlocked ? "border-border/60" : "border-border/40 opacity-60"
+              }`}
             >
               <div>
                 <p className="font-medium">{move.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {move.type} · {move.category} · Moc {move.power} · Celność {move.accuracy}% ·
-                  Lvl {move.level || 1}
+                  {move.type} · {move.category} · Moc {move.power} · Celność {move.accuracy}%
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {unlocked ? `Odblokowany (Lvl ${move.level || 1})` : `Nauka na Lvl ${move.level}`}
                 </p>
               </div>
               {isActive ? (
@@ -566,7 +574,11 @@ function ActiveMovesPanel({
                   Aktywny
                 </span>
               ) : (
-                <Button size="sm" disabled={busy} onClick={() => assign(move.name)}>
+                <Button
+                  size="sm"
+                  disabled={busy || !unlocked}
+                  onClick={() => assign(move.name)}
+                >
                   Przypisz
                 </Button>
               )}
@@ -574,6 +586,7 @@ function ActiveMovesPanel({
           );
         })}
       </div>
+
 
       {replacing ? (
         <div
