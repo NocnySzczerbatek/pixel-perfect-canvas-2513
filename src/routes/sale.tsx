@@ -91,7 +91,7 @@ function SalePage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <img
-                      src={leaderArt(gym.type)}
+                      src={leaderArt(gym.type, gym.leader)}
                       alt={`Lider Sali: ${gym.leader}`}
                       loading="lazy"
                       width={512}
