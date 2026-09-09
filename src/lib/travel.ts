@@ -1,7 +1,8 @@
 import { REGIONS } from "@/lib/game-data";
 import { warsawClock } from "@/lib/time";
 
-export const TRAVEL_TICKET_PRICE = 20000;
+/** Jedno źródło prawdy dla ceny Biletu Podróży (Sklep, Ekwipunek, ekran Podróży). */
+export const TRAVEL_TICKET_PRICE = 10000;
 
 /**
  * Okna podróży mieszczą się wyłącznie w rozsądnych godzinach (8:00–24:00 czasu polskiego):

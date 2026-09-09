@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { BallPicker } from "@/components/game/BallPicker";
 import { BattleTheatre } from "@/components/game/BattleTheatre";
 import type { BattleReport } from "@/lib/battle";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Swords } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,6 +51,10 @@ export const Route = createFileRoute("/eksploracja")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  // Zadania dzienne mogą wskazać lokację: /eksploracja?biome=las
+  validateSearch: (search: Record<string, unknown>) => ({
+    biome: typeof search["biome"] === "string" ? (search["biome"] as string) : undefined,
+  }),
   component: EksploracjaPage,
 });
 
@@ -60,6 +64,7 @@ type BattleOutcome = { won: boolean; biome: string; label: string };
 
 function EksploracjaPage() {
   const { session, loading, userId } = useSession();
+  const search = Route.useSearch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -305,6 +310,7 @@ function EksploracjaPage() {
               energy={state?.energy ?? 0}
               busy={busy}
               lastBiome={lastBiome}
+              focusBiome={search.biome ?? null}
             />
           )}
         </section>
@@ -400,25 +406,40 @@ function BiomeGrid({
   energy,
   busy,
   lastBiome,
+  focusBiome,
 }: {
   onTravel: (slug: string) => void;
   energy: number;
   busy: boolean;
   lastBiome: string | null;
+  focusBiome?: string | null;
 }) {
   const minCost = 2;
+  const focusRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (focusBiome && focusRef.current) {
+      focusRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [focusBiome]);
   return (
     <div className="glass-panel rounded-2xl p-5">
       <h2 className="text-2xl">Wybierz biom</h2>
+      {focusBiome ? (
+        <p className="mt-2 text-sm text-ice">
+          Zadanie wskazuje lokację {findBiome(focusBiome)?.name ?? focusBiome} — jest podświetlona poniżej.
+        </p>
+      ) : null}
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {BIOMES.map((biome) => {
           const disabled = energy < minCost || busy;
+          const isFocus = focusBiome === biome.slug;
           return (
             <button
               key={biome.slug}
+              ref={isFocus ? focusRef : undefined}
               disabled={disabled}
               onClick={() => onTravel(biome.slug)}
-              className="tile-hover glass-panel overflow-hidden rounded-2xl text-left disabled:opacity-50 disabled:hover:transform-none"
+              className={`tile-hover glass-panel overflow-hidden rounded-2xl text-left disabled:opacity-50 disabled:hover:transform-none${isFocus ? " ring-2 ring-ice" : ""}`}
             >
               <img
                 src={biome.image}
@@ -436,6 +457,7 @@ function BiomeGrid({
                 <p className="mt-1 text-xs text-muted-foreground">{biome.tagline}</p>
                 <p className="mt-2 text-xs font-medium text-ice">
                   2–5 Energii{lastBiome === biome.slug ? " · ostatnio tu byłeś" : ""}
+                  {isFocus ? " · cel zadania" : ""}
                 </p>
               </div>
             </button>
