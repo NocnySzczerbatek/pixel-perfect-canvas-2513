@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import oakPortrait from "@/assets/pixel/profesor-oak.png";
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
-import { DIFFICULTY_INFO, OAK_INFO, OAK_STAGES, QUEST_INFO, QUEST_PRESETS, type QuestDifficulty rewardItemLabel } from "@/lib/quests";
+import { DIFFICULTY_INFO, OAK_INFO, OAK_STAGES, QUEST_INFO, QUEST_PRESETS, rewardItemLabel, type QuestDifficulty } from "@/lib/quests";
 import { chooseDailyQuest, claimDailyQuest, claimOakResearch, getQuestsState, startOakResearch } from "@/lib/quests.functions";
 
 export const Route = createFileRoute("/zadania")({
