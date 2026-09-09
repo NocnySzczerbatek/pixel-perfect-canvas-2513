@@ -331,6 +331,50 @@ export type Database = {
           },
         ]
       }
+      league_runs: {
+        Row: {
+          attempts: number
+          champion: boolean
+          cleared_stages: number
+          created_at: string
+          id: string
+          owner_id: string
+          region: string
+          stage: number
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          champion?: boolean
+          cleared_stages?: number
+          created_at?: string
+          id?: string
+          owner_id: string
+          region: string
+          stage?: number
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          champion?: boolean
+          cleared_stages?: number
+          created_at?: string
+          id?: string
+          owner_id?: string
+          region?: string
+          stage?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_runs_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oak_research: {
         Row: {
           created_at: string
