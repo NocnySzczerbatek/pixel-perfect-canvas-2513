@@ -1,13 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { BookOpen, CheckCircle2, Dices, MapPin, Target } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import oakPortrait from "@/assets/pixel/profesor-oak.png";
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/hooks/useSession";
 import { findBiome } from "@/lib/biomes";
 import {
   DIFFICULTIES,
@@ -52,6 +53,8 @@ type QuestRow = {
 const DIFFICULTY_DOT: Record<QuestDifficulty, string> = { easy: "🟢", medium: "🔵", hard: "🔴" };
 
 function QuestsPage() {
+  const { session, loading: sessionLoading } = useSession();
+  const navigate = useNavigate();
   const fetchState = useServerFn(getQuestsState);
   const claim = useServerFn(claimDailyQuest);
   const reroll = useServerFn(rerollDailyQuest);
@@ -60,7 +63,20 @@ function QuestsPage() {
   const [state, setState] = useState<Awaited<ReturnType<typeof getQuestsState>> | null>(null);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<QuestDifficulty>("easy");
-  const { isLoading } = useQuery({ queryKey: ["quests"], queryFn: async () => { const result = await fetchState(); setState(result); return result; } });
+  // Zadania wymagają zalogowania — bez sesji nie wołamy serwera (brak nagłówka autoryzacji).
+  const { isLoading } = useQuery({
+    queryKey: ["quests"],
+    enabled: !sessionLoading && Boolean(session),
+    queryFn: async () => { const result = await fetchState(); setState(result); return result; },
+  });
+
+  useEffect(() => {
+    if (!sessionLoading && !session) void navigate({ to: "/" });
+  }, [sessionLoading, session, navigate]);
+
+  if (!sessionLoading && !session) {
+    return <GamePage title="Zadania" subtitle="Zaloguj się, aby zobaczyć zadania."><p className="text-sm text-muted-foreground">Przenoszę na stronę główną…</p></GamePage>;
+  }
 
   const run = async (action: () => Promise<any>, success: string) => {
     setBusy(true);
