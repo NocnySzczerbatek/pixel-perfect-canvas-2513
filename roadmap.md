@@ -11,7 +11,7 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Energia: +1/3 min, koszt kroku 2–5 pkt
 - [x] Kafelki biomów z grafiką terenu i opisem + eksploracja
 - [x] Dziki Pokémon: najpierw walka (osłabienie HP), potem rzut Ballem
-- [x] Trenerzy-boty: klasa + imię, drużyna 2–4, przewagi typów, przycisk „Dalej”
+- [x] Trenerzy-boty: klasa + imię, drużyna 2–4, przewagi typów, przycisk „Dalej"
 - [x] Filtrowanie Pokémonów po wybranym regionie
 - [x] IV (0–31), natura, umiejętność przy złapaniu + trening za Catch Coins i nauka ataków
 - [x] Drużyna, PC Box, Ekwipunek (grafiki przedmiotów z PokéAPI), Profil
@@ -39,4 +39,5 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Wykonywanie zwykłych ewolucji
 - [x] Wizualny ekran walki (BattleTheatre) w eksploracji, Salach, PvP, turniejach i u Trenerów
 - [x] Pokédex regionu: spotkane/złapane gatunki, typy, statystyki bazowe, biomy występowania
-- [ ] Płatności PLN — kod gotowy, celowo wyłączone na życzenie (pakiety oznaczone „Wkrótce”)
+- [ ] Płatności PLN — kod gotowy, celowo wyłączone na życzenie (pakiety oznaczone „Wkrótce")
+- [ ] Pełna rozpiska systemu gry — progi, liczby, koszty, nagrody i lokalizacje w kodzie

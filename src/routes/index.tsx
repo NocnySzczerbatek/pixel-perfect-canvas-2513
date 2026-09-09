@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -169,13 +169,15 @@ function StartScreen() {
       <div className="relative z-10 flex min-h-screen flex-col px-5 py-6 md:px-10">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img
-              src={logoAsset.url}
-              alt="Catch Zone"
-              width={64}
-              height={64}
-              className="h-14 w-14 rounded-xl object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.55)] ring-1 ring-white/20"
-            />
+            <Link to="/" className="block h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-white/20 drop-shadow-[0_0_12px_rgba(255,255,255,0.55)]">
+              <img
+                src={logoAsset.url}
+                alt="Catch Zone"
+                width={64}
+                height={64}
+                className="h-full w-full object-cover"
+              />
+            </Link>
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">
                 Cobblemon
