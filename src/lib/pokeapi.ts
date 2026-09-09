@@ -260,3 +260,65 @@ export function fetchEvolutionLine(speciesId: number) {
     return out;
   });
 }
+
+export type LearnMethod = "level-up" | "machine" | "egg" | "tutor" | "other";
+
+export type LearnableMove = {
+  name: string;
+  slug: string;
+  method: LearnMethod;
+  /** Poziom nauki (tylko dla metody level-up). */
+  level: number;
+};
+
+const METHOD_ORDER: Record<LearnMethod, number> = {
+  "level-up": 0,
+  machine: 1,
+  tutor: 2,
+  egg: 3,
+  other: 4,
+};
+
+/** Wszystkie ataki, których gatunek może się nauczyć (poziomowanie, TM, tutor, jajo). */
+export function fetchLearnableMoves(speciesId: number) {
+  return cached(`allmoves:${speciesId}`, async () => {
+    const data = await api<{
+      moves: {
+        move: { name: string };
+        version_group_details: {
+          level_learned_at: number;
+          move_learn_method: { name: string };
+        }[];
+      }[];
+    }>(`pokemon/${speciesId}`);
+
+    const best = new Map<string, { method: LearnMethod; level: number }>();
+    for (const entry of data.moves) {
+      for (const detail of entry.version_group_details) {
+        const raw = detail.move_learn_method.name;
+        const method: LearnMethod =
+          raw === "level-up" || raw === "machine" || raw === "egg" || raw === "tutor"
+            ? raw
+            : "other";
+        const level = detail.level_learned_at ?? 0;
+        const current = best.get(entry.move.name);
+        if (
+          !current ||
+          METHOD_ORDER[method] < METHOD_ORDER[current.method] ||
+          (method === current.method && method === "level-up" && level < current.level)
+        ) {
+          best.set(entry.move.name, { method, level });
+        }
+      }
+    }
+
+    return [...best.entries()]
+      .map(([slug, info]) => ({ name: pretty(slug), slug, ...info }))
+      .sort(
+        (a, b) =>
+          METHOD_ORDER[a.method] - METHOD_ORDER[b.method] ||
+          a.level - b.level ||
+          a.name.localeCompare(b.name),
+      ) as LearnableMove[];
+  });
+}
