@@ -17,6 +17,7 @@ import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
 import { artworkUrl } from "@/lib/game-data";
 import { HEAL_ITEMS } from "@/lib/items";
+import type { FindView } from "@/lib/finds";
 import { itemSprite } from "@/lib/pokedex";
 import {
   dismissEncounter,
