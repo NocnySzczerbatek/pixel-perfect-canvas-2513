@@ -1,3 +1,4 @@
+import { isLegendary } from "@/lib/base-stats";
 import { findBiome, type BiomeSpecies } from "@/lib/biomes";
 import { minLevelForSpecies } from "@/lib/evo-gates";
 import { FULL_DEX, type DexEntry } from "@/lib/full-dex";
@@ -6,8 +7,9 @@ import { REGION_DEX_RANGES } from "@/lib/pokedex";
 /** Wszystkie gatunki z Pokédexu danego regionu (bez legend blokujących start). */
 export function regionDex(region: string | null | undefined): DexEntry[] {
   const range = region ? REGION_DEX_RANGES[region] : undefined;
-  if (!range) return FULL_DEX;
-  return FULL_DEX.filter((entry) => entry.id >= range[0] && entry.id <= range[1]);
+  const dex = FULL_DEX.filter((entry) => !isLegendary(entry.id));
+  if (!range) return dex;
+  return dex.filter((entry) => entry.id >= range[0] && entry.id <= range[1]);
 }
 
 function toSpecies(entry: DexEntry): BiomeSpecies {
@@ -56,7 +58,9 @@ export function biomePool(
     }
   }
   const local = gate(
-    biome.species.filter((species) => dex.some((entry) => entry.id === species.id)),
+    biome.species.filter(
+      (species) => !isLegendary(species.id) && dex.some((entry) => entry.id === species.id),
+    ),
     trainerLevel,
   );
   const merged = new Map<number, BiomeSpecies>();

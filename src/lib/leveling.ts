@@ -1,6 +1,7 @@
 /** Doświadczenie i awanse Pokémonów (zdobywane w walkach). */
 
-import { hpFromIv } from "@/lib/battle";
+import { baseStats } from "@/lib/base-stats";
+import { hpValue } from "@/lib/battle";
 
 export const MAX_POKEMON_LEVEL = 100;
 
@@ -110,7 +111,7 @@ export async function awardPokemonExp(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const update: Record<string, any> = { exp, level };
     if (levels > 0) {
-      const hpMax = hpFromIv(level, row.iv_hp);
+      const hpMax = hpValue(level, baseStats(row.species_id)[0], row.iv_hp);
       update['hp_max'] = hpMax;
       update['hp_current'] = Math.min(hpMax, row.hp_current + (hpMax - row.hp_max));
       log.push(`${name} awansuje na Lvl ${level}! (+${gain.exp} EXP)`);

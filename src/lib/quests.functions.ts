@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { OAK_STAGES, QUEST_PRESETS, type QuestDifficulty } from "@/lib/quests";
+import { OAK_STAGES, QUEST_PRESETS, rewardItemLabel, type QuestDifficulty } from "@/lib/quests";
 import { warsawClock } from "@/lib/time";
 
 async function writeDb(): Promise<any> {
@@ -53,7 +53,7 @@ export const chooseDailyQuest = createServerFn({ method: "POST" })
     return { ok: true as const, state: await buildState(context.supabase, context.userId) };
   });
 
-async function grantReward(supabase: any, userId: string, coins: number, item: string | null, quantity: number) {
+async function grantReward(supabase: any, userId: string, coins: number, item: string | null, quantity: number): Promise<string[]> {
   const fields = ["poke_balls", "great_balls", "ultra_balls", "energy_bottles"];
   const select = item && fields.includes(item) ? `catch_coins, ${item}` : "catch_coins";
   const { data: profile } = await supabase.from("profiles").select(select).eq("id", userId).maybeSingle();
@@ -61,14 +61,18 @@ async function grantReward(supabase: any, userId: string, coins: number, item: s
   const update: Record<string, number> = { catch_coins: profile.catch_coins + coins };
   if (item && fields.includes(item)) update[item] = (profile[item] ?? 0) + quantity;
   await (await writeDb()).from("profiles").update(update).eq("id", userId);
+  const rewards: string[] = [];
+  if (coins > 0) rewards.push(`${coins} Catch Coins`);
+  if (item && fields.includes(item) && quantity > 0) rewards.push(`${quantity}× ${rewardItemLabel(item)}`);
+  return rewards;
 }
 
 export const claimDailyQuest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: { id: string }) => ({ id: String(input?.id ?? "") })).handler(async ({ data, context }) => {
   const { data: row } = await context.supabase.from("daily_quests").select("*").eq("id", data.id).eq("owner_id", context.userId).eq("status", "completed").maybeSingle();
   if (!row) return { ok: false as const, reason: "Nagroda nie jest jeszcze gotowa.", state: await buildState(context.supabase, context.userId) };
-  await grantReward(context.supabase, context.userId, row.reward_coins, row.reward_item_key, row.reward_item_quantity);
+  const rewards = await grantReward(context.supabase, context.userId, row.reward_coins, row.reward_item_key, row.reward_item_quantity);
   await (await writeDb()).from("daily_quests").update({ status: "claimed" }).eq("id", row.id).eq("owner_id", context.userId);
-  return { ok: true as const, state: await buildState(context.supabase, context.userId) };
+  return { ok: true as const, rewards, state: await buildState(context.supabase, context.userId) };
 });
 
 export const startOakResearch = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
@@ -89,8 +93,9 @@ export const claimOakResearch = createServerFn({ method: "POST" }).middleware([r
     if (state.candy_normal < row.target) return { ok: false as const, reason: "Nie masz wymaganych przedmiotów.", state };
     await (await writeDb()).from("profiles").update({ candy_normal: state.candy_normal - row.target }).eq("id", context.userId);
   }
-  await grantReward(context.supabase, context.userId, row.reward_coins, row.reward_item_key, row.reward_item_quantity);
+  const rewards = await grantReward(context.supabase, context.userId, row.reward_coins, row.reward_item_key, row.reward_item_quantity);
+  if (row.research_type === "deliver_item") rewards.unshift(`oddano ${row.target}× Cukierek`);
   await (await writeDb()).from("oak_research").update({ status: "claimed" }).eq("id", row.id).eq("owner_id", context.userId);
   await (await writeDb()).from("profiles").update({ oak_stage: state.oak_stage + 1 }).eq("id", context.userId);
-  return { ok: true as const, state: await buildState(context.supabase, context.userId) };
+  return { ok: true as const, rewards, state: await buildState(context.supabase, context.userId) };
 });
