@@ -211,7 +211,11 @@ export const challengeGym = createServerFn({ method: "POST" })
         badge_name: gym.badgeName,
         leader_name: gym.leader,
       });
-      updates.catch_coins = profile.catch_coins + gym.rewardCoins;
+      // Gwarantowany pakiet: zastrzyk CC, Flakony Energii, awans Badań Oaka.
+      const coinPack = gymCoinReward(gym.index);
+      const bottlePack = gymBottleReward(gym.index);
+      updates.catch_coins = profile.catch_coins + gym.rewardCoins + coinPack;
+      updates.energy_bottles = (profile.energy_bottles ?? 0) + bottlePack;
       let exp = profile.trainer_exp + gym.rewardExp;
       let level = profile.trainer_level;
       while (exp >= Math.round(100 * Math.pow(level, 1.8))) {
@@ -225,12 +229,44 @@ export const challengeGym = createServerFn({ method: "POST" })
         updates.mega_stones = (updates.mega_stones ?? profile.mega_stones ?? 0) + 1;
       }
       report.trainer_exp = gym.rewardExp;
-      report.coins = gym.rewardCoins;
+      report.coins = gym.rewardCoins + coinPack;
       report.extras.push(`Zdobywasz odznakę ${gym.badgeName}.`);
+      report.extras.push(`+${coinPack} CC od Lidera i ${bottlePack}× Flakon Energii.`);
       log.push(
-        `Zdobywasz ${gym.badgeName}! +${gym.rewardExp} EXP, +${gym.rewardCoins} Catch Coins.`,
+        `Zdobywasz ${gym.badgeName}! +${gym.rewardExp} EXP, +${gym.rewardCoins + coinPack} Catch Coins, ${bottlePack}× Flakon Energii.`,
       );
       if (gym.index === 8) log.push(`${gym.leader} wręcza Ci ${MEGA_STONE.label}.`);
+
+      // Awans Badań Oaka tylko gdy nie masz rozpoczętego badania — inaczej stan by się rozjechał.
+      const { data: openResearch } = await supabase
+        .from("oak_research")
+        .select("id")
+        .eq("owner_id", userId)
+        .neq("status", "claimed")
+        .limit(1);
+      if (!openResearch || openResearch.length === 0) {
+        updates.oak_stage = (profile.oak_stage ?? 1) + 1;
+        report.extras.push("Profesor Oak podnosi poziom Twoich badań.");
+        log.push("Profesor Oak zapisuje zwycięstwo — poziom badań wzrasta.");
+      }
+
+      // Losowe dropy: kamień ewolucyjny w typie Sali, Ultra Balle, TM z atakiem Lidera.
+      for (const drop of rollGymDrops(gym.type, gym.index)) {
+        if (drop.kind === "balls") {
+          updates.ultra_balls = (updates.ultra_balls ?? profile.ultra_balls ?? 0) + drop.count;
+          report.extras.push(`${drop.count}× Ultra Ball`);
+          log.push(`Drop: ${drop.count}× Ultra Ball.`);
+        } else if (drop.kind === "stone") {
+          await addItem(userId, drop.itemKey, { kind: "evolution", source: "gym" });
+          report.extras.push(drop.label);
+          log.push(`Drop: ${drop.label} — pasuje do typu ${gym.type}.`);
+        } else {
+          await addItem(userId, drop.itemKey, { kind: "tm", move: drop.tm.move, source: "gym" });
+          report.extras.push(drop.tm.label);
+          log.push(`Drop: ${drop.tm.label} — ulubiony atak Lidera.`);
+        }
+      }
+
       const gymGain = expForDefeat(gym.level, "gym");
       for (const ally of allies) report.pokemon_exp.push({ name: ally.name, exp: gymGain });
       log.push(
