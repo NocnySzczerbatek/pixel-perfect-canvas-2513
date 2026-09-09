@@ -890,3 +890,37 @@ function kindStyles(kind: EncounterView["kind"]) {
   if (kind === "bot") return "bg-ice/20 text-ice";
   return "bg-ember/20 text-ember";
 }
+
+/** Okienko znaleziska: co znalazłeś na szlaku i do czego to służy. */
+function FindCard({ find, onClose }: { find: FindView; onClose: () => void }) {
+  return (
+    <div className="glass-panel rounded-2xl border border-primary/40 p-5">
+      <div className="flex items-start gap-4">
+        <img
+          src={itemSprite(find.sprite)}
+          alt={find.label}
+          width={56}
+          height={56}
+          loading="lazy"
+          className="h-14 w-14 shrink-0 [image-rendering:pixelated]"
+          onError={(event) => {
+            event.currentTarget.src = itemSprite("dowsing-machine");
+          }}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs uppercase tracking-wide text-primary">
+            Znalezisko na szlaku · {find.rarity}
+          </p>
+          <p className="font-display text-lg">{find.label}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{find.description}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Przedmiot trafił automatycznie do Twojego Ekwipunku.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={onClose}>
+          OK
+        </Button>
+      </div>
+    </div>
+  );
+}
