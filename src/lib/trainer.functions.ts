@@ -13,7 +13,7 @@ async function writeDb(): Promise<any> {
 const MAX_ENERGY = 100;
 const MAX_PARTY = 6;
 export const BALL_PRICE = 20; // Catch Coins za 1 Poké Balla
-export const BOTTLE_ENERGY = 25; // Energia z jednego Flakonu
+export const BOTTLE_ENERGY = MAX_ENERGY; // Flakon uzupełnia Energię do pełna (cap MAX_ENERGY)
 
 export type PokemonRow = {
   id: string;
@@ -345,7 +345,7 @@ export const renameTrainer = createServerFn({ method: "POST" })
     return { ok: true as const, data: await buildTrainerData(supabase, userId) };
   });
 
-/** Zużywa Flakon Energii (+25 Energii, cap 100). */
+/** Zużywa Flakon Energii — uzupełnia Energię do 100 (cap MAX_ENERGY). */
 export const useEnergyBottle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -674,6 +674,8 @@ export const evolvePokemon = createServerFn({ method: "POST" })
     const toId = Number(next.species.url.split("/").filter(Boolean).pop() ?? 0);
     const name = next.species.name.charAt(0).toUpperCase() + next.species.name.slice(1);
     await (await writeDb()).from("player_pokemon").update({ species_id: toId, species_name: name }).eq("id", mon.id).eq("owner_id", userId);
+    const { emitQuestEvent } = await import("@/lib/quests.functions");
+    await emitQuestEvent(supabase, userId, "evolve");
     return { ok: true as const, name, data: await buildTrainerData(supabase, userId) };
   });
 

@@ -6,7 +6,7 @@ import { BIOMES, findBiome, type BiomeSpecies } from "@/lib/biomes";
 import { biomePool, regionWidePool } from "@/lib/encounter-pool";
 import { RAZZ, ballByKey, healByKey } from "@/lib/items";
 import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
-import { progressActivities } from "@/lib/quests.functions";
+import { emitQuestEvent, progressActivities } from "@/lib/quests.functions";
 import { effectiveRegion } from "@/lib/travel";
 import {
   hpValue,
@@ -471,7 +471,7 @@ export const travel = createServerFn({ method: "POST" })
         label: "Flakon Energii",
         sprite: "max-elixir",
         description:
-          "Uzupełnia 25 punktów Energii od razu po zużyciu w Ekwipunku. Energia napędza każdy krok eksploracji.",
+          "Uzupełnia Energię do pełnych 100 punktów po zużyciu w Ekwipunku. Energia napędza każdy krok eksploracji.",
         rarity: "Nieczęste",
       };
     }
@@ -488,7 +488,12 @@ export const travel = createServerFn({ method: "POST" })
 
     const findLine = find ? `Znalezisko: ${find.label} — trafiło do ekwipunku.` : null;
 
-    await progressActivities(supabase, userId, "battle", 1, "exploration");
+    // Silnik zadań: krok eksploracji, wizyta w lokacji i znaleziska.
+    await emitQuestEvent(supabase, userId, "steps", { biome: biome.slug });
+    await emitQuestEvent(supabase, userId, "visit", { biome: biome.slug });
+    if (find || foundCandy) {
+      await emitQuestEvent(supabase, userId, "find_item", { biome: biome.slug });
+    }
 
     const trainerLevel = profile.trainer_level;
     const kind: "wild" | "bot" = Math.random() < 0.62 ? "wild" : "bot";
@@ -509,6 +514,8 @@ export const travel = createServerFn({ method: "POST" })
       const hpMax = hpValue(level, baseStats(species.id)[0], 16);
       const shinyChance = SHINY_CHANCE * mult.shiny;
       const isShiny = Math.random() < shinyChance;
+      if (isShiny) await emitQuestEvent(supabase, userId, "shiny", { biome: biome.slug });
+
 
       payload = {
         kind,
@@ -775,7 +782,10 @@ export const throwBall = createServerFn({ method: "POST" })
       );
       const gainedExp = 8 + row.level * 5;
       await applyTrainerReward(supabase, userId, gainedExp, 0);
-      await progressActivities(supabase, userId, "catch", 1, String(speciesId));
+      await progressActivities(supabase, userId, "catch", 1, String(speciesId), {
+        biome: row.biome ?? null,
+        typeName: type,
+      });
       await (await writeDb())
         .from("encounters")
         .update({ status: "caught", log, reward_exp: gainedExp })

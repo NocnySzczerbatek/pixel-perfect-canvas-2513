@@ -75,51 +75,66 @@ export type Database = {
       }
       daily_quests: {
         Row: {
+          biome: string | null
           created_at: string
+          description: string | null
           difficulty: string
           id: string
           owner_id: string
           progress: number
           quest_date: string
           quest_type: string
+          rerolled: boolean
           reward_coins: number
           reward_item_key: string | null
           reward_item_quantity: number
+          slot: number | null
           status: string
           target: number
           target_key: string | null
+          title: string | null
           updated_at: string
         }
         Insert: {
+          biome?: string | null
           created_at?: string
+          description?: string | null
           difficulty: string
           id?: string
           owner_id: string
           progress?: number
           quest_date: string
           quest_type: string
+          rerolled?: boolean
           reward_coins?: number
           reward_item_key?: string | null
           reward_item_quantity?: number
+          slot?: number | null
           status?: string
           target: number
           target_key?: string | null
+          title?: string | null
           updated_at?: string
         }
         Update: {
+          biome?: string | null
           created_at?: string
+          description?: string | null
           difficulty?: string
           id?: string
           owner_id?: string
           progress?: number
           quest_date?: string
           quest_type?: string
+          rerolled?: boolean
           reward_coins?: number
           reward_item_key?: string | null
           reward_item_quantity?: number
+          slot?: number | null
           status?: string
           target?: number
           target_key?: string | null
+          title?: string | null
           updated_at?: string
         }
         Relationships: [
