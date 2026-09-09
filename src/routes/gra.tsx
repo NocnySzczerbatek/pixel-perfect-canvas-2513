@@ -481,6 +481,7 @@ const NAV_GROUPS = [
       { to: "/podroze", label: "Podróże", Icon: Plane, desc: "Czasowe wyprawy do regionów" },
       { to: "/mapa", label: "Mapa regionów", Icon: MapIcon, desc: "Sale, Liderzy i odznaki" },
       { to: "/bonusy", label: "Historia bonusów", Icon: Sparkles, desc: "Buffy i szansa na Shiny" },
+      { to: "/osiagniecia", label: "Osiągnięcia", Icon: Trophy, desc: "Codzienna nagroda i kamienie milowe" },
       { to: "/sale", label: "Sale", Icon: Landmark, desc: "8 Liderów regionu" },
       { to: "/liga", label: "Liga Pokémon", Icon: Crown, desc: "Elite 4 i Mistrz" },
       { to: "/pvp", label: "PvP", Icon: Swords, desc: "Napady na innych trenerów" },

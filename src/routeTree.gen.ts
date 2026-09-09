@@ -20,6 +20,7 @@ import { Route as GtsRouteImport } from './routes/gts'
 import { Route as LigaRouteImport } from './routes/liga'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as OdznakiRouteImport } from './routes/odznaki'
+import { Route as OsiagnieciaRouteImport } from './routes/osiagniecia'
 import { Route as PcBoxRouteImport } from './routes/pc-box'
 import { Route as PodrozeRouteImport } from './routes/podroze'
 import { Route as PokedexRouteImport } from './routes/pokedex'
@@ -87,6 +88,11 @@ const MapaRoute = MapaRouteImport.update({
 const OdznakiRoute = OdznakiRouteImport.update({
   id: '/odznaki',
   path: '/odznaki',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OsiagnieciaRoute = OsiagnieciaRouteImport.update({
+  id: '/osiagniecia',
+  path: '/osiagniecia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PcBoxRoute = PcBoxRouteImport.update({
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
   '/odznaki': typeof OdznakiRoute
+  '/osiagniecia': typeof OsiagnieciaRoute
   '/pc-box': typeof PcBoxRoute
   '/podroze': typeof PodrozeRoute
   '/pokedex': typeof PokedexRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
   '/odznaki': typeof OdznakiRoute
+  '/osiagniecia': typeof OsiagnieciaRoute
   '/pc-box': typeof PcBoxRoute
   '/podroze': typeof PodrozeRoute
   '/pokedex': typeof PokedexRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
   '/odznaki': typeof OdznakiRoute
+  '/osiagniecia': typeof OsiagnieciaRoute
   '/pc-box': typeof PcBoxRoute
   '/podroze': typeof PodrozeRoute
   '/pokedex': typeof PokedexRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/liga'
     | '/mapa'
     | '/odznaki'
+    | '/osiagniecia'
     | '/pc-box'
     | '/podroze'
     | '/pokedex'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/liga'
     | '/mapa'
     | '/odznaki'
+    | '/osiagniecia'
     | '/pc-box'
     | '/podroze'
     | '/pokedex'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/liga'
     | '/mapa'
     | '/odznaki'
+    | '/osiagniecia'
     | '/pc-box'
     | '/podroze'
     | '/pokedex'
@@ -328,6 +340,7 @@ export interface RootRouteChildren {
   LigaRoute: typeof LigaRoute
   MapaRoute: typeof MapaRoute
   OdznakiRoute: typeof OdznakiRoute
+  OsiagnieciaRoute: typeof OsiagnieciaRoute
   PcBoxRoute: typeof PcBoxRoute
   PodrozeRoute: typeof PodrozeRoute
   PokedexRoute: typeof PokedexRoute
@@ -420,6 +433,13 @@ declare module '@tanstack/react-router' {
       path: '/odznaki'
       fullPath: '/odznaki'
       preLoaderRoute: typeof OdznakiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/osiagniecia': {
+      id: '/osiagniecia'
+      path: '/osiagniecia'
+      fullPath: '/osiagniecia'
+      preLoaderRoute: typeof OsiagnieciaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pc-box': {
@@ -528,6 +548,7 @@ const rootRouteChildren: RootRouteChildren = {
   LigaRoute: LigaRoute,
   MapaRoute: MapaRoute,
   OdznakiRoute: OdznakiRoute,
+  OsiagnieciaRoute: OsiagnieciaRoute,
   PcBoxRoute: PcBoxRoute,
   PodrozeRoute: PodrozeRoute,
   PokedexRoute: PokedexRoute,
