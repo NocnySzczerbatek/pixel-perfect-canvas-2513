@@ -52,4 +52,5 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Nagrody za Sale: 2000–3000 CC, 3–5 Flakonów, awans badań Oaka, losowe dropy (kamień/Ultra Balle/TM)
 - [x] Liga Pokémon: Elite 4 + Mistrz po 8 odznakach, porażka cofa przebieg
 - [x] Osiągnięcia (17 celów, trwałe bonusy) + nagrody za codzienne logowanie 1–7 dni
-- [ ] Kolejne etapy specyfikacji: Raidy, Region Mastery, wydarzenia tygodniowe, hodowla
+- [x] Raidy: 3 Bossy dziennie (Tier 1–5), legendy tylko tutaj, 3 próby na dobę, łup CC/Flakony/TM/Mega
+- [ ] Kolejne etapy specyfikacji: Region Mastery, wydarzenia tygodniowe, hodowla, znajomi/klany
