@@ -531,14 +531,15 @@ export const travel = createServerFn({ method: "POST" })
         ],
       };
     } else {
-      const size = randInt(3, 4);
+      // Trener-bot ma być realnym wyzwaniem: pełniejsza drużyna i poziomy powyżej trenera.
+      const size = Math.min(6, randInt(3, 4) + Math.floor(trainerLevel / 12));
       const team: BotMember[] = Array.from({ length: size }, () => {
         const species: BiomeSpecies = pick(trainerPool);
         return {
           species_id: species.id,
           species_name: species.name,
           species_type: species.type,
-          level: Math.max(1, trainerLevel + randInt(-2, 2)),
+          level: Math.max(2, trainerLevel + randInt(1, 4)),
         };
       });
       const avg = Math.round(team.reduce((sum, m) => sum + m.level, 0) / team.length);
@@ -552,8 +553,9 @@ export const travel = createServerFn({ method: "POST" })
         trainer_person: person,
         hp_max: hpValue(avg, 70, 20),
         hp_current: hpValue(avg, 70, 20),
-        reward_exp: 20 + avg * 12,
-        reward_coins: 25 + avg * 9,
+        reward_exp: 26 + avg * 14 + size * 6,
+        reward_coins: 32 + avg * 11 + size * 5,
+
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
           ...(candyLine ? [candyLine] : []),
@@ -838,8 +840,10 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
     }
 
     const team = ((row.bot_team as BotMember[] | null) ?? []).map((member) =>
-      foeFighter(member, 24, 1.12, " bota"),
+      foeFighter(member, 30, 1.45, " bota"),
     );
+
+
 
     const result = simulateTeamBattle(allies, team);
     const report = result.report;

@@ -827,6 +827,33 @@ export type Database = {
           },
         ]
       }
+      region_visits: {
+        Row: {
+          first_visit_at: string
+          id: string
+          last_visit_at: string
+          owner_id: string
+          region: string
+          visits: number
+        }
+        Insert: {
+          first_visit_at?: string
+          id?: string
+          last_visit_at?: string
+          owner_id: string
+          region: string
+          visits?: number
+        }
+        Update: {
+          first_visit_at?: string
+          id?: string
+          last_visit_at?: string
+          owner_id?: string
+          region?: string
+          visits?: number
+        }
+        Relationships: []
+      }
       tournament_entries: {
         Row: {
           battles_today: number

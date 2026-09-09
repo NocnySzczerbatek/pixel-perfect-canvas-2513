@@ -39,5 +39,8 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Wykonywanie zwykłych ewolucji
 - [x] Wizualny ekran walki (BattleTheatre) w eksploracji, Salach, PvP, turniejach i u Trenerów
 - [x] Pokédex regionu: spotkane/złapane gatunki, typy, statystyki bazowe, biomy występowania
+- [x] Mapa regionów w Podróżach: okna lotów na mapie + oznaczenie odwiedzonych regionów
+- [x] Wzmocnienie Trenerów-botów w eksploracji (liczniejsza drużyna i wyższy poziom = realne wyzwanie)
 - [ ] Płatności PLN — kod gotowy, celowo wyłączone na życzenie (pakiety oznaczone „Wkrótce")
 - [ ] Pełna rozpiska systemu gry — progi, liczby, koszty, nagrody i lokalizacje w kodzie
+

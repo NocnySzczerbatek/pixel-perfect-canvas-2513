@@ -9,12 +9,25 @@ async function writeDb(): Promise<any> {
   return supabaseAdmin as any;
 }
 
+export type RegionVisit = {
+  region: string;
+  visits: number;
+  first_visit_at: string;
+  last_visit_at: string;
+};
+
 async function buildTravelState(supabase: any, userId: string) {
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("region, travel_tickets, travel_region, travel_until, catch_coins")
-    .eq("id", userId)
-    .maybeSingle();
+  const [{ data: profile }, { data: visitRows }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("region, travel_tickets, travel_region, travel_until, catch_coins")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("region_visits")
+      .select("region, visits, first_visit_at, last_visit_at")
+      .eq("owner_id", userId),
+  ]);
   if (!profile) throw new Error("Nie znaleziono profilu trenera.");
   const activeRegion = effectiveRegion(profile.region, profile.travel_region, profile.travel_until);
   if (profile.travel_region && activeRegion === profile.region) {
@@ -28,8 +41,41 @@ async function buildTravelState(supabase: any, userId: string) {
     travel_tickets: profile.travel_tickets ?? 0,
     catch_coins: profile.catch_coins,
     ticket_price: TRAVEL_TICKET_PRICE,
+    visits: ((visitRows ?? []) as any[]).map((row) => ({
+      region: row.region,
+      visits: row.visits,
+      first_visit_at: row.first_visit_at,
+      last_visit_at: row.last_visit_at,
+    })) as RegionVisit[],
   };
 }
+
+/** Dziennik odwiedzin — pierwsza wizyta zostaje, kolejne podbijają licznik. */
+async function recordVisit(userId: string, region: string) {
+  const db = await writeDb();
+  const now = new Date().toISOString();
+  const { data: existing } = await db
+    .from("region_visits")
+    .select("id, visits")
+    .eq("owner_id", userId)
+    .eq("region", region)
+    .maybeSingle();
+  if (existing) {
+    await db
+      .from("region_visits")
+      .update({ visits: (existing.visits ?? 0) + 1, last_visit_at: now })
+      .eq("id", existing.id);
+    return;
+  }
+  await db.from("region_visits").insert({
+    owner_id: userId,
+    region,
+    visits: 1,
+    first_visit_at: now,
+    last_visit_at: now,
+  });
+}
+
 
 export const getTravelState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -60,5 +106,7 @@ export const flyToRegion = createServerFn({ method: "POST" })
       travel_region: data.region,
       travel_until: until,
     }).eq("id", userId);
+    await recordVisit(userId, data.region);
     return { ok: true as const, until, state: await buildTravelState(supabase, userId) };
+
   });
