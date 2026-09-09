@@ -19,7 +19,7 @@ import { biomePool, regionDex } from "@/lib/encounter-pool";
 import { FULL_DEX } from "@/lib/full-dex";
 import { REGIONS, artworkUrl } from "@/lib/game-data";
 import { ivRating } from "@/lib/iv";
-import { pokedexProgress } from "@/lib/pokedex.functions";
+import { pokedexProgress, type DexOwnedEntry } from "@/lib/pokedex.functions";
 import { STAT_LABELS } from "@/lib/pokedex";
 
 export const Route = createFileRoute("/pokedex")({
@@ -79,7 +79,7 @@ function PokedexPage() {
   const seen = useMemo(() => new Set(data?.seenIds ?? []), [data]);
   const caught = useMemo(() => new Set(data?.caughtIds ?? []), [data]);
   const owned = useMemo(() => {
-    const map = new Map<number, (typeof data)["owned"][number]>();
+    const map = new Map<number, DexOwnedEntry>();
     for (const row of data?.owned ?? []) map.set(row.speciesId, row);
     return map;
   }, [data]);
