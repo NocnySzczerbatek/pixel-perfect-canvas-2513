@@ -140,8 +140,18 @@ function RaidsPage() {
       </div>
 
       {report ? (
-        <div className="mt-6">
-          <BattleTheatre report={report} log={log} />
+        <div className="mt-6 space-y-4">
+          <BattleTheatre report={report} allyLabel="Twoja drużyna" foeLabel="Boss Raidu" />
+          {log.length > 0 ? (
+            <div className="max-h-[22rem] overflow-y-auto rounded-2xl border border-border/60 bg-card/50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Przebieg raidu</p>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                {log.map((line, index) => (
+                  <li key={`${index}-${line.slice(0, 12)}`}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

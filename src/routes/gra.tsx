@@ -484,6 +484,7 @@ const NAV_GROUPS = [
       { to: "/osiagniecia", label: "Osiągnięcia", Icon: Trophy, desc: "Codzienna nagroda i kamienie milowe" },
       { to: "/sale", label: "Sale", Icon: Landmark, desc: "8 Liderów regionu" },
       { to: "/liga", label: "Liga Pokémon", Icon: Crown, desc: "Elite 4 i Mistrz" },
+      { to: "/raidy", label: "Raidy", Icon: Flame, desc: "Bossowie dnia i legendy" },
       { to: "/pvp", label: "PvP", Icon: Swords, desc: "Napady na innych trenerów" },
       { to: "/turnieje", label: "Turnieje", Icon: Crown, desc: "Tygodniowa liga o puchar" },
       { to: "/trenerzy", label: "Trenerzy", Icon: Users, desc: "Przeciwnicy i klasy" },
