@@ -106,5 +106,7 @@ export const flyToRegion = createServerFn({ method: "POST" })
       travel_region: data.region,
       travel_until: until,
     }).eq("id", userId);
+    await recordVisit(userId, data.region);
     return { ok: true as const, until, state: await buildTravelState(supabase, userId) };
+
   });
