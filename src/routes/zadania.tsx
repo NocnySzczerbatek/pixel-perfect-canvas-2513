@@ -1,13 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { BookOpen, CheckCircle2, Dices, MapPin, Target } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import oakPortrait from "@/assets/pixel/profesor-oak.png";
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/hooks/useSession";
 import { findBiome } from "@/lib/biomes";
 import {
   DIFFICULTIES,
