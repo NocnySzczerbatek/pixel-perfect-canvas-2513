@@ -34,7 +34,7 @@ function run(partySize: number, level: number, botSize: number, iv: number, powe
 for (const level of [10, 20, 36]) {
   for (const botSize of [3, 5]) {
     console.log(
-      `Lvl${level} vs bot x${botSize}: solo=${run(1, level, botSize, 28, 1.3)}% | 3 mons=${run(3, level, botSize, 28, 1.3)}% | 6 mons=${run(6, level, botSize, 28, 1.3)}%`,
+      `Lvl${level} vs bot x${botSize}: solo=${run(1, level, botSize, 31, 1.5)}% | 3 mons=${run(3, level, botSize, 31, 1.5)}% | 6 mons=${run(6, level, botSize, 31, 1.5)}%`,
     );
   }
 }
