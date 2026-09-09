@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          achievement_key: string
+          claimed_at: string
+          created_at: string
+          id: string
+          label: string
+          owner_id: string
+        }
+        Insert: {
+          achievement_key: string
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          label: string
+          owner_id: string
+        }
+        Update: {
+          achievement_key?: string
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          label?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bonus_history: {
         Row: {
           bonus_key: string
@@ -68,6 +103,44 @@ export type Database = {
             foreignKeyName: "bonus_history_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_login: {
+        Row: {
+          best_streak: number
+          created_at: string
+          id: string
+          last_claim_date: string | null
+          owner_id: string
+          streak: number
+          updated_at: string
+        }
+        Insert: {
+          best_streak?: number
+          created_at?: string
+          id?: string
+          last_claim_date?: string | null
+          owner_id: string
+          streak?: number
+          updated_at?: string
+        }
+        Update: {
+          best_streak?: number
+          created_at?: string
+          id?: string
+          last_claim_date?: string | null
+          owner_id?: string
+          streak?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_login_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
