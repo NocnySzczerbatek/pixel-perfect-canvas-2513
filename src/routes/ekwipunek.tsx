@@ -9,6 +9,7 @@ import { useTrainerData } from "@/hooks/useTrainerData";
 import { itemSprite } from "@/lib/pokedex";
 import { buyPokeBalls, craftMegaStone, useEnergyBottle } from "@/lib/trainer.functions";
 import { BALLS } from "@/lib/items";
+import { tmById, tmDescription, tmSprite } from "@/lib/finds";
 
 export const Route = createFileRoute("/ekwipunek")({
   head: () => ({
