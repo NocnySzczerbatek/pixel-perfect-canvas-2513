@@ -17,6 +17,7 @@ import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
 import { artworkUrl } from "@/lib/game-data";
 import { HEAL_ITEMS } from "@/lib/items";
+import type { FindView } from "@/lib/finds";
 import { itemSprite } from "@/lib/pokedex";
 import {
   dismissEncounter,
@@ -66,6 +67,7 @@ function EksploracjaPage() {
   const [lastBiome, setLastBiome] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<BattleOutcome | null>(null);
   const [activeMonId, setActiveMonId] = useState<string | null>(null);
+  const [find, setFind] = useState<FindView | null>(null);
 
   useEffect(() => {
     if (!loading && !session) {
@@ -99,6 +101,7 @@ function EksploracjaPage() {
     if (!userId || busy) return;
     setBusy(true);
     setOutcome(null);
+    setFind(null);
     try {
       const result = await travelFn({ data: { biome: biomeSlug } });
       if (!result.ok) {
@@ -107,6 +110,10 @@ function EksploracjaPage() {
         setLastBiome(biomeSlug);
         const biome = findBiome(biomeSlug);
         toast.success(`Dotarłeś do biomu ${biome?.name ?? biomeSlug}`);
+        if (result.find) {
+          setFind(result.find);
+          toast.success(`Znalezisko: ${result.find.label}`);
+        }
       }
       updateState(result.state);
     } catch (err) {
@@ -246,6 +253,7 @@ function EksploracjaPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="space-y-6 lg:col-span-2">
           <ResourcesPanel state={state} />
+          {find ? <FindCard find={find} onClose={() => setFind(null)} /> : null}
           {state?.active ? (
             <EncounterCard
               encounter={state.active}
@@ -881,4 +889,38 @@ function kindStyles(kind: EncounterView["kind"]) {
   if (kind === "wild") return "bg-aurora/20 text-aurora";
   if (kind === "bot") return "bg-ice/20 text-ice";
   return "bg-ember/20 text-ember";
+}
+
+/** Okienko znaleziska: co znalazłeś na szlaku i do czego to służy. */
+function FindCard({ find, onClose }: { find: FindView; onClose: () => void }) {
+  return (
+    <div className="glass-panel rounded-2xl border border-primary/40 p-5">
+      <div className="flex items-start gap-4">
+        <img
+          src={itemSprite(find.sprite)}
+          alt={find.label}
+          width={56}
+          height={56}
+          loading="lazy"
+          className="h-14 w-14 shrink-0 [image-rendering:pixelated]"
+          onError={(event) => {
+            event.currentTarget.src = itemSprite("dowsing-machine");
+          }}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs uppercase tracking-wide text-primary">
+            Znalezisko na szlaku · {find.rarity}
+          </p>
+          <p className="font-display text-lg">{find.label}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{find.description}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Przedmiot trafił automatycznie do Twojego Ekwipunku.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={onClose}>
+          OK
+        </Button>
+      </div>
+    </div>
+  );
 }

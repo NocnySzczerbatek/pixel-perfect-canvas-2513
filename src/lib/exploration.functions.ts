@@ -17,6 +17,15 @@ import {
   type Fighter,
 } from "@/lib/battle";
 import { allyFighter, foeFighter, wildFighter } from "@/lib/fighters";
+import { FULL_DEX } from "@/lib/full-dex";
+import {
+  TMS,
+  rollFind,
+  tmDescription,
+  tmItemKey,
+  tmSprite,
+  type FindView,
+} from "@/lib/finds";
 import {
   NATURES,
   TRAINER_CLASSES,
@@ -33,6 +42,34 @@ async function writeDb(): Promise<any> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin as any;
 }
+
+/** Dopisuje przedmiot do ekwipunku gracza (albo podnosi licznik). */
+async function addItem(
+  supabase: any,
+  userId: string,
+  itemKey: string,
+  metadata: Record<string, unknown>,
+) {
+  const { data: owned } = await supabase
+    .from("player_items")
+    .select("id, quantity")
+    .eq("owner_id", userId)
+    .eq("item_key", itemKey)
+    .maybeSingle();
+  if (owned) {
+    await (await writeDb())
+      .from("player_items")
+      .update({ quantity: owned.quantity + 1 })
+      .eq("id", owned.id)
+      .eq("owner_id", userId);
+  } else {
+    await (await writeDb())
+      .from("player_items")
+      .insert({ owner_id: userId, item_key: itemKey, quantity: 1, metadata });
+  }
+}
+
+
 
 
 const MAX_ENERGY = 100;
@@ -135,6 +172,7 @@ function expThreshold(level: number) {
 type ProfileRow = {
   energy: number;
   energy_updated_at: string;
+  energy_bottles: number;
   poke_balls: number;
   great_balls: number;
   ultra_balls: number;
@@ -162,7 +200,7 @@ type ProfileRow = {
 };
 
 const PROFILE_COLUMNS =
-  "energy, energy_updated_at, poke_balls, great_balls, ultra_balls, master_balls, premier_balls, net_balls, dive_balls, dusk_balls, quick_balls, timer_balls, repeat_balls, luxury_balls, razz_berries, potions, super_potions, revives, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region, travel_region, travel_until";
+  "energy, energy_updated_at, energy_bottles, poke_balls, great_balls, ultra_balls, master_balls, premier_balls, net_balls, dive_balls, dusk_balls, quick_balls, timer_balls, repeat_balls, luxury_balls, razz_berries, potions, super_potions, revives, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region, travel_region, travel_until";
 
 
 
@@ -394,15 +432,6 @@ export const travel = createServerFn({ method: "POST" })
     const foundCandy =
       candyRoll < 0.05 ? ("xl" as const) : candyRoll < 0.2 ? ("normal" as const) : null;
 
-    await ((await writeDb()).from("profiles") as any)
-      .update({
-        energy: Math.max(0, profile.energy - cost),
-        energy_updated_at: new Date().toISOString(),
-        ...(foundCandy === "normal" ? { candy_normal: (profile.candy_normal ?? 0) + 1 } : {}),
-        ...(foundCandy === "xl" ? { candy_xl: (profile.candy_xl ?? 0) + 1 } : {}),
-      })
-      .eq("id", userId);
-
     const candyLine =
       foundCandy === "normal"
         ? "Na ścieżce leżał Zwykły Cukierek — trafił do ekwipunku."
@@ -410,14 +439,55 @@ export const travel = createServerFn({ method: "POST" })
           ? "Znalazłeś Cukierek XL — rzadkie znalezisko!"
           : null;
 
+    // Rzadkie znaleziska: TM, fragment Kamienia Mega, Flakon Energii (max jedno na krok).
     const megaSpecies = [3, 6, 9, 65, 94, 115, 127, 130, 142, 150, 181, 212, 214, 229, 248, 254, 257, 260, 282, 303, 306, 308, 310, 319, 323, 334, 354, 359, 362, 373, 376, 380, 381, 445, 448, 460, 475, 531, 719];
-    const foundMegaSpecies = Math.random() < 0.08 ? pick(megaSpecies) : null;
-    if (foundMegaSpecies) {
-      const itemKey = `mega_shard_${foundMegaSpecies}`;
-      const { data: owned } = await supabase.from("player_items").select("id, quantity").eq("owner_id", userId).eq("item_key", itemKey).maybeSingle();
-      if (owned) await (await writeDb()).from("player_items").update({ quantity: owned.quantity + 1 }).eq("id", owned.id).eq("owner_id", userId);
-      else await (await writeDb()).from("player_items").insert({ owner_id: userId, item_key: itemKey, quantity: 1, metadata: { species_id: foundMegaSpecies, kind: "mega_shard" } });
+    const findKind = rollFind();
+    let find: FindView | null = null;
+
+    if (findKind === "tm") {
+      const tm = pick(TMS);
+      await addItem(supabase, userId, tmItemKey(tm.id), { kind: "tm", move: tm.move, type: tm.type });
+      find = {
+        kind: "tm",
+        label: tm.label,
+        sprite: tmSprite(tm.type),
+        description: tmDescription(tm),
+        rarity: "Bardzo rzadkie",
+      };
+    } else if (findKind === "mega") {
+      const speciesId = pick(megaSpecies);
+      const speciesName = FULL_DEX.find((entry) => entry.id === speciesId)?.name ?? `#${speciesId}`;
+      await addItem(supabase, userId, `mega_shard_${speciesId}`, { species_id: speciesId, kind: "mega_shard" });
+      find = {
+        kind: "mega",
+        label: `Fragment Kamienia Mega — ${speciesName}`,
+        sprite: "key-stone",
+        description: `Materiał do Mega Ewolucji. Zbierz 5 fragmentów tego gatunku, a w Ekwipunku utworzysz Kamień Mega dla ${speciesName} (+30% siły ataku w walce z Liderem Sali).`,
+        rarity: "Rzadkie",
+      };
+    } else if (findKind === "bottle") {
+      find = {
+        kind: "bottle",
+        label: "Flakon Energii",
+        sprite: "max-elixir",
+        description:
+          "Uzupełnia 25 punktów Energii od razu po zużyciu w Ekwipunku. Energia napędza każdy krok eksploracji.",
+        rarity: "Nieczęste",
+      };
     }
+
+    await ((await writeDb()).from("profiles") as any)
+      .update({
+        energy: Math.max(0, profile.energy - cost),
+        energy_updated_at: new Date().toISOString(),
+        ...(foundCandy === "normal" ? { candy_normal: (profile.candy_normal ?? 0) + 1 } : {}),
+        ...(foundCandy === "xl" ? { candy_xl: (profile.candy_xl ?? 0) + 1 } : {}),
+        ...(findKind === "bottle" ? { energy_bottles: (profile.energy_bottles ?? 0) + 1 } : {}),
+      })
+      .eq("id", userId);
+
+    const findLine = find ? `Znalezisko: ${find.label} — trafiło do ekwipunku.` : null;
+
     await progressActivities(supabase, userId, "battle", 1, "exploration");
 
     const trainerLevel = profile.trainer_level;
@@ -452,7 +522,7 @@ export const travel = createServerFn({ method: "POST" })
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
           ...(candyLine ? [candyLine] : []),
-          ...(foundMegaSpecies ? ["Znalazłeś fragment Kamienia Mega!"] : []),
+          ...(findLine ? [findLine] : []),
           ...(isShiny
             ? [`✨ Powietrze zaiskrzyło — to SHINY ${species.name}! Niezwykle rzadkie spotkanie.`]
             : []),
@@ -487,7 +557,7 @@ export const travel = createServerFn({ method: "POST" })
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
           ...(candyLine ? [candyLine] : []),
-          ...(foundMegaSpecies ? ["Znalazłeś fragment Kamienia Mega!"] : []),
+          ...(findLine ? [findLine] : []),
           `${trainerClass} ${person} wyzywa Cię na walkę: ${size} Pokémony (średni Lvl ${avg}).`,
         ],
       };
@@ -511,6 +581,7 @@ export const travel = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       encounter: toView(created),
+      find,
       state: await buildState(supabase, userId),
     };
   });
