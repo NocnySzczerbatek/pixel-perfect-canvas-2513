@@ -110,7 +110,7 @@ async function buildState(supabase: any, userId: string): Promise<AchievementsSt
       streak: login?.streak ?? 0,
       best_streak: login?.best_streak ?? 0,
       claimed_today: claimedToday,
-      reward: { day: Math.min(day, 7), ...loginReward(day) },
+      reward: { ...loginReward(day), day: Math.min(day, 7) },
     },
     achievements: ACHIEVEMENTS.map((def) => {
       const progress = Math.min(metrics[def.metric] ?? 0, def.target);
