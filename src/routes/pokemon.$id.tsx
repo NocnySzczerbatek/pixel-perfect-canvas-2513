@@ -11,7 +11,7 @@ import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { artworkUrl } from "@/lib/game-data";
-import { fetchEvolutions, fetchLevelUpMoves, fetchMoveDetails } from "@/lib/pokeapi";
+import { fetchEvolutions } from "@/lib/pokeapi";
 import candyXlIcon from "@/assets/candy-xl.png.asset.json";
 import {
   STAT_KEYS,
@@ -19,6 +19,7 @@ import {
   defaultActiveMoves,
   itemSprite,
   learnedMoves,
+  movePool,
   speciesType,
   type StatKey,
 } from "@/lib/pokedex";
@@ -82,21 +83,6 @@ function PokemonDetailPage() {
   const pokemon = (data?.pokemon ?? []).find((p) => p.id === id);
   const coins = data?.profile.catch_coins ?? 0;
   const speciesId = pokemon?.species_id;
-
-  const { data: moves } = useQuery({
-    queryKey: ["pokeapi-moves", speciesId],
-    queryFn: () => fetchLevelUpMoves(speciesId!),
-    enabled: !!speciesId,
-    staleTime: Infinity,
-  });
-
-  const moveSlugs = (moves ?? []).map((m) => m.slug);
-  const { data: moveStats } = useQuery({
-    queryKey: ["pokeapi-move-stats", speciesId, moveSlugs.length],
-    queryFn: () => fetchMoveDetails(moveSlugs),
-    enabled: moveSlugs.length > 0,
-    staleTime: Infinity,
-  });
 
   const { data: evolutions } = useQuery({
     queryKey: ["pokeapi-evo", speciesId],
@@ -181,7 +167,6 @@ function PokemonDetailPage() {
   const toNextLevel = TRAINING_LEVEL_STEP - (pokemon.training_points % TRAINING_LEVEL_STEP || 0);
   const friendship = pokemon.friendship ?? 0;
   const friendshipPct = Math.round((friendship / MAX_FRIENDSHIP) * 100);
-  const knownMoves = (moves ?? []).filter((move) => move.level <= pokemon.level);
 
   return (
     <GamePage
@@ -422,6 +407,7 @@ function ActiveMovesPanel({
   const [busy, setBusy] = useState(false);
   const [replacing, setReplacing] = useState<string | null>(null);
 
+  const fullPool = movePool(pokemon.species_id);
   const pool = learnedMoves(pokemon.species_id, pokemon.level);
   const stored = (pokemon.active_moves ?? []).filter((name) =>
     pool.some((move) => move.name === name),
