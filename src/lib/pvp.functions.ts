@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { hpFromIv, simulateTeamBattle, statFromIv, type Fighter } from "@/lib/battle";
+import { hpValue, simulateTeamBattle, statValue, type Fighter } from "@/lib/battle";
 import { allyFighter } from "@/lib/fighters";
 import { speciesType } from "@/lib/pokedex";
 
@@ -198,11 +198,11 @@ export const raidTrainer = createServerFn({ method: "POST" })
               name: `${rival.trainer_name} — rezerwowy`,
               type: "Normalny",
               level: 5,
-              hp: hpFromIv(5, 10),
-              hpMax: hpFromIv(5, 10),
-              atk: statFromIv(5, 10, 9),
-              def: statFromIv(5, 10, 8),
-              spe: statFromIv(5, 10, 8),
+              hp: hpValue(5, 60, 10),
+              hpMax: hpValue(5, 60, 10),
+              atk: statValue(5, 60, 10),
+              def: statValue(5, 60, 10),
+              spe: statValue(5, 60, 10),
             } as Fighter,
           ];
 

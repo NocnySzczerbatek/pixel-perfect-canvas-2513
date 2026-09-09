@@ -1,3 +1,4 @@
+import { baseStats } from "@/lib/base-stats";
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -8,7 +9,7 @@ import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
 import { progressActivities } from "@/lib/quests.functions";
 import { effectiveRegion } from "@/lib/travel";
 import {
-  hpFromIv,
+  hpValue,
   pickWeather,
   simulateTeamBattle,
   statFromIv,
@@ -435,7 +436,7 @@ export const travel = createServerFn({ method: "POST" })
       const isRareRoll = rarePool.length > 0 && Math.random() < rareChance;
       const species: BiomeSpecies = isRareRoll ? pick(rarePool) : pick(pool);
       const level = levelFor();
-      const hpMax = hpFromIv(level, 16);
+      const hpMax = hpValue(level, baseStats(species.id)[0], 16);
       const shinyChance = SHINY_CHANCE * mult.shiny;
       const isShiny = Math.random() < shinyChance;
 
@@ -479,8 +480,8 @@ export const travel = createServerFn({ method: "POST" })
         bot_team: team,
         trainer_class: trainerClass,
         trainer_person: person,
-        hp_max: hpFromIv(avg, 20),
-        hp_current: hpFromIv(avg, 20),
+        hp_max: hpValue(avg, 70, 20),
+        hp_current: hpValue(avg, 70, 20),
         reward_exp: 20 + avg * 12,
         reward_coins: 25 + avg * 9,
         log: [
@@ -677,7 +678,7 @@ export const throwBall = createServerFn({ method: "POST" })
         iv_spd: randInt(0, 31),
         iv_spe: randInt(0, 31),
       };
-      const hpMax = hpFromIv(row.level, ivs.iv_hp);
+      const hpMax = hpValue(row.level, baseStats(row.species_id ?? 0)[0], ivs.iv_hp);
       const nature = pick(NATURES);
       const ability = pick(abilitiesFor(type));
       await (await writeDb()).from("player_pokemon").insert({
