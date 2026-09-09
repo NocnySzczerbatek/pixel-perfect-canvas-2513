@@ -116,7 +116,9 @@ export const challengeGym = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("region, energy, mega_stones, trainer_level, trainer_exp, catch_coins")
+      .select(
+        "region, energy, mega_stones, trainer_level, trainer_exp, catch_coins, energy_bottles, ultra_balls, oak_stage",
+      )
       .eq("id", userId)
       .maybeSingle();
     if (!profile) throw new Error("Nie znaleziono profilu trenera.");
