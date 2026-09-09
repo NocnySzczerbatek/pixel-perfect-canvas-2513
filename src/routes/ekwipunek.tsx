@@ -131,7 +131,7 @@ function EkwipunekPage() {
               size="sm"
               disabled={busy || profile.energy_bottles <= 0 || profile.energy >= profile.energy_max}
               onClick={() =>
-                void run(() => drinkBottle(), `Energia uzupełniona o ${data?.bottle_energy ?? 25}.`)
+                void run(() => drinkBottle(), `Energia uzupełniona do ${profile.energy_max}/${profile.energy_max}.`)
               }
             >
               Zużyj Flakon
