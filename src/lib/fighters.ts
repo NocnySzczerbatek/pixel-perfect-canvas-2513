@@ -19,14 +19,17 @@ type AnyRow = {
   iv_spa?: number | null;
   iv_spd?: number | null;
   iv_spe?: number | null;
+  train_hp?: number | null;
   train_atk?: number | null;
   train_def?: number | null;
   train_spa?: number | null;
   train_spd?: number | null;
   train_spe?: number | null;
+  active_moves?: string[] | null;
   ability?: string | null;
   is_shiny?: boolean | null;
 };
+
 
 /** Pokémon gracza (wiersz z player_pokemon). `boost` = premia z Kamienia Mega. */
 export function allyFighter(row: AnyRow, boost = 0): Fighter {

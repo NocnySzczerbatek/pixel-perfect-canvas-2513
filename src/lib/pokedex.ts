@@ -258,13 +258,37 @@ export function movePool(speciesId: number): Move[] {
   }));
 }
 
+/** Wszystkie ataki opanowane na danym poziomie (pula do wyboru aktywnej czwórki). */
+export function learnedMoves(speciesId: number, level: number): Move[] {
+  return movePool(speciesId).filter((move) => move.level <= level);
+}
+
+/** Domyślny zestaw, gdy gracz jeszcze nic nie przypisał: 4 najnowsze poznane ataki. */
+export function defaultActiveMoves(speciesId: number, level: number): string[] {
+  return learnedMoves(speciesId, level)
+    .slice(-4)
+    .map((move) => move.name);
+}
+
 /**
- * Zestaw walki: maksymalnie 4 najnowsze ataki faktycznie poznane na danym poziomie.
+ * Zestaw walki: dokładnie te ataki, które gracz przypisał do slotów
+ * (a gdy nic nie przypisał — 4 najnowsze poznane).
  */
-export function battleMoves(speciesId: number, level: number): Move[] {
-  const learned = movePool(speciesId).filter((move) => move.level <= level);
+export function battleMoves(
+  speciesId: number,
+  level: number,
+  active?: readonly (string | null)[] | null,
+): Move[] {
+  const learned = learnedMoves(speciesId, level);
+  const chosen = (active ?? [])
+    .filter((name): name is string => !!name)
+    .map((name) => learned.find((move) => move.name === name))
+    .filter((move): move is Move => !!move)
+    .slice(0, 4);
+  if (chosen.length > 0) return chosen;
   return learned.slice(-4);
 }
+
 
 export const STAT_KEYS = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
 export type StatKey = (typeof STAT_KEYS)[number];
