@@ -253,6 +253,7 @@ function EksploracjaPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="space-y-6 lg:col-span-2">
           <ResourcesPanel state={state} />
+          {find ? <FindCard find={find} onClose={() => setFind(null)} /> : null}
           {state?.active ? (
             <EncounterCard
               encounter={state.active}
