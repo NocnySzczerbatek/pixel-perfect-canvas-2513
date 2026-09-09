@@ -68,13 +68,30 @@ export type Fighter = {
   moves?: BattleMove[];
 };
 
-export function statFromIv(level: number, iv: number, base = 8) {
-  return Math.round(base + level * 2 + iv * 0.6);
+/**
+ * Statystyka wyliczana jak w oryginalnych grach: bazowa moc gatunku decyduje
+ * najbardziej, poziom skaluje, IV i punkty treningu dodają szlif.
+ */
+export function statValue(level: number, baseStat: number, iv = 0, train = 0) {
+  const core = Math.floor(((2 * baseStat + iv + Math.floor(train / 4)) * level) / 100);
+  return Math.max(1, core + 5);
 }
 
-export function hpFromIv(level: number, iv: number) {
-  return Math.round(20 + level * 4 + iv * 0.8);
+/** HP wyliczane bazą gatunku (formuła z gier). */
+export function hpValue(level: number, baseHp: number, iv = 0, train = 0) {
+  const core = Math.floor(((2 * baseHp + iv + Math.floor(train / 4)) * level) / 100);
+  return Math.max(5, core + level + 10);
 }
+
+/** Zgodność wstecz: gdy nie znamy gatunku, przyjmujemy przeciętną bazę. */
+export function statFromIv(level: number, iv: number, base = 60) {
+  return statValue(level, base >= 20 ? base : 60, iv);
+}
+
+export function hpFromIv(level: number, iv: number, base = 60) {
+  return hpValue(level, base, iv);
+}
+
 
 /* ------------------------- Pogoda i warunki ------------------------- */
 
