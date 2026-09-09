@@ -52,7 +52,7 @@ function leaderTeam(gym: Gym) {
 }
 
 function toFoe(member: { species_id: number; species_name: string; level: number }): Fighter {
-  return foeFighter(member, 14, 1.05);
+  return foeFighter(member, 24, 1.15);
 }
 
 function toAlly(row: any, boost: number): Fighter {
@@ -60,7 +60,7 @@ function toAlly(row: any, boost: number): Fighter {
 }
 
 const PARTY_COLUMNS =
-  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, ability, is_shiny";
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, active_moves, ability, is_shiny";
 
 async function buildState(supabase: any, userId: string): Promise<GymsState> {
   const [{ data: profile }, { data: badges }] = await Promise.all([

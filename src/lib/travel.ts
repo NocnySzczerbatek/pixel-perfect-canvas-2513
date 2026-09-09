@@ -3,11 +3,20 @@ import { warsawClock } from "@/lib/time";
 
 export const TRAVEL_TICKET_PRICE = 20000;
 
+/**
+ * Okna podróży mieszczą się wyłącznie w rozsądnych godzinach (8:00–24:00 czasu polskiego):
+ * 9 regionów × 2 h, start co 1 h 45 min — od 8:00 do 22:00–24:00.
+ */
+const TRAVEL_FIRST_START = 8 * 60; // 8:00
+const TRAVEL_STEP = 105; // 1 h 45 min
+const TRAVEL_LENGTH = 120; // 2 h
+
 export const TRAVEL_WINDOWS = REGIONS.map((region, index) => ({
   ...region,
-  startMinute: index * 150,
-  endMinute: index * 150 + 120,
+  startMinute: TRAVEL_FIRST_START + index * TRAVEL_STEP,
+  endMinute: TRAVEL_FIRST_START + index * TRAVEL_STEP + TRAVEL_LENGTH,
 }));
+
 
 export function travelWindowState(region: string, now = new Date()) {
   const window = TRAVEL_WINDOWS.find((entry) => entry.slug === region);

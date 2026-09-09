@@ -549,6 +549,7 @@ export type Database = {
       player_pokemon: {
         Row: {
           ability: string | null
+          active_moves: string[] | null
           caught_at: string
           exp: number
           fainted: boolean
@@ -581,6 +582,7 @@ export type Database = {
         }
         Insert: {
           ability?: string | null
+          active_moves?: string[] | null
           caught_at?: string
           exp?: number
           fainted?: boolean
@@ -613,6 +615,7 @@ export type Database = {
         }
         Update: {
           ability?: string | null
+          active_moves?: string[] | null
           caught_at?: string
           exp?: number
           fainted?: boolean

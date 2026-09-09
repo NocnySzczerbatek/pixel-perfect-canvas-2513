@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { baseStats } from "@/lib/base-stats";
+import { hpValue } from "@/lib/battle";
+import { learnedMoves } from "@/lib/pokedex";
 
 async function writeDb(): Promise<any> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -41,6 +44,7 @@ export type PokemonRow = {
   training_points: number;
   friendship: number;
   is_shiny: boolean;
+  active_moves: string[] | null;
 };
 
 export type TrainerData = {
@@ -96,7 +100,7 @@ export type TrainerData = {
 };
 
 const POKEMON_COLUMNS =
-  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, nature, ability, training_points, friendship, is_shiny";
+  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, nature, ability, training_points, friendship, is_shiny, active_moves";
 
 
 function expThreshold(level: number) {
@@ -538,15 +542,10 @@ export const useCandy = createServerFn({ method: "POST" })
   });
 
 
-/** Wrodzona moc gatunku (losowana przy złapaniu) — wpływa na walkę, nie na pasek treningu. */
-const IV_FIELDS = {
-  hp: "iv_hp",
-  atk: "iv_atk",
-  def: "iv_def",
-  spa: "iv_spa",
-  spd: "iv_spd",
-  spe: "iv_spe",
-} as const;
+/**
+ * Wrodzona moc gatunku (IV 0–31) jest losowana raz przy złapaniu i NIGDY nie zmienia się
+ * później — trening dokłada osobne punkty (train_*), które nie dotykają IV.
+ */
 
 /** Kupione punkty treningu (0–31 na statystykę) — TYLKO to widać na pasku Poziomu Treningu. */
 export const TRAIN_FIELDS = {
@@ -568,7 +567,6 @@ export const trainPokemon = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const ivField = IV_FIELDS[data.stat];
     const trainField = TRAIN_FIELDS[data.stat];
     const { data: row } = await supabase
       .from("player_pokemon")
@@ -578,7 +576,6 @@ export const trainPokemon = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Nie znaleziono Pokémona.");
     const pokemon = row as PokemonRow;
-    const currentIv = pokemon[ivField as keyof PokemonRow] as number;
     const currentTrain = (pokemon[trainField as keyof PokemonRow] as number) ?? 0;
 
     if (currentTrain >= MAX_TRAIN) {
@@ -610,21 +607,22 @@ export const trainPokemon = createServerFn({ method: "POST" })
       Math.floor(pokemon.training_points / TRAINING_LEVEL_STEP);
     const maxLevel = (profile.trainer_level as number) + 5;
     const level = Math.min(maxLevel, pokemon.level + gainedLevels);
-    const newIvHp = data.stat === "hp" ? pokemon.iv_hp + 1 : pokemon.iv_hp;
-    const hpMax = Math.round(20 + level * 4 + newIvHp * 0.8);
+    // HP liczone tą samą formułą co w walce: baza gatunku + poziom + wrodzone HP + trening HP.
+    const trainHp = data.stat === "hp" ? currentTrain + 1 : (pokemon.train_hp ?? 0);
+    const hpMax = hpValue(level, baseStats(pokemon.species_id)[0], pokemon.iv_hp, trainHp);
 
     await ((await writeDb()).from("player_pokemon") as any)
       .update({
+        // Trening zmienia WYŁĄCZNIE punkty treningu — wrodzone IV pozostają nietknięte.
         [trainField]: currentTrain + 1,
-        // Wrodzona moc + kupiony punkt trafia do statystyk używanych w walce.
-        [ivField]: currentIv + 1,
         training_points: points,
         level,
         hp_max: hpMax,
-        hp_current: Math.min(hpMax, pokemon.hp_current + (hpMax - pokemon.hp_max)),
+        hp_current: Math.min(hpMax, pokemon.hp_current + Math.max(0, hpMax - pokemon.hp_max)),
       })
       .eq("id", data.id)
       .eq("owner_id", userId);
+
 
     await (await writeDb())
       .from("profiles")
@@ -697,4 +695,39 @@ export const craftMegaStone = createServerFn({ method: "POST" })
     if (stone) await (await writeDb()).from("player_items").update({ quantity: stone.quantity + 1 }).eq("id", stone.id).eq("owner_id", userId);
     else await (await writeDb()).from("player_items").insert({ owner_id: userId, item_key: stoneKey, quantity: 1, metadata: { species_id: data.speciesId, kind: "mega_stone" } });
     return { ok: true as const, data: await buildTrainerData(supabase, userId) };
+  });
+
+
+/** Gracz sam wybiera do 4 aktywnych ataków — tylko one są używane w walce. */
+export const setActiveMoves = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; moves: string[] }) => {
+    if (!input?.id) throw new Error("Brak Pokémona.");
+    const moves = Array.from(new Set((input.moves ?? []).filter((m) => typeof m === "string")));
+    if (moves.length > 4) throw new Error("Maksymalnie 4 aktywne ataki.");
+    return { id: input.id, moves };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row } = await supabase
+      .from("player_pokemon")
+      .select("id, species_id, level")
+      .eq("id", data.id)
+      .eq("owner_id", userId)
+      .maybeSingle();
+    if (!row) throw new Error("Nie znaleziono Pokémona.");
+    const allowed = learnedMoves(row.species_id as number, row.level as number).map((m) => m.name);
+    const moves = data.moves.filter((name) => allowed.includes(name));
+    if (moves.length !== data.moves.length) {
+      return {
+        ok: false as const,
+        reason: "Ten Pokémon nie opanował jeszcze wszystkich wybranych ataków.",
+        data: await buildTrainerData(supabase, userId),
+      };
+    }
+    await ((await writeDb()).from("player_pokemon") as any)
+      .update({ active_moves: moves })
+      .eq("id", data.id)
+      .eq("owner_id", userId);
+    return { ok: true as const, moves, data: await buildTrainerData(supabase, userId) };
   });

@@ -256,7 +256,7 @@ type PartyRow = {
 };
 
 const PARTY_COLUMNS =
-  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, ability, is_shiny";
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, active_moves, ability, is_shiny";
 
 async function loadParty(supabase: any, userId: string): Promise<PartyRow[]> {
   const { data } = await supabase
