@@ -120,7 +120,7 @@ export function weatherSlot(now = new Date()) {
 export function currentWeather(now = new Date()): WeatherDef {
   const { dateKey, slot } = weatherSlot(now);
   const index = hash(`${dateKey}#${slot}`) % ROTATION.length;
-  return WEATHERS[ROTATION[index]];
+  return WEATHERS[ROTATION[index] ?? "sun"];
 }
 
 /** Ile milisekund do zmiany pogody. */
