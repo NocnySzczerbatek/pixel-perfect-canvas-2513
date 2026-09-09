@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { simulateTeamBattle, type Fighter } from "@/lib/battle";
+import { ENERGY_COST, spendEnergy } from "@/lib/energy";
 import { allyFighter, foeFighter } from "@/lib/fighters";
 import { gymsForRegion, type Gym } from "@/lib/gyms";
 import { MEGA_STONE } from "@/lib/items";
@@ -13,7 +14,7 @@ async function writeDb(): Promise<any> {
   return supabaseAdmin as any;
 }
 
-const GYM_ENERGY = 10;
+const GYM_ENERGY = ENERGY_COST.gym;
 
 export type BadgeRow = {
   id: string;
@@ -188,10 +189,14 @@ export const challengeGym = createServerFn({ method: "POST" })
         .eq("owner_id", userId);
     }
 
-    const updates: any = {
-      energy: profile.energy - GYM_ENERGY,
-      energy_updated_at: new Date().toISOString(),
-    };
+    const spent = await spendEnergy(await writeDb(), userId, profile.energy, GYM_ENERGY);
+    if (!spent) {
+      return {
+        ok: false as const,
+        reason: "Energia zmieniła się w trakcie — odśwież i spróbuj ponownie.",
+      };
+    }
+    const updates: any = {};
     if (useMega) updates.mega_stones = (profile.mega_stones ?? 0) - 1;
 
     if (result.won) {

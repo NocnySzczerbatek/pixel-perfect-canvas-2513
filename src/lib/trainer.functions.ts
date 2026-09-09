@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { baseStats } from "@/lib/base-stats";
 import { hpValue } from "@/lib/battle";
+import { BOTTLE_ENERGY as BOTTLE_REFILL, MAX_ENERGY as ENERGY_CAP, consumeEnergyBottle } from "@/lib/energy";
 import { learnedMoves } from "@/lib/pokedex";
 
 async function writeDb(): Promise<any> {
@@ -10,10 +11,10 @@ async function writeDb(): Promise<any> {
   return supabaseAdmin as any;
 }
 
-const MAX_ENERGY = 100;
+const MAX_ENERGY = ENERGY_CAP;
 const MAX_PARTY = 6;
 export const BALL_PRICE = 20; // Catch Coins za 1 Poké Balla
-export const BOTTLE_ENERGY = MAX_ENERGY; // Flakon uzupełnia Energię do pełna (cap MAX_ENERGY)
+export const BOTTLE_ENERGY = BOTTLE_REFILL; // Flakon uzupełnia Energię do pełna (cap MAX_ENERGY)
 
 export type PokemonRow = {
   id: string;
@@ -370,14 +371,19 @@ export const useEnergyBottle = createServerFn({ method: "POST" })
         data: await buildTrainerData(supabase, userId),
       };
     }
-    await (await writeDb())
-      .from("profiles")
-      .update({
-        energy: Math.min(MAX_ENERGY, profile.energy + BOTTLE_ENERGY),
-        energy_bottles: profile.energy_bottles - 1,
-        energy_updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId);
+    const used = await consumeEnergyBottle(
+      await writeDb(),
+      userId,
+      profile.energy,
+      profile.energy_bottles,
+    );
+    if (!used) {
+      return {
+        ok: false as const,
+        reason: "Flakon nie został zużyty — odśwież stan i spróbuj ponownie.",
+        data: await buildTrainerData(supabase, userId),
+      };
+    }
     return { ok: true as const, data: await buildTrainerData(supabase, userId) };
   });
 
