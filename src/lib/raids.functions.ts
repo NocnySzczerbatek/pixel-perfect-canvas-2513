@@ -237,14 +237,17 @@ export const fightRaid = createServerFn({ method: "POST" })
             .from("player_items")
             .insert({ owner_id: userId, item_key: key, quantity: 1, metadata: { tm_id: tm.id } });
         }
-        drops.push(`TM${String(tm.id).padStart(2, "0")} ${tm.label}`);
+        drops.push(`TM ${tm.label}`);
       }
 
       // EXP dla Pokémonów, które przetrwały walkę.
-      for (const row of alive) {
-        if ((result.allyHp[row.id] ?? 0) <= 0) continue;
-        await awardPokemonExp(db, row, rewards.exp);
-      }
+      await awardPokemonExp(
+        db,
+        userId,
+        alive
+          .filter((row: any) => (result.allyHp[row.id] ?? 0) > 0)
+          .map((row: any) => ({ id: row.id, exp: rewards.exp })),
+      );
 
       report.coins = rewards.coins;
       report.trainer_exp = rewards.exp;
