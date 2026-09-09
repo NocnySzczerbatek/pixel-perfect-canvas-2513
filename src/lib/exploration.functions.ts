@@ -580,6 +580,7 @@ export const travel = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       encounter: toView(created),
+      find,
       state: await buildState(supabase, userId),
     };
   });
