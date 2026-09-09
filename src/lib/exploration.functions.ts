@@ -43,6 +43,34 @@ async function writeDb(): Promise<any> {
   return supabaseAdmin as any;
 }
 
+/** Dopisuje przedmiot do ekwipunku gracza (albo podnosi licznik). */
+async function addItem(
+  supabase: any,
+  userId: string,
+  itemKey: string,
+  metadata: Record<string, unknown>,
+) {
+  const { data: owned } = await supabase
+    .from("player_items")
+    .select("id, quantity")
+    .eq("owner_id", userId)
+    .eq("item_key", itemKey)
+    .maybeSingle();
+  if (owned) {
+    await (await writeDb())
+      .from("player_items")
+      .update({ quantity: owned.quantity + 1 })
+      .eq("id", owned.id)
+      .eq("owner_id", userId);
+  } else {
+    await (await writeDb())
+      .from("player_items")
+      .insert({ owner_id: userId, item_key: itemKey, quantity: 1, metadata });
+  }
+}
+
+
+
 
 const MAX_ENERGY = 100;
 const ENERGY_TICK_MS = 3 * 60 * 1000; // +1 Energii co 3 minuty
