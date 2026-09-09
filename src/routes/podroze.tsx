@@ -13,6 +13,7 @@ import { formatDuration } from "@/lib/time";
 import { TRAVEL_TICKET_PRICE, travelWindowState } from "@/lib/travel";
 import { itemSprite } from "@/lib/pokedex";
 import { REGION_MAP_POINTS } from "@/lib/region-map";
+import travelMap from "@/assets/travel-map.jpg";
 
 export const Route = createFileRoute("/podroze")({
   head: () => ({
@@ -133,8 +134,16 @@ function TravelPage() {
           ) : null}
 
           <div className="glass-panel rounded-2xl p-4">
-            <div className="relative aspect-[16/10] w-full rounded-xl bg-[radial-gradient(circle_at_20%_20%,hsl(var(--aurora)/0.18),transparent_55%),radial-gradient(circle_at_80%_70%,hsl(var(--primary)/0.16),transparent_55%)] ring-1 ring-border/60">
-              <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] [background-size:48px_48px]" />
+            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl ring-1 ring-border/60">
+              <img
+                src={travelMap}
+                alt="Mapa świata z dziewięcioma regionami połączonymi trasami lotów"
+                width={1600}
+                height={1000}
+                loading="lazy"
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover [image-rendering:pixelated]"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-background/35" />
               {REGIONS.map((entry) => {
                 const point = REGION_MAP_POINTS[entry.slug] ?? { x: 50, y: 50 };
                 const windowState = travelWindowState(entry.slug, now);

@@ -1,12 +1,13 @@
-/** Pozycje regionów na stylizowanej mapie świata (procenty kontenera). */
+/** Pozycje regionów na stylizowanej mapie świata (procenty kontenera).
+ * Siatka 3×3 dopasowana do wysp na grafice mapy podróży. */
 export const REGION_MAP_POINTS: Record<string, { x: number; y: number }> = {
-  kanto: { x: 22, y: 34 },
-  johto: { x: 12, y: 55 },
-  hoenn: { x: 30, y: 74 },
-  sinnoh: { x: 44, y: 20 },
-  unova: { x: 62, y: 42 },
-  kalos: { x: 74, y: 22 },
-  alola: { x: 84, y: 66 },
-  galar: { x: 56, y: 74 },
-  paldea: { x: 90, y: 38 },
+  kanto: { x: 19, y: 20 },
+  johto: { x: 50, y: 18 },
+  hoenn: { x: 78, y: 20 },
+  sinnoh: { x: 19, y: 47 },
+  unova: { x: 50, y: 47 },
+  kalos: { x: 82, y: 47 },
+  alola: { x: 19, y: 78 },
+  galar: { x: 50, y: 78 },
+  paldea: { x: 79, y: 79 },
 };
