@@ -575,6 +575,11 @@ export const travel = createServerFn({ method: "POST" })
 
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
+          (() => {
+            const world = worldEncounterEffects();
+            return `${DAY_PHASES[world.phase].icon} ${DAY_PHASES[world.phase].label} · ${world.weather.icon} ${world.weather.label} — ${world.weather.note}`;
+          })(),
+
           ...(candyLine ? [candyLine] : []),
           ...(findLine ? [findLine] : []),
           `${trainerClass} ${person} wyzywa Cię na walkę: ${size} Pokémony (średni Lvl ${avg}).`,
