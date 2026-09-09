@@ -394,15 +394,6 @@ export const travel = createServerFn({ method: "POST" })
     const foundCandy =
       candyRoll < 0.05 ? ("xl" as const) : candyRoll < 0.2 ? ("normal" as const) : null;
 
-    await ((await writeDb()).from("profiles") as any)
-      .update({
-        energy: Math.max(0, profile.energy - cost),
-        energy_updated_at: new Date().toISOString(),
-        ...(foundCandy === "normal" ? { candy_normal: (profile.candy_normal ?? 0) + 1 } : {}),
-        ...(foundCandy === "xl" ? { candy_xl: (profile.candy_xl ?? 0) + 1 } : {}),
-      })
-      .eq("id", userId);
-
     const candyLine =
       foundCandy === "normal"
         ? "Na ścieżce leżał Zwykły Cukierek — trafił do ekwipunku."
@@ -410,14 +401,55 @@ export const travel = createServerFn({ method: "POST" })
           ? "Znalazłeś Cukierek XL — rzadkie znalezisko!"
           : null;
 
+    // Rzadkie znaleziska: TM, fragment Kamienia Mega, Flakon Energii (max jedno na krok).
     const megaSpecies = [3, 6, 9, 65, 94, 115, 127, 130, 142, 150, 181, 212, 214, 229, 248, 254, 257, 260, 282, 303, 306, 308, 310, 319, 323, 334, 354, 359, 362, 373, 376, 380, 381, 445, 448, 460, 475, 531, 719];
-    const foundMegaSpecies = Math.random() < 0.08 ? pick(megaSpecies) : null;
-    if (foundMegaSpecies) {
-      const itemKey = `mega_shard_${foundMegaSpecies}`;
-      const { data: owned } = await supabase.from("player_items").select("id, quantity").eq("owner_id", userId).eq("item_key", itemKey).maybeSingle();
-      if (owned) await (await writeDb()).from("player_items").update({ quantity: owned.quantity + 1 }).eq("id", owned.id).eq("owner_id", userId);
-      else await (await writeDb()).from("player_items").insert({ owner_id: userId, item_key: itemKey, quantity: 1, metadata: { species_id: foundMegaSpecies, kind: "mega_shard" } });
+    const findKind = rollFind();
+    let find: FindView | null = null;
+
+    if (findKind === "tm") {
+      const tm = pick(TMS);
+      await addItem(supabase, userId, tmItemKey(tm.id), { kind: "tm", move: tm.move, type: tm.type });
+      find = {
+        kind: "tm",
+        label: tm.label,
+        sprite: tmSprite(tm.type),
+        description: tmDescription(tm),
+        rarity: "Bardzo rzadkie",
+      };
+    } else if (findKind === "mega") {
+      const speciesId = pick(megaSpecies);
+      const speciesName = FULL_DEX.find((entry) => entry.id === speciesId)?.name ?? `#${speciesId}`;
+      await addItem(supabase, userId, `mega_shard_${speciesId}`, { species_id: speciesId, kind: "mega_shard" });
+      find = {
+        kind: "mega",
+        label: `Fragment Kamienia Mega — ${speciesName}`,
+        sprite: "key-stone",
+        description: `Materiał do Mega Ewolucji. Zbierz 5 fragmentów tego gatunku, a w Ekwipunku utworzysz Kamień Mega dla ${speciesName} (+30% siły ataku w walce z Liderem Sali).`,
+        rarity: "Rzadkie",
+      };
+    } else if (findKind === "bottle") {
+      find = {
+        kind: "bottle",
+        label: "Flakon Energii",
+        sprite: "max-elixir",
+        description:
+          "Uzupełnia 25 punktów Energii od razu po zużyciu w Ekwipunku. Energia napędza każdy krok eksploracji.",
+        rarity: "Nieczęste",
+      };
     }
+
+    await ((await writeDb()).from("profiles") as any)
+      .update({
+        energy: Math.max(0, profile.energy - cost),
+        energy_updated_at: new Date().toISOString(),
+        ...(foundCandy === "normal" ? { candy_normal: (profile.candy_normal ?? 0) + 1 } : {}),
+        ...(foundCandy === "xl" ? { candy_xl: (profile.candy_xl ?? 0) + 1 } : {}),
+        ...(findKind === "bottle" ? { energy_bottles: (profile.energy_bottles ?? 0) + 1 } : {}),
+      })
+      .eq("id", userId);
+
+    const findLine = find ? `Znalezisko: ${find.label} — trafiło do ekwipunku.` : null;
+
     await progressActivities(supabase, userId, "battle", 1, "exploration");
 
     const trainerLevel = profile.trainer_level;
