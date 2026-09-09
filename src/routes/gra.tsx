@@ -443,7 +443,7 @@ const TOUR_STEPS: TourStep[] = [
     target: "/podroze",
     title: "Podróże między regionami",
     body:
-      "Za Bilet Podróży (20 000 CC) wyruszasz do innego regionu w otwartym oknie czasowym i łapiesz tamtejsze gatunki.",
+      "Za Bilet Podróży (10 000 CC) wyruszasz do innego regionu w otwartym oknie czasowym i łapiesz tamtejsze gatunki.",
   },
   {
     target: "/sklep",
