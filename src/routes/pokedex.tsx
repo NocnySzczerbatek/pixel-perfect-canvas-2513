@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { GamePage } from "@/components/game/GamePage";
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { BIOMES } from "@/lib/biomes";
 import { biomePool, regionDex } from "@/lib/encounter-pool";
+import { FULL_DEX } from "@/lib/full-dex";
 import { REGIONS, artworkUrl } from "@/lib/game-data";
-import { pokedexProgress } from "@/lib/pokedex.functions";
+import { ivRating } from "@/lib/iv";
+import { pokedexProgress, type DexOwnedEntry } from "@/lib/pokedex.functions";
 import { STAT_LABELS } from "@/lib/pokedex";
 
 export const Route = createFileRoute("/pokedex")({
@@ -40,7 +43,9 @@ export const Route = createFileRoute("/pokedex")({
   component: PokedexPage,
 });
 
-type Filter = "all" | "seen" | "caught" | "missing";
+type Filter = "all" | "seen" | "caught" | "missing" | "shiny";
+type Scope = "region" | "world";
+type Sort = "number" | "name" | "iv" | "level" | "count";
 
 const STAT_ORDER = ["hp", "attack", "defense", "special-attack", "special-defense", "speed"] as const;
 const STAT_NAMES: Record<string, string> = {
@@ -60,6 +65,9 @@ function biomesFor(speciesId: number, region: string | null) {
 function PokedexPage() {
   const fetchProgress = useServerFn(pokedexProgress);
   const [filter, setFilter] = useState<Filter>("all");
+  const [scope, setScope] = useState<Scope>("region");
+  const [sort, setSort] = useState<Sort>("number");
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -70,17 +78,42 @@ function PokedexPage() {
   const region = data?.region ?? null;
   const seen = useMemo(() => new Set(data?.seenIds ?? []), [data]);
   const caught = useMemo(() => new Set(data?.caughtIds ?? []), [data]);
-  const dex = useMemo(() => regionDex(region), [region]);
-  const entries = useMemo(
-    () =>
-      dex.filter((entry) => {
-        if (filter === "seen") return seen.has(entry.id);
-        if (filter === "caught") return caught.has(entry.id);
-        if (filter === "missing") return !seen.has(entry.id);
-        return true;
-      }),
-    [dex, filter, seen, caught],
+  const owned = useMemo(() => {
+    const map = new Map<number, DexOwnedEntry>();
+    for (const row of data?.owned ?? []) map.set(row.speciesId, row);
+    return map;
+  }, [data]);
+  const dex = useMemo(
+    () => (scope === "world" ? FULL_DEX : regionDex(region)),
+    [region, scope],
   );
+  const entries = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    const list = dex.filter((entry) => {
+      if (filter === "seen") return seen.has(entry.id);
+      if (filter === "caught") return caught.has(entry.id);
+      if (filter === "missing") return !seen.has(entry.id);
+      if (filter === "shiny") return owned.get(entry.id)?.shiny === true;
+      return true;
+    });
+    const searched = needle
+      ? list.filter(
+          (entry) =>
+            entry.name.toLowerCase().includes(needle) ||
+            entry.types.some((t) => t.toLowerCase().includes(needle)) ||
+            String(entry.id) === needle,
+        )
+      : list;
+    const sorted = [...searched];
+    sorted.sort((a, b) => {
+      if (sort === "name") return a.name.localeCompare(b.name, "pl");
+      if (sort === "iv") return (owned.get(b.id)?.bestIv ?? -1) - (owned.get(a.id)?.bestIv ?? -1);
+      if (sort === "level") return (owned.get(b.id)?.maxLevel ?? -1) - (owned.get(a.id)?.maxLevel ?? -1);
+      if (sort === "count") return (owned.get(b.id)?.count ?? 0) - (owned.get(a.id)?.count ?? 0);
+      return a.id - b.id;
+    });
+    return sorted;
+  }, [dex, filter, seen, caught, owned, search, sort]);
 
   const regionName = REGIONS.find((r) => r.slug === region)?.name ?? "wszystkie regiony";
   const detail = selected ? dex.find((entry) => entry.id === selected) : null;
@@ -103,7 +136,7 @@ function PokedexPage() {
   return (
     <GamePage
       title="Pokédex"
-      subtitle={`Region ${regionName}: ${caught.size} złapanych i ${seen.size} spotkanych z ${dex.length} gatunków.`}
+      subtitle={`${scope === "world" ? "Cały świat" : `Region ${regionName}`}: ${caught.size} złapanych i ${seen.size} spotkanych z ${dex.length} gatunków.`}
     >
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Wczytuję Pokédex…</p>
@@ -122,6 +155,7 @@ function PokedexPage() {
                   ["seen", "Spotkane"],
                   ["caught", "Złapane"],
                   ["missing", "Brakujące"],
+                  ["shiny", "Shiny"],
                 ] as [Filter, string][]
               ).map(([key, label]) => (
                 <Button
@@ -133,6 +167,41 @@ function PokedexPage() {
                   {label}
                 </Button>
               ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Szukaj: nazwa, typ albo numer"
+                className="h-9 w-full sm:w-64"
+              />
+              {(
+                [
+                  ["region", "Mój region"],
+                  ["world", "Cały świat (1025)"],
+                ] as [Scope, string][]
+              ).map(([key, label]) => (
+                <Button
+                  key={key}
+                  size="sm"
+                  variant={scope === key ? "default" : "outline"}
+                  onClick={() => setScope(key)}
+                >
+                  {label}
+                </Button>
+              ))}
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value as Sort)}
+                className="h-9 rounded-md border border-border/60 bg-background px-2 text-sm"
+                aria-label="Sortowanie Pokédexu"
+              >
+                <option value="number">Sortuj: numer</option>
+                <option value="name">Sortuj: nazwa</option>
+                <option value="iv">Sortuj: najlepsze IV</option>
+                <option value="level">Sortuj: najwyższy poziom</option>
+                <option value="count">Sortuj: liczba złapanych</option>
+              </select>
             </div>
           </div>
 
@@ -165,6 +234,18 @@ function PokedexPage() {
                     <p className="mt-1 text-[11px] text-muted-foreground">
                       {isCaught ? "Złapany" : isSeen ? "Spotkany" : "Nieodkryty"}
                     </p>
+                    {(() => {
+                      const record = owned.get(entry.id);
+                      if (!record) return null;
+                      const rating = ivRating(record.bestIv);
+                      return (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          ×{record.count} · Lvl {record.maxLevel} ·{" "}
+                          <span className={rating.className.split(" ")[0]}>{record.bestIv}% IV</span>
+                          {record.shiny ? " · ★" : ""}
+                        </p>
+                      );
+                    })()}
                   </button>
                 </li>
               );
@@ -215,6 +296,33 @@ function PokedexPage() {
                     ) : null}
                   </div>
                 </div>
+
+                {(() => {
+                  const record = owned.get(detail.id);
+                  if (!record) return null;
+                  const rating = ivRating(record.bestIv);
+                  return (
+                    <div className="rounded-xl border border-border/60 p-3 text-sm">
+                      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                        Twoja kolekcja
+                      </p>
+                      <p className="mt-2">
+                        Złapane: {record.count} · najwyższy poziom: {record.maxLevel}
+                      </p>
+                      <p className="mt-1">
+                        Najlepsze IV:{" "}
+                        <span className={`rounded-full px-2 py-0.5 text-xs ring-1 ${rating.className}`}>
+                          {record.bestIv}% · {rating.label}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Pierwszy raz złapany:{" "}
+                        {new Date(record.firstCaughtAt).toLocaleDateString("pl-PL")}
+                        {record.shiny ? " · masz wersję Shiny ★" : ""}
+                      </p>
+                    </div>
+                  );
+                })()}
 
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">

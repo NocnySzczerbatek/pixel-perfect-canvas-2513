@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { ExpBar } from "@/components/game/ExpBar";
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { artworkUrl } from "@/lib/game-data";
+import { ivPercent, ivRating } from "@/lib/iv";
 import type { PokemonRow } from "@/lib/trainer.functions";
 
 export function PokemonCard({
@@ -13,6 +14,8 @@ export function PokemonCard({
   pokemon: PokemonRow;
   children?: ReactNode;
 }) {
+  const iv = ivPercent(pokemon);
+  const rating = ivRating(iv);
   const hpPercent = Math.max(
     0,
     Math.min(100, Math.round((pokemon.hp_current / Math.max(1, pokemon.hp_max)) * 100)),
@@ -42,6 +45,14 @@ export function PokemonCard({
         <p className="text-xs text-muted-foreground">{pokemon.species_name}</p>
       ) : null}
       <TypeBadges speciesId={pokemon.species_id} className="mt-2" />
+      <p className="mt-2">
+        <span
+          title="IV wpływa wyłącznie na statystyki — nigdy na poziom"
+          className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${rating.className}`}
+        >
+          {iv}% IV · {rating.label}
+        </span>
+      </p>
       <p className="mt-1 text-xs text-muted-foreground">
         Lvl {pokemon.level}
         {pokemon.is_starter ? " · Starter" : ""}
