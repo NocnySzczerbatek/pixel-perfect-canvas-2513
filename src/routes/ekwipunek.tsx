@@ -1,28 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { GamePage } from "@/components/game/GamePage";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { itemSprite } from "@/lib/pokedex";
 import { buyPokeBalls, craftMegaStone, useEnergyBottle } from "@/lib/trainer.functions";
-import { BALLS } from "@/lib/items";
-import { tmById, tmDescription, tmSprite } from "@/lib/finds";
+import { BAG_CATEGORIES, buildBackpack, filterBackpack, type BagCategory, type BagSort } from "@/lib/backpack";
 
 export const Route = createFileRoute("/ekwipunek")({
   head: () => ({
     meta: [
-      { title: "Ekwipunek — Catch Zone" },
+      { title: "Plecak — Catch Zone" },
       {
         name: "description",
-        content: "Poké Balle, Flakony Energii i Catch Coins. Uzupełnij zapasy przed wyprawą.",
+        content: "Plecak trenera: Balle, jagody, mikstury, TM-y, kamienie ewolucji i Mega, bilety podróży.",
       },
-      { property: "og:title", content: "Ekwipunek — Catch Zone" },
+      { property: "og:title", content: "Plecak — Catch Zone" },
       {
         property: "og:description",
-        content: "Poké Balle, Flakony Energii i Catch Coins. Uzupełnij zapasy przed wyprawą.",
+        content: "Plecak trenera: Balle, jagody, mikstury, TM-y, kamienie ewolucji i Mega, bilety podróży.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -37,6 +37,10 @@ function EkwipunekPage() {
   const buyBalls = useServerFn(buyPokeBalls);
   const craftStone = useServerFn(craftMegaStone);
   const [busy, setBusy] = useState(false);
+  const [category, setCategory] = useState<BagCategory | "all">("all");
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<BagSort>("category");
+  const [hideEmpty, setHideEmpty] = useState(true);
 
   const run = async (action: () => Promise<any>, success: string) => {
     setBusy(true);
@@ -55,134 +59,153 @@ function EkwipunekPage() {
   const profile = data?.profile;
   const price = data?.ball_price ?? 20;
 
+  const bag = useMemo(() => buildBackpack(profile as any, data?.items ?? []), [profile, data?.items]);
+  const visible = useMemo(
+    () => filterBackpack(bag, { category, search, sort, hideEmpty }),
+    [bag, category, search, sort, hideEmpty],
+  );
+
   return (
     <GamePage
-      title="Ekwipunek"
-      subtitle="Twoje zapasy. Poké Balle kupisz za Catch Coins, Flakon dolewa Energii natychmiast."
+      title="Plecak"
+      subtitle="Wszystkie przedmioty w jednym miejscu — filtruj po kategorii, szukaj i sortuj."
     >
       {isLoading || !profile ? (
-        <p className="text-sm text-muted-foreground">Wczytuję ekwipunek…</p>
+        <p className="text-sm text-muted-foreground">Wczytuję plecak…</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="glass-panel rounded-2xl p-5">
-            <ItemIcon name="poke-ball" label="Poké Ball" />
-            <p className="mt-3 font-display text-3xl">{profile.poke_balls}</p>
-            <p className="text-sm text-muted-foreground">Poké Balle</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[1, 5, 10].map((amount) => (
-                <Button
-                  key={amount}
-                  size="sm"
-                  variant={amount === 1 ? "default" : "outline"}
-                  disabled={busy || profile.catch_coins < amount * price}
-                  onClick={() =>
-                    void run(
-                      () => buyBalls({ data: { amount } }),
-                      `Kupiono ${amount} Poké Ball${amount > 1 ? "e" : ""}.`,
-                    )
-                  }
-                >
-                  +{amount} · {amount * price}
-                </Button>
+        <div className="space-y-5">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="glass-panel rounded-2xl p-4">
+              <p className="text-xs text-muted-foreground">Catch Coins</p>
+              <p className="font-display text-2xl">{profile.catch_coins}</p>
+            </div>
+            <div className="glass-panel rounded-2xl p-4">
+              <p className="text-xs text-muted-foreground">Energia</p>
+              <p className="font-display text-2xl">
+                {profile.energy}/{profile.energy_max}
+              </p>
+              <Button
+                className="mt-2"
+                size="sm"
+                disabled={busy || profile.energy_bottles <= 0 || profile.energy >= profile.energy_max}
+                onClick={() =>
+                  void run(
+                    () => drinkBottle(),
+                    `Energia uzupełniona do ${profile.energy_max}/${profile.energy_max}.`,
+                  )
+                }
+              >
+                Zużyj Flakon ({profile.energy_bottles})
+              </Button>
+            </div>
+            <div className="glass-panel rounded-2xl p-4">
+              <p className="text-xs text-muted-foreground">Poké Balle · {price} CC / szt.</p>
+              <p className="font-display text-2xl">{profile.poke_balls}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[1, 5, 10].map((amount) => (
+                  <Button
+                    key={amount}
+                    size="sm"
+                    variant={amount === 1 ? "default" : "outline"}
+                    disabled={busy || profile.catch_coins < amount * price}
+                    onClick={() =>
+                      void run(
+                        () => buyBalls({ data: { amount } }),
+                        `Kupiono ${amount} Poké Ball${amount > 1 ? "e" : ""}.`,
+                      )
+                    }
+                  >
+                    +{amount}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {BAG_CATEGORIES.map((cat) => (
+              <Button
+                key={cat.key}
+                size="sm"
+                variant={category === cat.key ? "default" : "outline"}
+                onClick={() => setCategory(cat.key)}
+              >
+                {cat.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Szukaj przedmiotu…"
+              className="w-full sm:w-64"
+            />
+            {([
+              { key: "category", label: "Wg kategorii" },
+              { key: "name", label: "Wg nazwy" },
+              { key: "count", label: "Wg ilości" },
+            ] as { key: BagSort; label: string }[]).map((option) => (
+              <Button
+                key={option.key}
+                size="sm"
+                variant={sort === option.key ? "secondary" : "outline"}
+                onClick={() => setSort(option.key)}
+              >
+                {option.label}
+              </Button>
+            ))}
+            <Button size="sm" variant={hideEmpty ? "secondary" : "outline"} onClick={() => setHideEmpty((v) => !v)}>
+              {hideEmpty ? "Ukryj puste: tak" : "Ukryj puste: nie"}
+            </Button>
+          </div>
+
+          {visible.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Brak przedmiotów w tej kategorii.</p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visible.map((item) => (
+                <div key={item.key} className="glass-panel rounded-2xl p-5">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={itemSprite(item.sprite)}
+                      alt={item.label}
+                      loading="lazy"
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 shrink-0 [image-rendering:pixelated]"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{item.label}</p>
+                      <p className="font-display text-2xl">
+                        {item.count}
+                        {item.craftAt ? <span className="text-sm text-muted-foreground">/{item.craftAt}</span> : null}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs text-muted-foreground">{item.note}</p>
+                  {item.craftAt && item.speciesId ? (
+                    <Button
+                      className="mt-3"
+                      size="sm"
+                      disabled={busy || item.count < item.craftAt}
+                      onClick={() =>
+                        void run(
+                          () => craftStone({ data: { speciesId: item.speciesId! } }),
+                          "Utworzono gatunkowy Kamień Mega.",
+                        )
+                      }
+                    >
+                      Utwórz Kamień
+                    </Button>
+                  ) : null}
+                </div>
               ))}
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">{price} Catch Coins za Balla.</p>
-          </div>
-          {(data.items ?? []).filter((item) => item.item_key.startsWith("mega_shard_")).map((item) => {
-            const speciesId = Number(item.item_key.replace("mega_shard_", ""));
-            return <div key={item.item_key} className="glass-panel rounded-2xl p-5"><ItemIcon name="key-stone" label="Fragment Mega" /><p className="mt-3 font-display text-3xl">{item.quantity}/5</p><p className="text-sm text-muted-foreground">Fragmenty Mega · gatunek #{speciesId}</p><Button className="mt-4" size="sm" disabled={busy || item.quantity < 5} onClick={() => void run(() => craftStone({ data: { speciesId } }), "Utworzono gatunkowy Kamień Mega.")}>Utwórz Kamień</Button></div>;
-          })}
-          {(data.items ?? []).filter((item) => item.item_key.startsWith("mega_stone_")).map((item) => <div key={item.item_key} className="glass-panel rounded-2xl p-5"><ItemIcon name="key-stone" label="Kamień Mega" /><p className="mt-3 font-display text-3xl">{item.quantity}</p><p className="text-sm text-muted-foreground">Kamień Mega · gatunek #{item.item_key.replace("mega_stone_", "")}</p></div>)}
-          {(data.items ?? [])
-            .filter((item) => item.item_key.startsWith("tm_") && item.quantity > 0)
-            .map((item) => {
-              const tm = tmById(item.item_key.replace("tm_", ""));
-              if (!tm) return null;
-              return (
-                <div key={item.item_key} className="glass-panel rounded-2xl p-5">
-                  <ItemIcon name={tmSprite(tm.type)} label={tm.label} />
-                  <p className="mt-3 font-display text-3xl">{item.quantity}</p>
-                  <p className="text-sm text-muted-foreground">{tm.label}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{tmDescription(tm)}</p>
-                </div>
-              );
-            })}
-          {(data.items ?? [])
-            .filter((item) => item.item_key === "shiny_charm" && item.quantity > 0)
-            .map((item) => (
-              <div key={item.item_key} className="glass-panel rounded-2xl p-5">
-                <ItemIcon name="shiny-charm" label="Shiny Charm" />
-                <p className="mt-3 font-display text-3xl">{item.quantity}</p>
-                <p className="text-sm text-muted-foreground">
-                  Shiny Charm · podwaja szansę na shiny w eksploracji
-                </p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Nagroda za 1. miejsce w turnieju tygodniowym. Działa automatycznie.
-                </p>
-              </div>
-            ))}
-
-          <div className="glass-panel rounded-2xl p-5">
-            <ItemIcon name="max-elixir" label="Flakon Energii" />
-            <p className="mt-3 font-display text-3xl">{profile.energy_bottles}</p>
-            <p className="text-sm text-muted-foreground">Flakony Energii</p>
-            <Button
-              className="mt-4"
-              size="sm"
-              disabled={busy || profile.energy_bottles <= 0 || profile.energy >= profile.energy_max}
-              onClick={() =>
-                void run(() => drinkBottle(), `Energia uzupełniona do ${profile.energy_max}/${profile.energy_max}.`)
-              }
-            >
-              Zużyj Flakon
-            </Button>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Energia: {profile.energy}/{profile.energy_max} · +1 co 3 minuty.
-            </p>
-          </div>
-
-          {[
-            ...BALLS.filter((ball) => ball.key !== "poke").map((ball) => ({ label: ball.label, sprite: ball.sprite, count: profile[ball.field] })),
-            { label: "Bilety Podróży", sprite: "ss-ticket", count: profile.travel_tickets },
-            { label: "Razz Berry", sprite: "razz-berry", count: profile.razz_berries },
-            { label: "Mikstura", sprite: "potion", count: profile.potions },
-            { label: "Super Mikstura", sprite: "super-potion", count: profile.super_potions },
-            { label: "Eliksir Życia", sprite: "revive", count: profile.revives },
-            { label: "Kamienie Mega", sprite: "key-stone", count: profile.mega_stones },
-          ].map((item) => (
-            <div key={item.label} className="glass-panel rounded-2xl p-5">
-              <ItemIcon name={item.sprite} label={item.label} />
-              <p className="mt-3 font-display text-3xl">{item.count}</p>
-              <p className="text-sm text-muted-foreground">{item.label}</p>
-              <p className="mt-4 text-xs text-muted-foreground">
-                Dokupisz w Sklepie za Catch Coins.
-              </p>
-            </div>
-          ))}
-
-          <div className="glass-panel rounded-2xl p-5">
-            <ItemIcon name="coin-case" label="Catch Coins" />
-            <p className="mt-3 font-display text-3xl">{profile.catch_coins}</p>
-            <p className="text-sm text-muted-foreground">Catch Coins</p>
-            <p className="mt-4 text-xs text-muted-foreground">
-              Monety zdobywasz za wygrane walki z trenerami i wydajesz na trening Pokémonów.
-            </p>
-          </div>
+          )}
         </div>
       )}
     </GamePage>
-  );
-}
-
-function ItemIcon({ name, label }: { name: string; label: string }) {
-  return (
-    <img
-      src={itemSprite(name)}
-      alt={label}
-      loading="lazy"
-      width={40}
-      height={40}
-      className="h-10 w-10 [image-rendering:pixelated]"
-    />
   );
 }
