@@ -11,7 +11,7 @@ import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { artworkUrl } from "@/lib/game-data";
-import { fetchEvolutions, fetchLevelUpMoves, fetchMoveDetails } from "@/lib/pokeapi";
+import { fetchEvolutions } from "@/lib/pokeapi";
 import candyXlIcon from "@/assets/candy-xl.png.asset.json";
 import {
   STAT_KEYS,
@@ -19,6 +19,7 @@ import {
   defaultActiveMoves,
   itemSprite,
   learnedMoves,
+  movePool,
   speciesType,
   type StatKey,
 } from "@/lib/pokedex";
@@ -82,21 +83,6 @@ function PokemonDetailPage() {
   const pokemon = (data?.pokemon ?? []).find((p) => p.id === id);
   const coins = data?.profile.catch_coins ?? 0;
   const speciesId = pokemon?.species_id;
-
-  const { data: moves } = useQuery({
-    queryKey: ["pokeapi-moves", speciesId],
-    queryFn: () => fetchLevelUpMoves(speciesId!),
-    enabled: !!speciesId,
-    staleTime: Infinity,
-  });
-
-  const moveSlugs = (moves ?? []).map((m) => m.slug);
-  const { data: moveStats } = useQuery({
-    queryKey: ["pokeapi-move-stats", speciesId, moveSlugs.length],
-    queryFn: () => fetchMoveDetails(moveSlugs),
-    enabled: moveSlugs.length > 0,
-    staleTime: Infinity,
-  });
 
   const { data: evolutions } = useQuery({
     queryKey: ["pokeapi-evo", speciesId],
@@ -181,7 +167,6 @@ function PokemonDetailPage() {
   const toNextLevel = TRAINING_LEVEL_STEP - (pokemon.training_points % TRAINING_LEVEL_STEP || 0);
   const friendship = pokemon.friendship ?? 0;
   const friendshipPct = Math.round((friendship / MAX_FRIENDSHIP) * 100);
-  const knownMoves = (moves ?? []).filter((move) => move.level <= pokemon.level);
 
   return (
     <GamePage
@@ -404,49 +389,6 @@ function PokemonDetailPage() {
           onSaved={setData}
         />
 
-        <section className="glass-panel rounded-2xl p-5 lg:col-span-3">
-          <h2 className="text-2xl">Ruchy z poziomowania</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Dane z PokéAPI. Opanowane: {knownMoves.length} z {(moves ?? []).length}.
-          </p>
-          {moves === undefined ? (
-            <p className="mt-4 text-sm text-muted-foreground">Wczytuję listę ruchów…</p>
-          ) : (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {moves.map((move) => {
-                const known = pokemon.level >= move.level;
-                const stats = moveStats?.[move.slug];
-                return (
-                  <div
-                    key={move.name}
-                    className={`rounded-xl border p-3 ${
-                      known ? "border-aurora/40 bg-aurora/10" : "border-border/60 opacity-70"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium">{move.name}</p>
-                      {stats ? <TypeBadges types={[stats.type]} /> : null}
-                    </div>
-                    {stats ? (
-                      <p className="mt-1 text-xs">
-                        {stats.category} · Moc {stats.power ?? "—"} · Celność{" "}
-                        {stats.accuracy ? `${stats.accuracy}%` : "—"}
-                        {stats.pp ? ` · PP ${stats.pp}` : ""}
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-xs text-muted-foreground">Wczytuję statystyki…</p>
-                    )}
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {known
-                        ? `Opanowany (Lvl ${move.level || 1})`
-                        : `Nauka na Lvl ${move.level}`}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
       </div>
     </GamePage>
   );
@@ -465,6 +407,7 @@ function ActiveMovesPanel({
   const [busy, setBusy] = useState(false);
   const [replacing, setReplacing] = useState<string | null>(null);
 
+  const fullPool = movePool(pokemon.species_id);
   const pool = learnedMoves(pokemon.species_id, pokemon.level);
   const stored = (pokemon.active_moves ?? []).filter((name) =>
     pool.some((move) => move.name === name),
@@ -545,20 +488,28 @@ function ActiveMovesPanel({
         })}
       </div>
 
-      <h3 className="mt-6 text-lg">Opanowane ruchy ({pool.length})</h3>
+      <h3 className="mt-6 text-lg">Ruchy z poziomowania</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Odblokowane ataki możesz od razu wstawić w slot. Kolejne dochodzą wraz z poziomem.
+      </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {pool.map((move) => {
+        {fullPool.map((move) => {
+          const unlocked = move.level <= pokemon.level;
           const isActive = active.includes(move.name);
           return (
             <div
               key={move.name}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border/60 p-3"
+              className={`flex items-center justify-between gap-3 rounded-xl border p-3 ${
+                unlocked ? "border-border/60" : "border-border/40 opacity-60"
+              }`}
             >
               <div>
                 <p className="font-medium">{move.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {move.type} · {move.category} · Moc {move.power} · Celność {move.accuracy}% ·
-                  Lvl {move.level || 1}
+                  {move.type} · {move.category} · Moc {move.power} · Celność {move.accuracy}%
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {unlocked ? `Odblokowany (Lvl ${move.level || 1})` : `Nauka na Lvl ${move.level}`}
                 </p>
               </div>
               {isActive ? (
@@ -566,7 +517,11 @@ function ActiveMovesPanel({
                   Aktywny
                 </span>
               ) : (
-                <Button size="sm" disabled={busy} onClick={() => assign(move.name)}>
+                <Button
+                  size="sm"
+                  disabled={busy || !unlocked}
+                  onClick={() => assign(move.name)}
+                >
                   Przypisz
                 </Button>
               )}
@@ -574,6 +529,7 @@ function ActiveMovesPanel({
           );
         })}
       </div>
+
 
       {replacing ? (
         <div
