@@ -17,6 +17,15 @@ import {
   type Fighter,
 } from "@/lib/battle";
 import { allyFighter, foeFighter, wildFighter } from "@/lib/fighters";
+import { FULL_DEX } from "@/lib/full-dex";
+import {
+  TMS,
+  rollFind,
+  tmDescription,
+  tmItemKey,
+  tmSprite,
+  type FindView,
+} from "@/lib/finds";
 import {
   NATURES,
   TRAINER_CLASSES,
