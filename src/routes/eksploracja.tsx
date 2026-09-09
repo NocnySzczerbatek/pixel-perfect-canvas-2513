@@ -67,6 +67,7 @@ function EksploracjaPage() {
   const [lastBiome, setLastBiome] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<BattleOutcome | null>(null);
   const [activeMonId, setActiveMonId] = useState<string | null>(null);
+  const [find, setFind] = useState<FindView | null>(null);
 
   useEffect(() => {
     if (!loading && !session) {
