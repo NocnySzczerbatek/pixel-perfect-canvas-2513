@@ -205,3 +205,58 @@ export function fetchEvolutions(speciesId: number) {
     return [] as EvolutionInfo[];
   });
 }
+
+export type EvolutionStage = {
+  id: number;
+  name: string;
+  /** Warunek uzyskania tej formy (pusty dla formy obecnej). */
+  requirement: string;
+};
+
+/** Cała linia ewolucyjna od obecnej formy w przód (z warunkiem każdej formy). */
+export function fetchEvolutionLine(speciesId: number) {
+  return cached(`line:${speciesId}`, async () => {
+    const species = await api<{ name: string; evolution_chain: { url: string } | null }>(
+      `pokemon-species/${speciesId}`,
+    );
+    const self: EvolutionStage = { id: speciesId, name: pretty(species.name), requirement: "" };
+    if (!species.evolution_chain) return [self];
+    const chainId = species.evolution_chain.url.split("/").filter(Boolean).pop();
+    const chain = await api<{ chain: ChainNode }>(`evolution-chain/${chainId}`);
+
+    const find = (node: ChainNode): ChainNode | null => {
+      if (node.species.name === species.name) return node;
+      for (const next of node.evolves_to) {
+        const hit = find(next);
+        if (hit) return hit;
+      }
+      return null;
+    };
+    const start = find(chain.chain);
+    if (!start) return [self];
+
+    const out: EvolutionStage[] = [self];
+    const walk = (node: ChainNode) => {
+      for (const next of node.evolves_to) {
+        const detail = next.evolution_details[0];
+        const requirement = detail?.min_level
+          ? `od poziomu ${detail.min_level}`
+          : detail?.min_happiness
+            ? `przy przyjaźni ${detail.min_happiness}+`
+            : detail?.item
+              ? `przy użyciu ${pretty(detail.item.name)}`
+              : detail?.trigger
+                ? pretty(detail.trigger.name)
+                : "ewolucja";
+        out.push({
+          id: Number(next.species.url.split("/").filter(Boolean).pop() ?? 0),
+          name: pretty(next.species.name),
+          requirement,
+        });
+        walk(next);
+      }
+    };
+    walk(start);
+    return out;
+  });
+}
