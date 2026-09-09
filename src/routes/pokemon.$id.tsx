@@ -389,6 +389,9 @@ function PokemonDetailPage() {
           onSaved={setData}
         />
 
+        <AllMovesSection pokemon={pokemon} />
+
+
       </div>
     </GamePage>
   );
