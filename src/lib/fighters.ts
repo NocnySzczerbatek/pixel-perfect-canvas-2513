@@ -56,7 +56,8 @@ export function allyFighter(row: AnyRow, boost = 0): Fighter {
     acc: 100,
     ability: row.ability ?? "—",
     shiny: !!row.is_shiny,
-    moves: battleMoves(speciesId, level),
+    moves: battleMoves(speciesId, level, row.active_moves ?? null),
+
   };
 }
 
