@@ -5,6 +5,7 @@ import { simulateTeamBattle, type Fighter } from "@/lib/battle";
 import { ENERGY_COST, spendEnergy } from "@/lib/energy";
 import { allyFighter, foeFighter } from "@/lib/fighters";
 import { gymsForRegion, type Gym } from "@/lib/gyms";
+import { gymBottleReward, gymCoinReward, rollGymDrops } from "@/lib/gym-rewards";
 import { MEGA_STONE } from "@/lib/items";
 import { speciesType } from "@/lib/pokedex";
 import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
