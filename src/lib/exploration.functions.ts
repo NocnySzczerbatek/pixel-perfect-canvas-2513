@@ -199,7 +199,7 @@ type ProfileRow = {
 };
 
 const PROFILE_COLUMNS =
-  "energy, energy_updated_at, poke_balls, great_balls, ultra_balls, master_balls, premier_balls, net_balls, dive_balls, dusk_balls, quick_balls, timer_balls, repeat_balls, luxury_balls, razz_berries, potions, super_potions, revives, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region, travel_region, travel_until";
+  "energy, energy_updated_at, energy_bottles, poke_balls, great_balls, ultra_balls, master_balls, premier_balls, net_balls, dive_balls, dusk_balls, quick_balls, timer_balls, repeat_balls, luxury_balls, razz_berries, potions, super_potions, revives, catch_coins, candy_normal, candy_xl, trainer_level, trainer_exp, region, travel_region, travel_until";
 
 
 
