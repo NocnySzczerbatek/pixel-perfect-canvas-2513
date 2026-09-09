@@ -959,6 +959,68 @@ export type Database = {
           },
         ]
       }
+      raid_runs: {
+        Row: {
+          boss_key: string
+          boss_name: string
+          created_at: string
+          damage_done: number
+          id: string
+          level: number
+          log: Json
+          owner_id: string
+          raid_date: string
+          reward_coins: number
+          rewards: Json
+          species_id: number
+          tier: number
+          turns: number
+          won: boolean
+        }
+        Insert: {
+          boss_key: string
+          boss_name: string
+          created_at?: string
+          damage_done?: number
+          id?: string
+          level: number
+          log?: Json
+          owner_id: string
+          raid_date: string
+          reward_coins?: number
+          rewards?: Json
+          species_id: number
+          tier: number
+          turns?: number
+          won?: boolean
+        }
+        Update: {
+          boss_key?: string
+          boss_name?: string
+          created_at?: string
+          damage_done?: number
+          id?: string
+          level?: number
+          log?: Json
+          owner_id?: string
+          raid_date?: string
+          reward_coins?: number
+          rewards?: Json
+          species_id?: number
+          tier?: number
+          turns?: number
+          won?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raid_runs_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       region_visits: {
         Row: {
           first_visit_at: string
