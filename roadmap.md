@@ -49,4 +49,6 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Quest Engine: 30 zadań dziennie (10/10/10), 8 typów, jedno przelosowanie, przycisk „Udaj się do lokacji"
 - [x] Plecak: kategorie (Balle, Jagody, Leczenie, TM, Ewolucja, Mega, Zadania), szukajka, sortowanie
 - [x] Świat: pora dnia (ranek/dzień/wieczór/noc) i pogoda co 3 h — wpływ na typy, rzadkość i Shiny
-- [ ] Kolejne etapy specyfikacji: Liga, Raidy, osiągnięcia, logowanie dzienne
+- [x] Nagrody za Sale: 2000–3000 CC, 3–5 Flakonów, awans badań Oaka, losowe dropy (kamień/Ultra Balle/TM)
+- [x] Liga Pokémon: Elite 4 + Mistrz po 8 odznakach, porażka cofa przebieg
+- [ ] Kolejne etapy specyfikacji: Raidy, osiągnięcia, logowanie dzienne, Region Mastery
