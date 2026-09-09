@@ -535,6 +535,8 @@ export const travel = createServerFn({ method: "POST" })
         hp_current: hpMax,
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
+          weatherLine,
+
           ...(candyLine ? [candyLine] : []),
           ...(findLine ? [findLine] : []),
           ...(isShiny
