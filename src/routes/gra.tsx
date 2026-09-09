@@ -164,13 +164,13 @@ function TrainerDashboard() {
     <main className="min-h-screen px-5 py-8 md:px-10">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link to="/" className="shrink-0">
+          <Link to="/" className="block h-12 w-12 shrink-0 overflow-hidden rounded-xl ring-1 ring-white/20 drop-shadow-[0_0_12px_rgba(255,255,255,0.55)]">
             <img
               src={logoAsset.url}
               alt="Catch Zone"
               width={56}
               height={56}
-              className="block h-12 w-12 shrink-0 rounded-xl object-contain align-middle drop-shadow-[0_0_12px_rgba(255,255,255,0.55)] ring-1 ring-white/20"
+              className="h-full w-full object-cover"
             />
           </Link>
           <div>
