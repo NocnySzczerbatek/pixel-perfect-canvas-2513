@@ -194,6 +194,7 @@ export const challengeGym = createServerFn({ method: "POST" })
       return {
         ok: false as const,
         reason: "Energia zmieniła się w trakcie — odśwież i spróbuj ponownie.",
+        state: await buildState(supabase, userId),
       };
     }
     const updates: any = {};

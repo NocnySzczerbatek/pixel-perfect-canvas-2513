@@ -203,6 +203,7 @@ export const fightTrainer = createServerFn({ method: "POST" })
       return {
         ok: false as const,
         reason: "Energia zmieniła się w trakcie — odśwież i spróbuj ponownie.",
+        state: await boardState(supabase, userId),
       };
     }
     const updates: Record<string, any> = {};
