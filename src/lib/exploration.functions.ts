@@ -12,7 +12,7 @@ import {
   hpValue,
   pickWeather,
   simulateTeamBattle,
-  statFromIv,
+  
   type BattleReport,
   type Fighter,
 } from "@/lib/battle";
