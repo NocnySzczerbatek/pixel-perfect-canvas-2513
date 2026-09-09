@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { baseStats } from "@/lib/base-stats";
+import { hpValue } from "@/lib/battle";
+import { learnedMoves } from "@/lib/pokedex";
 
 async function writeDb(): Promise<any> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -41,6 +44,7 @@ export type PokemonRow = {
   training_points: number;
   friendship: number;
   is_shiny: boolean;
+  active_moves: string[] | null;
 };
 
 export type TrainerData = {
@@ -96,7 +100,7 @@ export type TrainerData = {
 };
 
 const POKEMON_COLUMNS =
-  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, nature, ability, training_points, friendship, is_shiny";
+  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, nature, ability, training_points, friendship, is_shiny, active_moves";
 
 
 function expThreshold(level: number) {
@@ -578,7 +582,6 @@ export const trainPokemon = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Nie znaleziono Pokémona.");
     const pokemon = row as PokemonRow;
-    const currentIv = pokemon[ivField as keyof PokemonRow] as number;
     const currentTrain = (pokemon[trainField as keyof PokemonRow] as number) ?? 0;
 
     if (currentTrain >= MAX_TRAIN) {
