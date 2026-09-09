@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { OAK_STAGES, QUEST_PRESETS, type QuestDifficulty } from "@/lib/quests";
+import { OAK_STAGES, QUEST_PRESETS, rewardItemLabel, type QuestDifficulty } from "@/lib/quests";
 import { warsawClock } from "@/lib/time";
 
 async function writeDb(): Promise<any> {
