@@ -519,7 +519,7 @@ export const travel = createServerFn({ method: "POST" })
         log: [
           `Krok w biomie ${biome.name} (−${cost} Energii).`,
           ...(candyLine ? [candyLine] : []),
-          ...(foundMegaSpecies ? ["Znalazłeś fragment Kamienia Mega!"] : []),
+          ...(findLine ? [findLine] : []),
           `${trainerClass} ${person} wyzywa Cię na walkę: ${size} Pokémony (średni Lvl ${avg}).`,
         ],
       };
