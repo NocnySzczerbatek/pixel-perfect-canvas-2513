@@ -482,6 +482,7 @@ const NAV_GROUPS = [
       { to: "/mapa", label: "Mapa regionów", Icon: MapIcon, desc: "Sale, Liderzy i odznaki" },
       { to: "/bonusy", label: "Historia bonusów", Icon: Sparkles, desc: "Buffy i szansa na Shiny" },
       { to: "/sale", label: "Sale", Icon: Landmark, desc: "8 Liderów regionu" },
+      { to: "/liga", label: "Liga Pokémon", Icon: Crown, desc: "Elite 4 i Mistrz" },
       { to: "/pvp", label: "PvP", Icon: Swords, desc: "Napady na innych trenerów" },
       { to: "/turnieje", label: "Turnieje", Icon: Crown, desc: "Tygodniowa liga o puchar" },
       { to: "/trenerzy", label: "Trenerzy", Icon: Users, desc: "Przeciwnicy i klasy" },
