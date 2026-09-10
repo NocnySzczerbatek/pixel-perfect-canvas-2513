@@ -108,6 +108,89 @@ export type Database = {
           },
         ]
       }
+      breeding_eggs: {
+        Row: {
+          ability: string | null
+          active_moves: string[] | null
+          created_at: string
+          hatched_at: string | null
+          id: string
+          inherited: Json
+          iv_atk: number
+          iv_def: number
+          iv_hp: number
+          iv_spa: number
+          iv_spd: number
+          iv_spe: number
+          level: number
+          nature: string | null
+          owner_id: string
+          parent_a: string | null
+          parent_a_name: string
+          parent_b: string | null
+          parent_b_name: string
+          ready_at: string
+          species_id: number
+          species_name: string
+        }
+        Insert: {
+          ability?: string | null
+          active_moves?: string[] | null
+          created_at?: string
+          hatched_at?: string | null
+          id?: string
+          inherited?: Json
+          iv_atk?: number
+          iv_def?: number
+          iv_hp?: number
+          iv_spa?: number
+          iv_spd?: number
+          iv_spe?: number
+          level?: number
+          nature?: string | null
+          owner_id: string
+          parent_a?: string | null
+          parent_a_name?: string
+          parent_b?: string | null
+          parent_b_name?: string
+          ready_at: string
+          species_id: number
+          species_name: string
+        }
+        Update: {
+          ability?: string | null
+          active_moves?: string[] | null
+          created_at?: string
+          hatched_at?: string | null
+          id?: string
+          inherited?: Json
+          iv_atk?: number
+          iv_def?: number
+          iv_hp?: number
+          iv_spa?: number
+          iv_spd?: number
+          iv_spe?: number
+          level?: number
+          nature?: string | null
+          owner_id?: string
+          parent_a?: string | null
+          parent_a_name?: string
+          parent_b?: string | null
+          parent_b_name?: string
+          ready_at?: string
+          species_id?: number
+          species_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "breeding_eggs_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_login: {
         Row: {
           best_streak: number
@@ -294,6 +377,48 @@ export type Database = {
           {
             foreignKeyName: "encounters_owner_id_fkey"
             columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friendships_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1021,6 +1146,41 @@ export type Database = {
           },
         ]
       }
+      region_mastery_claims: {
+        Row: {
+          claimed_at: string
+          id: string
+          owner_id: string
+          region: string
+          reward_text: string
+          tier: number
+        }
+        Insert: {
+          claimed_at?: string
+          id?: string
+          owner_id: string
+          region: string
+          reward_text?: string
+          tier: number
+        }
+        Update: {
+          claimed_at?: string
+          id?: string
+          owner_id?: string
+          region?: string
+          reward_text?: string
+          tier?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "region_mastery_claims_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       region_visits: {
         Row: {
           first_visit_at: string
@@ -1178,6 +1338,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "trainer_battles_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_event_claims: {
+        Row: {
+          claimed_at: string
+          event_key: string
+          id: string
+          owner_id: string
+          reward_text: string
+          week_start: string
+        }
+        Insert: {
+          claimed_at?: string
+          event_key: string
+          id?: string
+          owner_id: string
+          reward_text?: string
+          week_start: string
+        }
+        Update: {
+          claimed_at?: string
+          event_key?: string
+          id?: string
+          owner_id?: string
+          reward_text?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_event_claims_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
