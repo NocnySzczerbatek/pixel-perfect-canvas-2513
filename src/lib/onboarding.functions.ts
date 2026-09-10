@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { REGIONS, findRegion } from "@/lib/game-data";
 import { NATURES, abilitiesFor } from "@/lib/pokedex";
+import { baseStats, calculateMaxHP } from "@/lib/base-stats";
 
 async function writeDb(): Promise<any> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -40,20 +41,12 @@ export const createTrainer = createServerFn({ method: "POST" })
     if (!nameCheck.ok) return { ok: false as const, reason: nameCheck.reason };
 
     const db = await writeDb();
-    const { data: existing } = await db
-      .from("player_pokemon")
-      .select("id")
-      .eq("owner_id", context.userId)
-      .limit(1);
+    const { data: existing } = await db.from("player_pokemon").select("id").eq("owner_id", context.userId).limit(1);
     if (existing && existing.length > 0) {
       return { ok: false as const, reason: "Masz już swojego pierwszego Pokémona." };
     }
 
-    const { data: nameTaken } = await db
-      .from("profiles")
-      .select("id")
-      .eq("trainer_name", nameCheck.name)
-      .limit(1);
+    const { data: nameTaken } = await db.from("profiles").select("id").eq("trainer_name", nameCheck.name).limit(1);
     if (nameTaken && nameTaken.length > 0) {
       return { ok: false as const, reason: "Ten nick jest już zajęty. Wybierz inny." };
     }
@@ -71,7 +64,14 @@ export const createTrainer = createServerFn({ method: "POST" })
 
     const iv = () => Math.floor(Math.random() * 32);
     const ivHp = iv();
-    const hp = 20 + 5 * 4 + Math.round(ivHp * 0.8);
+
+    // Pobieramy bazowe statystyki wybranego startera
+    const starterBaseStats = baseStats(starter.id);
+    const baseHp = starterBaseStats[0]; // Pierwszy element w tablicy to Base HP
+
+    // Obliczamy poprawne HP dla 5 poziomu i 0 EV z naszego nowego wzoru
+    const hp = calculateMaxHP(baseHp, ivHp, 0, 5);
+
     const abilities = abilitiesFor(starter.type);
     const { error: pokemonError } = await db.from("player_pokemon").insert({
       owner_id: context.userId,
