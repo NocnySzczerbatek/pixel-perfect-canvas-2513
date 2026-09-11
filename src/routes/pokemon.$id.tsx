@@ -176,6 +176,7 @@ function PokemonDetailPage() {
       else {
         toast.success(success);
         setHeldOpen(false);
+        setMegaOpen(false);
         await refetch();
       }
     } catch (error) {
