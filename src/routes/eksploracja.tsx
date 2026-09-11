@@ -206,9 +206,11 @@ function EksploracjaPage() {
     try {
       const result = await resolveBotFn({ data: { encounterId: encounter.id } });
       const label = `${encounter.trainer_class ?? "Trener"} ${encounter.trainer_person ?? "Bot"}`;
-      if (result.won) toast.success(`Wygrana z ${label}!`);
-      notifyQuests("questsCompleted" in result ? result.questsCompleted : []);
-      else toast.error(`Przegrana z ${label}.`);
+      if (result.won) {
+        toast.success(`Wygrana z ${label}!`);
+        notifyQuests("questsCompleted" in result ? result.questsCompleted : []);
+      } else toast.error(`Przegrana z ${label}.`);
+
       if (result.report) setReport(result.report);
       else setOutcome({ won: result.won, biome: encounter.biome, label });
       updateState(result.state);
