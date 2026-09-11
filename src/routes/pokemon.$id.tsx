@@ -186,15 +186,16 @@ function PokemonDetailPage() {
     }
   };
 
-  const handleEvolve = async () => {
+  const handleEvolve = async (toId: number) => {
     setBusy(true);
     try {
-      const result = await evolve({ data: { id } });
+      const result = await evolve({ data: { id, toId } });
       if (result.data) setData(result.data);
       if (!result.ok) toast.error(result.reason); else toast.success(`Ewolucja zakończona: ${result.name}!`);
     } catch (error) { toast.error(error instanceof Error ? error.message : "Ewolucja się nie udała."); }
     finally { setBusy(false); }
   };
+
 
   if (isLoading) {
     return (
