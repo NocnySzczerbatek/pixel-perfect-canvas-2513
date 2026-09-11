@@ -44,6 +44,7 @@ export type PokemonRow = {
   ability: string | null;
   training_points: number;
   held_item: string | null;
+  mega_stone: string | null;
   friendship: number;
   is_shiny: boolean;
   active_moves: string[] | null;
