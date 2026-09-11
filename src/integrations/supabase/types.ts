@@ -1486,6 +1486,19 @@ export type Database = {
           trainer_name: string
         }[]
       }
+      reroll_daily_quest: {
+        Args: {
+          _owner_id: string
+          _quest_date: string
+          _quest_id: string
+          _replacement: Json
+        }
+        Returns: boolean
+      }
+      start_daily_quest_day: {
+        Args: { _owner_id: string; _quest_date: string; _quests: Json }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
