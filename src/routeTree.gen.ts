@@ -19,6 +19,7 @@ import { Route as GraRouteImport } from './routes/gra'
 import { Route as GtsRouteImport } from './routes/gts'
 import { Route as LigaRouteImport } from './routes/liga'
 import { Route as MapaRouteImport } from './routes/mapa'
+import { Route as MistrzostwoRouteImport } from './routes/mistrzostwo'
 import { Route as OdznakiRouteImport } from './routes/odznaki'
 import { Route as OsiagnieciaRouteImport } from './routes/osiagniecia'
 import { Route as PcBoxRouteImport } from './routes/pc-box'
@@ -84,6 +85,11 @@ const LigaRoute = LigaRouteImport.update({
 const MapaRoute = MapaRouteImport.update({
   id: '/mapa',
   path: '/mapa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MistrzostwoRoute = MistrzostwoRouteImport.update({
+  id: '/mistrzostwo',
+  path: '/mistrzostwo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OdznakiRoute = OdznakiRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/gts': typeof GtsRoute
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
+  '/mistrzostwo': typeof MistrzostwoRoute
   '/odznaki': typeof OdznakiRoute
   '/osiagniecia': typeof OsiagnieciaRoute
   '/pc-box': typeof PcBoxRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/gts': typeof GtsRoute
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
+  '/mistrzostwo': typeof MistrzostwoRoute
   '/odznaki': typeof OdznakiRoute
   '/osiagniecia': typeof OsiagnieciaRoute
   '/pc-box': typeof PcBoxRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/gts': typeof GtsRoute
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
+  '/mistrzostwo': typeof MistrzostwoRoute
   '/odznaki': typeof OdznakiRoute
   '/osiagniecia': typeof OsiagnieciaRoute
   '/pc-box': typeof PcBoxRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/gts'
     | '/liga'
     | '/mapa'
+    | '/mistrzostwo'
     | '/odznaki'
     | '/osiagniecia'
     | '/pc-box'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/gts'
     | '/liga'
     | '/mapa'
+    | '/mistrzostwo'
     | '/odznaki'
     | '/osiagniecia'
     | '/pc-box'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/gts'
     | '/liga'
     | '/mapa'
+    | '/mistrzostwo'
     | '/odznaki'
     | '/osiagniecia'
     | '/pc-box'
@@ -351,6 +363,7 @@ export interface RootRouteChildren {
   GtsRoute: typeof GtsRoute
   LigaRoute: typeof LigaRoute
   MapaRoute: typeof MapaRoute
+  MistrzostwoRoute: typeof MistrzostwoRoute
   OdznakiRoute: typeof OdznakiRoute
   OsiagnieciaRoute: typeof OsiagnieciaRoute
   PcBoxRoute: typeof PcBoxRoute
@@ -439,6 +452,13 @@ declare module '@tanstack/react-router' {
       path: '/mapa'
       fullPath: '/mapa'
       preLoaderRoute: typeof MapaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mistrzostwo': {
+      id: '/mistrzostwo'
+      path: '/mistrzostwo'
+      fullPath: '/mistrzostwo'
+      preLoaderRoute: typeof MistrzostwoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/odznaki': {
@@ -567,6 +587,7 @@ const rootRouteChildren: RootRouteChildren = {
   GtsRoute: GtsRoute,
   LigaRoute: LigaRoute,
   MapaRoute: MapaRoute,
+  MistrzostwoRoute: MistrzostwoRoute,
   OdznakiRoute: OdznakiRoute,
   OsiagnieciaRoute: OsiagnieciaRoute,
   PcBoxRoute: PcBoxRoute,
