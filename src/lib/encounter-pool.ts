@@ -16,7 +16,6 @@ function toSpecies(entry: DexEntry): BiomeSpecies {
   return { id: entry.id, name: entry.name, type: entry.type };
 }
 
-const MIN_POOL = 8;
 
 /**
  * Formy rozwinięte pojawiają się dopiero, gdy trener osiągnie ich próg ewolucji.
