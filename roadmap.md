@@ -57,5 +57,7 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 
 - [x] Mapa świata /swiat (strefy + biomy + typy), biom Ruiny, panel wypraw i powiadomienia o ukończonych zadaniach
 
-- [ ] Fragmenty/Kamienie Mega w Ekwipunku: nazwa Pokemona zamiast numeru
-- [ ] Weryfikacja komunikatu o dropie przedmiotu w eksploracji
+- [x] Fragmenty/Kamienie Mega w Ekwipunku: nazwa Pokemona zamiast numeru
+- [x] Weryfikacja komunikatu o dropie przedmiotu w eksploracji (toast + karta znaleziska)
+- [x] Przedmioty Trzymane: katalog, dropy z biomów, slot na karcie Pokémona, bonusy w walce
+- [x] Sprzedaż Hodowcy przeniesiona z GTS do PC Boxa (z potwierdzeniem ceny)
