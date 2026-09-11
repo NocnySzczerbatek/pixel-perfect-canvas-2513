@@ -1,33 +1,8 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  Backpack,
-  BookOpen,
-  Boxes,
-  CalendarDays,
-  Egg,
-  Compass,
-  Gem,
-  Heart,
-  HeartPulse,
-  Crown,
-  Flame,
-  Landmark,
-  Map as MapIcon,
-  Medal,
-  Plane,
-  Repeat,
-  Shield,
-  ShoppingBag,
-  Sparkles,
-  Swords,
-  Trophy,
-  ClipboardList,
-  UserRound,
-  Users,
-} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { BonusPanel } from "@/components/game/BonusPanel";
+import { GameNav } from "@/components/game/GameNav";
 import { GuidedTour, type TourStep } from "@/components/game/GuidedTour";
 import { PlayerWindow } from "@/components/game/PlayerWindow";
 import { ENERGY_TICK_MS, MAX_ENERGY } from "@/lib/energy";
@@ -214,6 +189,8 @@ function TrainerDashboard() {
         </button>
       </header>
 
+      <GameNav />
+
       <PlayerWindow
         open={playerOpen}
         onClose={() => setPlayerOpen(false)}
@@ -389,26 +366,6 @@ function TrainerDashboard() {
         </div>
       </section>
 
-      {NAV_GROUPS.map((group) => (
-        <section className="mt-10" key={group.title}>
-          <h2 className="text-2xl">{group.title}</h2>
-          <p className="text-xs text-muted-foreground">{group.note}</p>
-          <nav className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {group.tiles.map(({ to, label, Icon, desc }) => (
-              <Link
-                key={to}
-                to={to}
-                data-tour={to}
-                className="tile-hover glass-panel flex flex-col items-start gap-2 rounded-2xl p-4"
-              >
-                <Icon className="h-6 w-6 text-muted-foreground" aria-hidden />
-                <span className="font-display text-xl">{label}</span>
-                <span className="text-xs text-muted-foreground">{desc}</span>
-              </Link>
-            ))}
-          </nav>
-        </section>
-      ))}
     </main>
   );
 }
@@ -477,49 +434,3 @@ function formatCountdown(ms: number) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-const NAV_GROUPS = [
-  {
-    title: "Walka",
-    note: "Tu zdobywasz doświadczenie, odznaki i monety.",
-    tiles: [
-      { to: "/eksploracja", label: "Eksploracja", Icon: Compass, desc: "Biomy, dzicy i trenerzy" },
-      { to: "/podroze", label: "Podróże", Icon: Plane, desc: "Czasowe wyprawy do regionów" },
-      { to: "/mapa", label: "Mapa regionów", Icon: MapIcon, desc: "Sale, Liderzy i odznaki" },
-      { to: "/bonusy", label: "Historia bonusów", Icon: Sparkles, desc: "Buffy i szansa na Shiny" },
-      { to: "/osiagniecia", label: "Osiągnięcia", Icon: Trophy, desc: "Codzienna nagroda i kamienie milowe" },
-      { to: "/sale", label: "Sale", Icon: Landmark, desc: "8 Liderów regionu" },
-      { to: "/liga", label: "Liga Pokémon", Icon: Crown, desc: "Elite 4 i Mistrz" },
-      { to: "/raidy", label: "Raidy", Icon: Flame, desc: "Bossowie dnia i legendy" },
-      { to: "/pvp", label: "PvP", Icon: Swords, desc: "Napady na innych trenerów" },
-      { to: "/turnieje", label: "Turnieje", Icon: Crown, desc: "Tygodniowa liga o puchar" },
-      { to: "/trenerzy", label: "Trenerzy", Icon: Users, desc: "Przeciwnicy i klasy" },
-      { to: "/wydarzenia", label: "Wydarzenia", Icon: CalendarDays, desc: "Bonus tygodnia i nagroda" },
-      { to: "/mistrzostwo", label: "Mistrzostwo", Icon: Gem, desc: "Postęp regionów i progi" },
-    ],
-  },
-  {
-    title: "Drużyna",
-    note: "Twoje Pokémony, torba i skrzynia.",
-    tiles: [
-      { to: "/druzyna", label: "Drużyna", Icon: Shield, desc: "Skład i pseudonimy" },
-      { to: "/centrum", label: "Siostra Joy", Icon: HeartPulse, desc: "Centrum Pokémon: leczenie" },
-      { to: "/pc-box", label: "PC Box", Icon: Boxes, desc: "Reszta kolekcji" },
-      { to: "/ekwipunek", label: "Ekwipunek", Icon: Backpack, desc: "Balle i mikstury" },
-      { to: "/odznaki", label: "Odznaki", Icon: Medal, desc: "Zdobyte odznaki" },
-      { to: "/zadania", label: "Zadania", Icon: ClipboardList, desc: "Dzienne cele i badania Oaka" },
-      { to: "/pokedex", label: "Pokédex", Icon: BookOpen, desc: "Spotkane gatunki i ich biomy" },
-      { to: "/hodowla", label: "Hodowla", Icon: Egg, desc: "Jajka i dziedziczone IV" },
-    ],
-  },
-  {
-    title: "Handel i konto",
-    note: "Zakupy, wymiany i Twoje statystyki.",
-    tiles: [
-      { to: "/sklep", label: "Sklep", Icon: ShoppingBag, desc: "Balle, mikstury, pakiety" },
-      { to: "/gts", label: "GTS", Icon: Repeat, desc: "Giełda i Kupiec" },
-      { to: "/ranking", label: "Ranking", Icon: Trophy, desc: "Najlepsi trenerzy" },
-      { to: "/znajomi", label: "Znajomi", Icon: Heart, desc: "Zaproszenia i lista trenerów" },
-      { to: "/profil", label: "Profil", Icon: UserRound, desc: "Twoje statystyki" },
-    ],
-  },
-] as const;
