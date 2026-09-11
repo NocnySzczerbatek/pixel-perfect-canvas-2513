@@ -66,6 +66,8 @@ export type Fighter = {
   shiny?: boolean;
   side?: "ally" | "foe";
   moves?: BattleMove[];
+  /** Klucz Przedmiotu Trzymanego (Held Item) — premia do typu albo leczenie co turę. */
+  heldItem?: string | null;
 };
 
 /**
@@ -169,6 +171,8 @@ export type BattleReport = {
   extras: string[];
 };
 
+import { catalogItem, heldBoostFor, heldHealFor } from "@/lib/held-items";
+
 const DEFAULT_MOVE: BattleMove = { name: "Uderzenie", power: 40, category: "Fizyczny" };
 
 function typesOf(f: Fighter): string[] {
@@ -260,10 +264,16 @@ function attackOnce(
   const off = special ? spaOf(attacker) : attacker.atk;
   const def = special ? spdOf(defender) : defender.def;
   const variance = 0.9 + Math.random() * 0.2;
+  const heldBoost = 1 + heldBoostFor(attacker.heldItem, moveType);
   const dmg = Math.max(
     2,
     Math.round(
-      Math.max(2, off * (move.power / 55) - def * 0.45) * mult * stab * weatherBoost * variance,
+      Math.max(2, off * (move.power / 55) - def * 0.45) *
+        mult *
+        stab *
+        weatherBoost *
+        heldBoost *
+        variance,
     ),
   );
   defender.hp = Math.max(0, defender.hp - dmg);
@@ -280,6 +290,12 @@ function attackOnce(
         weatherBoost > 1
           ? `${weather.label} wzmacnia ataki typu ${moveType} o 20%.`
           : `${weather.label} osłabia ataki typu ${moveType} o 20%.`,
+    });
+  }
+  if (heldBoost > 1) {
+    lines.push({
+      kind: "ability",
+      text: `${catalogItem(attacker.heldItem)?.label} wzmacnia ataki typu ${moveType} o ${Math.round((heldBoost - 1) * 100)}%.`,
     });
   }
   if (stab > 1) {
@@ -328,6 +344,18 @@ export function simulateTeamBattle(
       const defender = attacker === me ? foe : me;
       if (attacker.hp <= 0 || defender.hp <= 0) continue;
       attackOnce(attacker, defender, weather, lines);
+    }
+
+    // Leftovers i podobne przedmioty leczą na koniec tury.
+    for (const fighter of [me, foe]) {
+      const share = heldHealFor(fighter.heldItem);
+      if (share <= 0 || fighter.hp <= 0 || fighter.hp >= fighter.hpMax) continue;
+      const heal = Math.max(1, Math.round(fighter.hpMax * share));
+      fighter.hp = Math.min(fighter.hpMax, fighter.hp + heal);
+      lines.push({
+        kind: "ability",
+        text: `${catalogItem(fighter.heldItem)?.label} leczy ${fighter.name} o ${heal} HP.`,
+      });
     }
 
     rounds.push({

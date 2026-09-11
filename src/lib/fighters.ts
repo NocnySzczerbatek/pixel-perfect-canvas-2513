@@ -28,6 +28,7 @@ type AnyRow = {
   active_moves?: string[] | null;
   ability?: string | null;
   is_shiny?: boolean | null;
+  held_item?: string | null;
 };
 
 
@@ -56,6 +57,7 @@ export function allyFighter(row: AnyRow, boost = 0): Fighter {
     acc: 100,
     ability: row.ability ?? "—",
     shiny: !!row.is_shiny,
+    heldItem: row.held_item ?? null,
     moves: battleMoves(speciesId, level, row.active_moves ?? null),
 
   };
