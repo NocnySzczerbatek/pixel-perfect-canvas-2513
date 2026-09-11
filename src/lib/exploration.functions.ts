@@ -728,23 +728,29 @@ export const throwBall = createServerFn({ method: "POST" })
     }
     const useRazz = data.razz && (profile.razz_berries ?? 0) > 0;
 
-    const hpFactor = (3 * row.hp_max - 2 * row.hp_current) / (3 * row.hp_max);
     const isNight = isNightNow();
-    const { count: ownedSpecies } = await supabase.from("player_pokemon").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("species_id", row.species_id ?? 0);
+    const dexTypes = FULL_DEX.find((entry) => entry.id === (row.species_id ?? 0))?.types ?? [];
+    const wildTypes = [...new Set([...(row.species_type ? [row.species_type as string] : []), ...dexTypes])];
+    const { count: ownedSpecies } = await supabase
+      .from("player_pokemon")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", userId)
+      .eq("species_id", row.species_id ?? 0);
     const turns = ((row.log as string[]) ?? []).filter((line: string) => line.includes("zadaje")).length;
-    const situational = data.ball === "net" && ["Woda", "Robak"].includes(row.species_type ?? "") ? 3 / ball.multiplier
-      : data.ball === "dive" && row.species_type === "Woda" ? 3 / ball.multiplier
-      : data.ball === "dusk" && (isNight || row.biome === "cave") ? 3 / ball.multiplier
-      : data.ball === "quick" && row.hp_current === row.hp_max ? 4 / ball.multiplier
-      : data.ball === "timer" ? Math.min(3.5, 1 + turns * 0.35) / ball.multiplier
-      : data.ball === "repeat" && (ownedSpecies ?? 0) > 0 ? 3 / ball.multiplier : 1;
-    const chance =
-      ball.multiplier >= 99
-        ? 1
-        : Math.max(
-            0.05,
-            Math.min(0.95, hpFactor * 0.9 * ball.multiplier * situational * (useRazz ? RAZZ.bonus : 1)),
-          );
+
+    /** Warunek Balla spełniony → conditionalBonus, inaczej Ball działa jak Poké Ball. */
+    const conditionMet =
+      data.ball === "net" ? wildTypes.some((type) => type === "Woda" || type === "Robak")
+      : data.ball === "dive" ? wildTypes.includes("Woda")
+      : data.ball === "dusk" ? isNight || row.biome === "jaskinia"
+      : data.ball === "quick" ? row.hp_current === row.hp_max
+      : data.ball === "repeat" ? (ownedSpecies ?? 0) > 0
+      : false;
+    const timerBonus = data.ball === "timer" ? Math.min(TIMER_MAX, turns * TIMER_PER_TURN) : 0;
+    const ballBonus = ball.bonus + (conditionMet ? (ball.conditionalBonus ?? 0) : 0) + timerBonus;
+    const chance = ball.guaranteed
+      ? 1
+      : Math.max(0.05, Math.min(CATCH_CAP, CATCH_BASE + ballBonus + (useRazz ? RAZZ_BONUS : 0)));
     const success = Math.random() < chance;
     const log: string[] = [
       ...((row.log as string[]) ?? []),
@@ -787,7 +793,7 @@ export const throwBall = createServerFn({ method: "POST" })
         in_party: (count ?? 0) < 6,
         nature,
         ability,
-        ...(data.ball === "luxury" ? { friendship: 120 } : {}),
+        ...(data.ball === "luxury" ? { friendship: LUXURY_FRIENDSHIP } : {}),
         ...(row.is_shiny ? { is_shiny: true } : {}),
         ...ivs,
       });
