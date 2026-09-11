@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -16,6 +16,7 @@ import { TypeBadges } from "@/components/game/TypeBadges";
 import { TrainerAvatar } from "@/components/game/TrainerAvatar";
 import { useSession } from "@/hooks/useSession";
 import { BIOMES, findBiome } from "@/lib/biomes";
+import { WORLD_ZONES, biomeTypes, zoneBiomes, zoneForBiome } from "@/lib/world-zones";
 import { artworkUrl } from "@/lib/game-data";
 import { HEAL_ITEMS } from "@/lib/items";
 import type { FindView } from "@/lib/finds";
@@ -104,6 +105,11 @@ function EksploracjaPage() {
     queryClient.setQueryData([EXPLORATION_QUERY_KEY, userId], next);
   };
 
+  /** Zadania kończą się w trakcie wyprawy — informujemy o tym od razu. */
+  const notifyQuests = (titles?: string[]) => {
+    for (const title of titles ?? []) toast.success(`Zadanie ukończone: ${title}`);
+  };
+
   const handleTravel = async (biomeSlug: string) => {
     setReport(null);
     if (!userId || busy) return;
@@ -122,6 +128,7 @@ function EksploracjaPage() {
           setFind(result.find);
           toast.success(`Znalezisko: ${result.find.label}`);
         }
+        notifyQuests(result.questsCompleted);
       }
       updateState(result.state);
     } catch (err) {
@@ -162,6 +169,7 @@ function EksploracjaPage() {
         toast.error(result.reason);
       } else if (result.caught) {
         toast.success(`Złapano! (szansa ${Math.round(result.chance * 100)}%)`);
+        notifyQuests(result.questsCompleted);
       } else if (result.fled) {
         toast.warning(`Pokémon uciekł (szansa ${Math.round(result.chance * 100)}%).`);
       } else {
@@ -199,6 +207,7 @@ function EksploracjaPage() {
       const result = await resolveBotFn({ data: { encounterId: encounter.id } });
       const label = `${encounter.trainer_class ?? "Trener"} ${encounter.trainer_person ?? "Bot"}`;
       if (result.won) toast.success(`Wygrana z ${label}!`);
+      notifyQuests("questsCompleted" in result ? result.questsCompleted : []);
       else toast.error(`Przegrana z ${label}.`);
       if (result.report) setReport(result.report);
       else setOutcome({ won: result.won, biome: encounter.biome, label });
@@ -321,6 +330,10 @@ function EksploracjaPage() {
         </section>
 
         <aside className="space-y-6">
+          <ExpeditionBriefing
+            state={state}
+            biomeSlug={state?.active?.biome ?? search.biome ?? lastBiome ?? null}
+          />
           <TrainerLevelPanel state={state} />
         </aside>
       </div>
@@ -401,6 +414,86 @@ function ResourcesPanel({ state }: { state: ExplorationState | undefined }) {
       <div className="glass-panel rounded-2xl p-4 text-center">
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Drużyna</p>
         <p className="mt-1 font-display text-3xl">{state?.party_size ?? 0} / 6</p>
+      </div>
+    </div>
+  );
+}
+
+/** Panel wypraw: gdzie iść, ile kosztuje Energia, ile spotkań i jak się przygotować. */
+function ExpeditionBriefing({
+  state,
+  biomeSlug,
+}: {
+  state: ExplorationState | undefined;
+  biomeSlug: string | null;
+}) {
+  const energy = state?.energy ?? 0;
+  const level = state?.trainer_level ?? 1;
+  const suggested = useMemo(() => {
+    const zones = [...WORLD_ZONES].filter((zone) => zone.minLevel <= level);
+    const zone = zones.length > 0 ? zones[zones.length - 1]! : WORLD_ZONES[0]!;
+    return zone;
+  }, [level]);
+  const biome = findBiome(biomeSlug) ?? zoneBiomes(suggested)[0] ?? BIOMES[0]!;
+  const zone = zoneForBiome(biome.slug) ?? suggested;
+  const minSteps = Math.floor(energy / 5);
+  const maxSteps = Math.floor(energy / 2);
+  const healthy = (state?.party ?? []).filter((mon) => !mon.fainted).length;
+  const balls = (state?.poke_balls ?? 0) + (state?.great_balls ?? 0) + (state?.ultra_balls ?? 0);
+
+  return (
+    <div className="glass-panel rounded-2xl p-5">
+      <h2 className="font-display text-xl">Panel wypraw</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Strefa {zone.name} · biom {biome.name} (od Lvl {zone.minLevel})
+      </p>
+      <div className="mt-3 flex flex-wrap gap-1">
+        {biomeTypes(biome).map((type) => (
+          <span
+            key={type}
+            className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ice"
+          >
+            {type}
+          </span>
+        ))}
+      </div>
+      <dl className="mt-4 space-y-2 text-sm">
+        <div className="flex items-center justify-between gap-2">
+          <dt className="text-muted-foreground">Koszt jednego kroku</dt>
+          <dd className="font-medium">2–5 Energii</dd>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <dt className="text-muted-foreground">Spotkania z obecnej Energii</dt>
+          <dd className="font-medium">
+            {minSteps}–{maxSteps}
+          </dd>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <dt className="text-muted-foreground">Zdolni do walki</dt>
+          <dd className={healthy > 0 ? "font-medium" : "font-medium text-destructive"}>{healthy} / 6</dd>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <dt className="text-muted-foreground">Balle w plecaku</dt>
+          <dd className={balls > 0 ? "font-medium" : "font-medium text-destructive"}>{balls}</dd>
+        </div>
+      </dl>
+      <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">Jak się przygotować</p>
+      <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+        <li>1. Ulecz drużynę w Centrum Pokémon — leczenie jest darmowe.</li>
+        <li>2. Dobierz Balle i Jagody Razz w Ekwipunku (Razz podnosi szansę złapania).</li>
+        <li>3. Weź Pokémony z przewagą typu nad {biomeTypes(biome).join(", ")}.</li>
+        <li>4. Trzymaj minimum 10 Energii, aby dokończyć walkę i rzucić Ballem.</li>
+      </ul>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button asChild size="sm" variant="secondary">
+          <Link to="/swiat">Mapa świata</Link>
+        </Button>
+        <Button asChild size="sm" variant="secondary">
+          <Link to="/centrum">Centrum Pokémon</Link>
+        </Button>
+        <Button asChild size="sm" variant="secondary">
+          <Link to="/ekwipunek">Ekwipunek</Link>
+        </Button>
       </div>
     </div>
   );
