@@ -460,10 +460,21 @@ function BiomeGrid({
                   <span className="text-xs text-muted-foreground">{biome.element}</span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">{biome.tagline}</p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {(biome.types.length > 0 ? biome.types : [biome.element]).map((type) => (
+                    <span
+                      key={type}
+                      className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground"
+                    >
+                      {type}
+                    </span>
+                  ))}
+                </div>
                 <p className="mt-2 text-xs font-medium text-ice">
                   2–5 Energii{lastBiome === biome.slug ? " · ostatnio tu byłeś" : ""}
                   {isFocus ? " · cel zadania" : ""}
                 </p>
+
               </div>
             </button>
           );
