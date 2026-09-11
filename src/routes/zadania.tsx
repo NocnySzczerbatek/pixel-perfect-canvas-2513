@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { BookOpen, CheckCircle2, Dices, MapPin, Target } from "lucide-react";
+import { BookOpen, CalendarPlus, CheckCircle2, Dices, MapPin, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -21,12 +21,12 @@ import {
   type QuestDifficulty,
   type QuestType,
 } from "@/lib/quests";
-import { claimDailyQuest, claimOakResearch, getQuestsState, rerollDailyQuest, startOakResearch } from "@/lib/quests.functions";
+import { claimDailyQuest, claimOakResearch, getQuestsState, rerollDailyQuest, startDailyQuestDay, startOakResearch } from "@/lib/quests.functions";
 
 export const Route = createFileRoute("/zadania")({
   head: () => ({ meta: [
     { title: "Zadania i badania Oaka — Catch Zone" },
-    { name: "description", content: "30 zadań dziennych w trzech poziomach trudności, jedno przelosowanie i badania Profesora Oaka." },
+    { name: "description", content: "9 zadań dziennych w trzech poziomach trudności, jedno wspólne przelosowanie i badania Profesora Oaka." },
     { property: "og:title", content: "Zadania — Catch Zone" },
     { property: "og:description", content: "Dzienne wyzwania, przelosowanie zadań i badania Profesora Oaka z nagrodami." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
@@ -58,6 +58,7 @@ function QuestsPage() {
   const fetchState = useServerFn(getQuestsState);
   const claim = useServerFn(claimDailyQuest);
   const reroll = useServerFn(rerollDailyQuest);
+  const startDay = useServerFn(startDailyQuestDay);
   const startOak = useServerFn(startOakResearch);
   const claimOak = useServerFn(claimOakResearch);
   const [state, setState] = useState<Awaited<ReturnType<typeof getQuestsState>> | null>(null);
@@ -106,10 +107,16 @@ function QuestsPage() {
         <section>
           <h2 className="flex items-center gap-2 font-display text-2xl"><Target className="h-5 w-5" /> Zadania dzienne</h2>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            Codziennie czeka 30 zadań — po 10 łatwych, średnich i trudnych. Postęp zapisuje się sam podczas gry
+            Codziennie czeka 9 zadań — po 3 łatwe, średnie i trudne. Postęp zapisuje się sam podczas gry
             (łapanie, walki, kroki, lokacje, znaleziska, ewolucje, Shiny), a nagrodę odbierasz przyciskiem.
-            Każde zadanie możesz jeden raz przelosować. O 24:00 czasu polskiego zestaw zmienia się na nowy.
+            Masz jedno darmowe przelosowanie na cały zestaw. Nowy dzień zaczyna się o 24:00 czasu polskiego.
           </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button disabled={busy || state.day_started} onClick={() => void run(() => startDay(), "Dzisiejszy zestaw jest gotowy!")}>
+              <CalendarPlus /> {state.day_started ? "Dzisiejszy dzień rozpoczęty" : "Rozpocznij nowy dzień"}
+            </Button>
+            <span className="text-xs text-muted-foreground">Darmowe przelosowanie: {state.reroll_used ? "wykorzystane" : "dostępne"}</span>
+          </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {DIFFICULTIES.map((difficulty) => (
               <Button key={difficulty} size="sm" variant={tab === difficulty ? "default" : "outline"} onClick={() => setTab(difficulty)}>
@@ -118,6 +125,7 @@ function QuestsPage() {
             ))}
           </div>
           <p className="mt-2 text-xs text-muted-foreground">{DIFFICULTY_INFO[tab]}</p>
+          {!state.day_started ? <p className="mt-6 text-sm text-muted-foreground">Rozpocznij nowy dzień, aby otrzymać zestaw zadań.</p> : null}
           <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {quests.map((quest) => {
               const biome = quest.biome ? findBiome(quest.biome) : null;
@@ -153,8 +161,8 @@ function QuestsPage() {
                     ) : quest.status === "claimed" ? (
                       <span className="text-xs text-muted-foreground">Nagroda odebrana</span>
                     ) : (
-                      <Button size="sm" variant="outline" disabled={busy || quest.rerolled} onClick={() => void run(() => reroll({ data: { id: quest.id } }), "Zadanie przelosowane.")}>
-                        <Dices className="h-4 w-4" /> {quest.rerolled ? "Już przelosowane" : "Losuj ponownie"}
+                      <Button size="sm" variant="outline" disabled={busy || state.reroll_used} onClick={() => void run(() => reroll({ data: { id: quest.id } }), "Zadanie przelosowane.")}>
+                        <Dices className="h-4 w-4" /> {state.reroll_used ? "Przelosowanie wykorzystane" : "Losuj ponownie"}
                       </Button>
                     )}
                   </div>
