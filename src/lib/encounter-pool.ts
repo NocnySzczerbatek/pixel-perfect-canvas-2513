@@ -16,7 +16,6 @@ function toSpecies(entry: DexEntry): BiomeSpecies {
   return { id: entry.id, name: entry.name, type: entry.type };
 }
 
-const MIN_POOL = 8;
 
 /**
  * Formy rozwinięte pojawiają się dopiero, gdy trener osiągnie ich próg ewolucji.
@@ -75,22 +74,13 @@ export function biomePool(
     if (!merged.has(entry.id)) merged.set(entry.id, toSpecies(entry));
   }
 
-  // 3. Dopełnienie z pełnego dexu — nadal tylko pasujące typem.
-  if (merged.size < MIN_POOL) {
-    const global = gate(
-      FULL_DEX.filter(
-        (entry) => !isLegendary(entry.id) && entry.types.some((type) => affinity.includes(type)),
-      ),
-      trainerLevel,
-    );
-    for (const entry of global) {
-      if (merged.size >= MIN_POOL) break;
-      if (!merged.has(entry.id)) merged.set(entry.id, toSpecies(entry));
-    }
-  }
+  // 3. Nigdy nie dopełniamy gatunkami z innych regionów. Gdy region nie ma
+  //    ani jednego pasującego typem gatunku, wracamy do całego dexu regionu.
+  if (merged.size === 0) return dex.map(toSpecies);
 
-  return merged.size > 0 ? [...merged.values()] : dex.map(toSpecies);
+  return [...merged.values()];
 }
+
 
 
 /** Szeroka pula regionu — drużyny trenerów mieszają wszystkie typy. */
