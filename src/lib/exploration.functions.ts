@@ -5,7 +5,17 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ENERGY_TICK_MS, MAX_ENERGY, clampEnergy } from "@/lib/energy";
 import { BIOMES, findBiome, type BiomeSpecies } from "@/lib/biomes";
 import { biomePool, regionWidePool } from "@/lib/encounter-pool";
-import { RAZZ, ballByKey, healByKey } from "@/lib/items";
+import {
+  CATCH_BASE,
+  CATCH_CAP,
+  LUXURY_FRIENDSHIP,
+  RAZZ,
+  RAZZ_BONUS,
+  TIMER_MAX,
+  TIMER_PER_TURN,
+  ballByKey,
+  healByKey,
+} from "@/lib/items";
 import { awardPokemonExp, expForDefeat } from "@/lib/leveling";
 import { emitQuestEvent, progressActivities } from "@/lib/quests.functions";
 import { effectiveRegion } from "@/lib/travel";
