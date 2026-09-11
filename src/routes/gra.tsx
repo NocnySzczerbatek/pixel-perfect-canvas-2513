@@ -389,26 +389,6 @@ function TrainerDashboard() {
         </div>
       </section>
 
-      {NAV_GROUPS.map((group) => (
-        <section className="mt-10" key={group.title}>
-          <h2 className="text-2xl">{group.title}</h2>
-          <p className="text-xs text-muted-foreground">{group.note}</p>
-          <nav className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {group.tiles.map(({ to, label, Icon, desc }) => (
-              <Link
-                key={to}
-                to={to}
-                data-tour={to}
-                className="tile-hover glass-panel flex flex-col items-start gap-2 rounded-2xl p-4"
-              >
-                <Icon className="h-6 w-6 text-muted-foreground" aria-hidden />
-                <span className="font-display text-xl">{label}</span>
-                <span className="text-xs text-muted-foreground">{desc}</span>
-              </Link>
-            ))}
-          </nav>
-        </section>
-      ))}
     </main>
   );
 }
