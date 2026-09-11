@@ -825,6 +825,7 @@ export type Database = {
           iv_spd: number
           iv_spe: number
           level: number
+          mega_stone: string | null
           nature: string | null
           nickname: string | null
           owner_id: string
@@ -859,6 +860,7 @@ export type Database = {
           iv_spd?: number
           iv_spe?: number
           level?: number
+          mega_stone?: string | null
           nature?: string | null
           nickname?: string | null
           owner_id: string
@@ -893,6 +895,7 @@ export type Database = {
           iv_spd?: number
           iv_spe?: number
           level?: number
+          mega_stone?: string | null
           nature?: string | null
           nickname?: string | null
           owner_id?: string
