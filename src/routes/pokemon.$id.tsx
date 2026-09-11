@@ -607,6 +607,47 @@ function PokemonDetailPage() {
           )}
         </DialogContent>
       </Dialog>
+      <Dialog open={megaOpen} onOpenChange={setMegaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Kamień Mega Ewolucji</DialogTitle>
+            <DialogDescription>
+              Slot przyjmuje tylko Kamień Mega przypisany do tego gatunku. Wpięcie zabiera 1 sztukę,
+              a wyjęcie zwraca ją do plecaka.
+            </DialogDescription>
+          </DialogHeader>
+          {megaOwned === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nie masz Kamienia Mega dla {pokemon.species_name}. Zbierz 5 fragmentów tego gatunku w
+              Ekwipunku, aby go złożyć.
+            </p>
+          ) : (
+            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/20 p-2">
+              <img src={itemSprite("key-stone")} alt={megaStoneLabel} className="h-8 w-8" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm">
+                  {megaStoneLabel} <span className="text-muted-foreground">×{megaOwned}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Przydaje się w walkach z Liderami Sal.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                disabled={busy || pokemon.mega_stone === megaStoneKey}
+                onClick={() =>
+                  void handleHeld(
+                    () => megaEquipFn({ data: { pokemonId: id, itemKey: megaStoneKey } }),
+                    "Kamień Mega wpięty.",
+                  )
+                }
+              >
+                {pokemon.mega_stone === megaStoneKey ? "Wpięty" : "Wepnij"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </GamePage>
   );
 }
