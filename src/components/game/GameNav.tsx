@@ -34,6 +34,8 @@ export const NAV_GROUPS = [
     note: "Tu zdobywasz doświadczenie, odznaki i monety.",
     tiles: [
       { to: "/eksploracja", label: "Eksploracja", Icon: Compass, desc: "Biomy, dzicy i trenerzy" },
+      { to: "/swiat", label: "Mapa świata", Icon: MapIcon, desc: "Strefy, biomy i ich typy" },
+
       { to: "/podroze", label: "Podróże", Icon: Plane, desc: "Czasowe wyprawy do regionów" },
       { to: "/mapa", label: "Mapa regionów", Icon: MapIcon, desc: "Sale, Liderzy i odznaki" },
       { to: "/bonusy", label: "Historia bonusów", Icon: Sparkles, desc: "Buffy i szansa na Shiny" },

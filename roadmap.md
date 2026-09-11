@@ -54,3 +54,5 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Osiągnięcia (17 celów, trwałe bonusy) + nagrody za codzienne logowanie 1–7 dni
 - [x] Raidy: 3 Bossy dziennie (Tier 1–5), legendy tylko tutaj, 3 próby na dobę, łup CC/Flakony/TM/Mega
 - [ ] Kolejne etapy specyfikacji: Region Mastery, wydarzenia tygodniowe, hodowla, znajomi/klany
+
+- [x] Mapa świata /swiat (strefy + biomy + typy), biom Ruiny, panel wypraw i powiadomienia o ukończonych zadaniach

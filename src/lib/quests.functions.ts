@@ -49,32 +49,36 @@ export async function emitQuestEvent(
   userId: string,
   event: QuestEvent,
   ctx: QuestEventContext = {},
-) {
+): Promise<string[]> {
   const amount = ctx.amount ?? 1;
   const today = warsawClock().dateKey;
   const types = questTypesForEvent(event);
   const { data: quests } = await supabase
     .from("daily_quests")
-    .select("id, quest_type, target_key, biome, progress, target, status")
+    .select("id, quest_type, target_key, biome, progress, target, status, title")
     .eq("owner_id", userId)
     .eq("quest_date", today)
     .eq("status", "active")
     .in("quest_type", types);
 
+  const completed: string[] = [];
   const db = await writeDb();
   for (const quest of quests ?? []) {
     if (quest.biome && ctx.biome && quest.biome !== ctx.biome) continue;
     if (quest.biome && !ctx.biome) continue;
     if (quest.quest_type === "catch_type" && quest.target_key && quest.target_key !== ctx.typeName) continue;
     const progress = Math.min(quest.target, quest.progress + amount);
+    const done = progress >= quest.target;
+    if (done) completed.push(String(quest.title ?? "Zadanie dzienne"));
     await db
       .from("daily_quests")
-      .update({ progress, status: progress >= quest.target ? "completed" : "active" })
+      .update({ progress, status: done ? "completed" : "active" })
       .eq("id", quest.id)
       .eq("owner_id", userId);
   }
 
-  if (event !== "catch" && event !== "battle") return;
+
+  if (event !== "catch" && event !== "battle") return completed;
   const researchType = event === "catch" ? "catch_species" : "win_battles";
   const { data: research } = await supabase
     .from("oak_research")
@@ -85,12 +89,15 @@ export async function emitQuestEvent(
   for (const row of research ?? []) {
     if (row.target_key !== "any" && row.target_key !== (ctx.targetKey ?? "any")) continue;
     const progress = Math.min(row.target, row.progress + amount);
+    const done = progress >= row.target;
+    if (done) completed.push("Badanie Profesora Oaka");
     await db
       .from("oak_research")
-      .update({ progress, status: progress >= row.target ? "completed" : "active" })
+      .update({ progress, status: done ? "completed" : "active" })
       .eq("id", row.id)
       .eq("owner_id", userId);
   }
+  return completed;
 }
 
 /** Zgodność ze starymi wywołaniami (łapanie i walki). */
@@ -101,9 +108,10 @@ export async function progressActivities(
   amount = 1,
   targetKey = "any",
   extra: { biome?: string | null; typeName?: string | null } = {},
-) {
-  await emitQuestEvent(supabase, userId, event, { amount, targetKey, ...extra });
+): Promise<string[]> {
+  return emitQuestEvent(supabase, userId, event, { amount, targetKey, ...extra });
 }
+
 
 function questRow(userId: string, date: string, quest: GeneratedQuest) {
   return {
