@@ -872,7 +872,9 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
 
 
 
+    const botQuestsCompleted: string[] = [];
     const result = simulateTeamBattle(allies, team);
+
     const report = result.report;
     log.push(`Walka z ${label}:`);
     log.push(...result.log);
