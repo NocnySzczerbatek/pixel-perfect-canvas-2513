@@ -8,6 +8,8 @@ import biomeOcean from "@/assets/biome-ocean.jpg";
 import biomeOtchlan from "@/assets/biome-otchlan.jpg";
 import biomePustynia from "@/assets/biome-pustynia.jpg";
 import biomeRowniny from "@/assets/biome-rowniny.jpg";
+import biomeRuiny from "@/assets/biome-ruiny.jpg";
+
 import biomeSnieg from "@/assets/biome-snieg.jpg";
 import biomeWulkan from "@/assets/biome-wulkan.jpg";
 
