@@ -46,7 +46,7 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 
 - [x] Bilet Podróży: jedno źródło prawdy = 10 000 CC
 - [x] Flakon Energii uzupełnia do pełna (limit 100), bez drugiego magazynu
-- [x] Quest Engine: 30 zadań dziennie (10/10/10), 8 typów, jedno przelosowanie, przycisk „Udaj się do lokacji"
+- [x] Quest Engine: 9 zadań dziennie (3/3/3), 8 typów, jedno wspólne przelosowanie, ręczny start dnia
 - [x] Plecak: kategorie (Balle, Jagody, Leczenie, TM, Ewolucja, Mega, Zadania), szukajka, sortowanie
 - [x] Świat: pora dnia (ranek/dzień/wieczór/noc) i pogoda co 3 h — wpływ na typy, rzadkość i Shiny
 - [x] Nagrody za Sale: 2000–3000 CC, 3–5 Flakonów, awans badań Oaka, losowe dropy (kamień/Ultra Balle/TM)
@@ -61,3 +61,5 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Weryfikacja komunikatu o dropie przedmiotu w eksploracji (toast + karta znaleziska)
 - [x] Przedmioty Trzymane: katalog, dropy z biomów, slot na karcie Pokémona, bonusy w walce
 - [x] Sprzedaż Hodowcy przeniesiona z GTS do PC Boxa (z potwierdzeniem ceny)
+- [x] Zadania dzienne 3/3/3: ręczne rozpoczęcie dnia i jeden wspólny reroll
+- [x] Czat graczy: kanał globalny i handlowy, zwijany widżet

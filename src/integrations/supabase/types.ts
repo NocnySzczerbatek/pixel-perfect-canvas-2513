@@ -191,6 +191,41 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          author_id: string
+          channel: string
+          content: string
+          created_at: string
+          id: string
+          trainer_name: string
+        }
+        Insert: {
+          author_id: string
+          channel: string
+          content: string
+          created_at?: string
+          id?: string
+          trainer_name: string
+        }
+        Update: {
+          author_id?: string
+          channel?: string
+          content?: string
+          created_at?: string
+          id?: string
+          trainer_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_login: {
         Row: {
           best_streak: number
@@ -224,6 +259,41 @@ export type Database = {
             foreignKeyName: "daily_login_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_quest_days: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          quest_date: string
+          reroll_used: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          quest_date: string
+          reroll_used?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          quest_date?: string
+          reroll_used?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_quest_days_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1415,6 +1485,23 @@ export type Database = {
           trainer_level: number
           trainer_name: string
         }[]
+      }
+      reroll_daily_quest: {
+        Args: {
+          _owner_id: string
+          _quest_date: string
+          _quest_id: string
+          _replacement: Json
+        }
+        Returns: boolean
+      }
+      send_chat_message: {
+        Args: { _author_id: string; _channel: string; _content: string }
+        Returns: string
+      }
+      start_daily_quest_day: {
+        Args: { _owner_id: string; _quest_date: string; _quests: Json }
+        Returns: boolean
       }
     }
     Enums: {

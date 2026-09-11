@@ -13,7 +13,7 @@ export type QuestType =
   | "shiny";
 
 /** Liczba zadań generowanych codziennie dla każdej trudności. */
-export const QUESTS_PER_DIFFICULTY = 10;
+export const QUESTS_PER_DIFFICULTY = 3;
 export const DIFFICULTIES: QuestDifficulty[] = ["easy", "medium", "hard"];
 
 export const QUEST_PRESETS = {
@@ -230,7 +230,7 @@ function buildOne(difficulty: QuestDifficulty, slot: number, rand: () => number)
   };
 }
 
-/** Pełny dzienny zestaw: 10 łatwych, 10 średnich, 10 trudnych zadań. */
+/** Pełny dzienny zestaw: 3 łatwe, 3 średnie, 3 trudne zadania. */
 export function generateDailyQuests(seedKey: string): GeneratedQuest[] {
   const rand = seeded(seedKey);
   const quests: GeneratedQuest[] = [];
