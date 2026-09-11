@@ -157,7 +157,6 @@ export async function fetchMoveDetails(slugs: string[]): Promise<Record<string, 
 export type EvolutionInfo = {
   toId: number;
   to: string;
-  toId: number;
   minLevel: number | null;
   minHappiness: number | null;
   item: string | null;
