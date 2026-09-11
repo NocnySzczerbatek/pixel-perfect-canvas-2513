@@ -1495,6 +1495,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      send_chat_message: {
+        Args: { _author_id: string; _channel: string; _content: string }
+        Returns: string
+      }
       start_daily_quest_day: {
         Args: { _owner_id: string; _quest_date: string; _quests: Json }
         Returns: boolean
