@@ -7,6 +7,7 @@
 import { BALLS, HEAL_ITEMS, MEGA_STONE, RAZZ } from "@/lib/items";
 import { tmById, tmDescription, tmSprite } from "@/lib/finds";
 import { CATALOG } from "@/lib/held-items";
+import { FULL_DEX } from "@/lib/full-dex";
 
 export type BagCategory = "balls" | "berries" | "heal" | "tm" | "evolution" | "held" | "mega" | "quest" | "other";
 
@@ -38,6 +39,10 @@ export type BagItem = {
 
 type ProfileLike = Record<string, unknown>;
 type ItemRow = { item_key: string; quantity: number };
+
+/** Nazwa gatunku z Pokédexu — w Ekwipunku pokazujemy imię, nie numer. */
+const dexName = (speciesId: number) =>
+  FULL_DEX.find((entry) => entry.id === speciesId)?.name ?? `#${speciesId}`;
 
 const num = (value: unknown) => (typeof value === "number" ? value : 0);
 
@@ -157,13 +162,14 @@ export function buildBackpack(profile: ProfileLike | null | undefined, items: It
     }
     if (row.item_key.startsWith("mega_shard_")) {
       const speciesId = Number(row.item_key.replace("mega_shard_", ""));
+      const speciesName = dexName(speciesId);
       out.push({
         key: row.item_key,
-        label: `Fragment Mega · #${speciesId}`,
+        label: `Fragment Mega · ${speciesName}`,
         sprite: "key-stone",
         count: row.quantity,
         category: "mega",
-        note: "Zbierz 5 fragmentów, aby złożyć gatunkowy Kamień Mega.",
+        note: `Zbierz 5 fragmentów, aby złożyć Kamień Mega dla ${speciesName}.`,
         craftAt: 5,
         speciesId,
       });
@@ -171,9 +177,10 @@ export function buildBackpack(profile: ProfileLike | null | undefined, items: It
     }
     if (row.item_key.startsWith("mega_stone_")) {
       const speciesId = Number(row.item_key.replace("mega_stone_", ""));
+      const speciesName = dexName(speciesId);
       out.push({
         key: row.item_key,
-        label: `Kamień Mega · #${speciesId}`,
+        label: `Kamień Mega · ${speciesName}`,
         sprite: "key-stone",
         count: row.quantity,
         category: "mega",
