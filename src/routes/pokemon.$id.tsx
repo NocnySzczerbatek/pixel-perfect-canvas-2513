@@ -10,6 +10,13 @@ import { IV_MAX_PER_STAT, IV_MAX_TOTAL, ivPercent, ivRating, ivTotal } from "@/l
 import { GamePage } from "@/components/game/GamePage";
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { HELD_ITEMS, catalogItem } from "@/lib/held-items";
 import { equipHeldItem, unequipHeldItem } from "@/lib/held.functions";
@@ -499,6 +506,51 @@ function PokemonDetailPage() {
 
 
       </div>
+      <Dialog open={heldOpen} onOpenChange={setHeldOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Wybierz Przedmiot Trzymany</DialogTitle>
+            <DialogDescription>
+              Pokazujemy tylko przedmioty, które masz w Ekwipunku. Założenie zabiera 1 sztukę, a
+              zdjęcie zwraca ją do plecaka.
+            </DialogDescription>
+          </DialogHeader>
+          {ownedHeld.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nie masz jeszcze Przedmiotów Trzymanych — znajdziesz je podczas eksploracji biomów.
+            </p>
+          ) : (
+            <ul className="max-h-72 space-y-2 overflow-y-auto">
+              {ownedHeld.map((item) => (
+                <li
+                  key={item.key}
+                  className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/20 p-2"
+                >
+                  <img src={itemSprite(item.sprite)} alt={item.label} className="h-8 w-8" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm">
+                      {item.label} <span className="text-muted-foreground">×{item.count}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">{item.note}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={busy || pokemon.held_item === item.key}
+                    onClick={() =>
+                      void handleHeld(
+                        () => equipFn({ data: { pokemonId: id, itemKey: item.key } }),
+                        `${item.label} założony.`,
+                      )
+                    }
+                  >
+                    {pokemon.held_item === item.key ? "Trzyma" : "Załóż"}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </GamePage>
   );
 }
