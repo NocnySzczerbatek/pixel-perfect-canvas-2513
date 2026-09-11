@@ -26,11 +26,10 @@ export const Route = createFileRoute("/swiat")({
 
 function SwiatPage() {
   return (
-    <GamePage>
+    <GamePage title="Mapa świata" subtitle="Strefy i biomy z typami Pokémonów, które w nich występują.">
       <div className="space-y-6">
         <header className="glass-panel rounded-2xl p-5">
-          <h1 className="font-display text-3xl">Mapa świata</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Świat dzieli się na strefy, a każda strefa na biomy. W biomie spotkasz wyłącznie Pokémony,
             których typ 1 lub typ 2 pasuje do tego terenu. Kliknij biom, aby od razu ruszyć na wyprawę.
           </p>
