@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { GROWTH_LABEL, fetchGrowthRate, pokemonExpToNext } from "@/lib/leveling";
+import { IV_MAX_PER_STAT, IV_MAX_TOTAL, ivPercent, ivRating, ivTotal } from "@/lib/iv";
 import { GamePage } from "@/components/game/GamePage";
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
@@ -258,6 +259,48 @@ function PokemonDetailPage() {
               <dd>{toNextLevel} pkt</dd>
             </div>
           </dl>
+          <div className="mt-4 rounded-xl border border-border/60 bg-muted/20 p-3 text-left">
+            <div className="flex items-center justify-between">
+              <p className="font-display text-sm tracking-wide">IV (wrodzony potencjał)</p>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] ring-1 ${ivRating(ivPercent(pokemon)).className}`}
+              >
+                {ivRating(ivPercent(pokemon)).label}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Suma {ivTotal(pokemon)}/{IV_MAX_TOTAL} · {ivPercent(pokemon)}%. IV są losowane przy
+              złapaniu i nie zmieniają się — trening liczy się osobno.
+            </p>
+            <ul className="mt-2 space-y-1 text-sm">
+              {(
+                [
+                  ["HP", pokemon.iv_hp],
+                  ["Atak", pokemon.iv_atk],
+                  ["Obrona", pokemon.iv_def],
+                  ["Atak Sp.", pokemon.iv_spa],
+                  ["Obrona Sp.", pokemon.iv_spd],
+                  ["Szybkość", pokemon.iv_spe],
+                ] as const
+              ).map(([label, value]) => (
+                <li key={label} className="flex items-center gap-2">
+                  <span className="w-24 shrink-0 text-xs text-muted-foreground">{label}</span>
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                    <span
+                      className="block h-full rounded-full bg-primary"
+                      style={{
+                        width: `${Math.round(((value ?? 0) / IV_MAX_PER_STAT) * 100)}%`,
+                      }}
+                    />
+                  </span>
+                  <span className="w-12 shrink-0 text-right text-xs tabular-nums">
+                    {value ?? 0}/{IV_MAX_PER_STAT}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <p className="mt-3 text-xs text-muted-foreground">
             Natura i umiejętność są losowane przy złapaniu i nie da się ich zmienić.
           </p>
