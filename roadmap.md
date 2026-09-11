@@ -61,3 +61,5 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Weryfikacja komunikatu o dropie przedmiotu w eksploracji (toast + karta znaleziska)
 - [x] Przedmioty Trzymane: katalog, dropy z biomów, slot na karcie Pokémona, bonusy w walce
 - [x] Sprzedaż Hodowcy przeniesiona z GTS do PC Boxa (z potwierdzeniem ceny)
+- [ ] Zadania dzienne 3/3/3: ręczne rozpoczęcie dnia i jeden wspólny reroll
+- [ ] Czat graczy: kanał globalny i handlowy, zwijany widżet

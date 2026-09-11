@@ -131,29 +131,13 @@ function questRow(userId: string, date: string, quest: GeneratedQuest) {
   };
 }
 
-/** Zestaw dnia generuje się raz — po polskiej dacie i identyfikatorze gracza. */
-async function ensureDailyQuests(supabase: any, userId: string, date: string) {
-  const { data: existing } = await supabase
-    .from("daily_quests")
-    .select("slot")
-    .eq("owner_id", userId)
-    .eq("quest_date", date)
-    .not("slot", "is", null);
-  const taken = new Set(((existing ?? []) as any[]).map((row) => row.slot));
-  const missing = generateDailyQuests(`${userId}:${date}`).filter((quest) => !taken.has(quest.slot));
-  if (missing.length === 0) return;
-  await (await writeDb())
-    .from("daily_quests")
-    .insert(missing.map((quest) => questRow(userId, date, quest)));
-}
-
 async function buildState(supabase: any, userId: string) {
   const today = warsawClock().dateKey;
-  await ensureDailyQuests(supabase, userId, today);
-  const [{ data: profile }, { data: quests }, { data: research }] = await Promise.all([
+  const [{ data: profile }, { data: quests }, { data: research }, { data: day }] = await Promise.all([
     supabase.from("profiles").select("trainer_level, catch_coins, oak_stage, candy_normal").eq("id", userId).maybeSingle(),
     supabase.from("daily_quests").select("*").eq("owner_id", userId).eq("quest_date", today).order("slot"),
     supabase.from("oak_research").select("*").eq("owner_id", userId).order("stage", { ascending: false }).limit(1),
+    supabase.from("daily_quest_days").select("reroll_used").eq("owner_id", userId).eq("quest_date", today).maybeSingle(),
   ]);
   if (!profile) throw new Error("Nie znaleziono profilu trenera.");
   return {
@@ -164,10 +148,38 @@ async function buildState(supabase: any, userId: string) {
     oak_stage: profile.oak_stage ?? 1,
     quests: quests ?? [],
     research: research?.[0] ?? null,
+    day_started: Boolean(day),
+    reroll_used: Boolean(day?.reroll_used),
   };
 }
 
 export const getQuestsState = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => buildState(context.supabase, context.userId));
+
+/** Rozpoczyna zestaw dokładnie raz na polski dzień. */
+export const startDailyQuestDay = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const today = warsawClock().dateKey;
+    const db = await writeDb();
+    const { data: reserved, error: reserveError } = await db
+      .from("daily_quest_days")
+      .insert({ owner_id: context.userId, quest_date: today })
+      .select("id")
+      .maybeSingle();
+    if (reserveError || !reserved) {
+      return { ok: false as const, reason: "Dzisiejszy zestaw został już rozpoczęty.", state: await buildState(context.supabase, context.userId) };
+    }
+    const quests = generateDailyQuests(`${context.userId}:${today}`);
+    const { error: deleteError } = await db.from("daily_quests").delete().eq("owner_id", context.userId).eq("quest_date", today);
+    const { error: insertError } = deleteError
+      ? { error: deleteError }
+      : await db.from("daily_quests").insert(quests.map((quest) => questRow(context.userId, today, quest)));
+    if (insertError) {
+      await db.from("daily_quest_days").delete().eq("id", reserved.id).eq("owner_id", context.userId);
+      throw new Error("Nie udało się utworzyć dzisiejszych zadań.");
+    }
+    return { ok: true as const, state: await buildState(context.supabase, context.userId) };
+  });
 
 /** Jednorazowe przelosowanie konkretnego zadania (ta sama trudność, inne zadanie). */
 export const rerollDailyQuest = createServerFn({ method: "POST" })
@@ -182,15 +194,26 @@ export const rerollDailyQuest = createServerFn({ method: "POST" })
       .eq("owner_id", userId)
       .maybeSingle();
     if (!row) return { ok: false as const, reason: "Nie znaleziono zadania.", state: await buildState(supabase, userId) };
-    if (row.rerolled) return { ok: false as const, reason: "To zadanie było już raz przelosowane.", state: await buildState(supabase, userId) };
     if (row.status !== "active") return { ok: false as const, reason: "Ukończonego zadania nie można przelosować.", state: await buildState(supabase, userId) };
+    const today = warsawClock().dateKey;
+    if (row.quest_date !== today) return { ok: false as const, reason: "Można przelosować tylko dzisiejsze zadanie.", state: await buildState(supabase, userId) };
+    const db = await writeDb();
+    const { data: claimedReroll } = await db
+      .from("daily_quest_days")
+      .update({ reroll_used: true })
+      .eq("owner_id", userId)
+      .eq("quest_date", today)
+      .eq("reroll_used", false)
+      .select("id")
+      .maybeSingle();
+    if (!claimedReroll) return { ok: false as const, reason: "Dzisiejsze darmowe przelosowanie zostało już wykorzystane.", state: await buildState(supabase, userId) };
     const replacement = generateReplacementQuest(
       `${userId}:${row.quest_date}`,
       row.slot ?? 0,
       row.difficulty as QuestDifficulty,
       `${row.quest_type}:${row.biome ?? ""}:${row.target_key ?? ""}`,
     );
-    await (await writeDb())
+    await db
       .from("daily_quests")
       .update({ ...questRow(userId, row.quest_date, replacement), progress: 0, status: "active", rerolled: true })
       .eq("id", row.id)
