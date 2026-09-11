@@ -32,10 +32,18 @@ function gate<T extends { id: number }>(list: T[], trainerLevel: number | null |
   return filtered.length > 0 ? filtered : list.filter((entry) => minLevelForSpecies(entry.id) <= 1);
 }
 
+const DEX_BY_ID = new Map<number, DexEntry>(FULL_DEX.map((entry) => [entry.id, entry]));
+
+function matchesBiome(id: number, affinity: string[]): boolean {
+  const entry = DEX_BY_ID.get(id);
+  if (!entry) return false;
+  return entry.types.some((type) => affinity.includes(type));
+}
+
 /**
- * Pula dzikich spotkań: wszystkie Pokémony regionu, których typ pasuje do biomu.
- * Gdy region ma mało pasujących gatunków, pula jest dopełniana innymi z regionu,
- * żeby w biomie nigdy nie respił się tylko jeden gatunek.
+ * Pula dzikich spotkań: WYŁĄCZNIE Pokémony, których Typ 1 lub Typ 2 pasuje do biomu.
+ * Najpierw gatunki z regionu, potem (gdy region ma za mało pasujących) pasujące
+ * typem gatunki z pełnego Pokédexu. Nigdy nie dopełniamy puli obcymi typami.
  */
 export function biomePool(
   biomeSlug: string,
@@ -46,28 +54,44 @@ export function biomePool(
   const dex = gate(regionDex(region), trainerLevel);
   if (!biome) return dex.map(toSpecies);
   const affinity = biome.types.length > 0 ? biome.types : [biome.element];
-  const matching = dex.filter((entry) => entry.types.some((type) => affinity.includes(type)));
-  const pool = [...matching];
-  if (pool.length < MIN_POOL) {
-    const ids = new Set(pool.map((entry) => entry.id));
-    for (const entry of dex) {
-      if (pool.length >= MIN_POOL) break;
-      if (ids.has(entry.id)) continue;
-      pool.push(entry);
-      ids.add(entry.id);
-    }
-  }
+
+  const merged = new Map<number, BiomeSpecies>();
+
+  // 1. Kuratorowane gatunki biomu — tylko te, które faktycznie mają pasujący typ.
   const local = gate(
     biome.species.filter(
-      (species) => !isLegendary(species.id) && dex.some((entry) => entry.id === species.id),
+      (species) =>
+        !isLegendary(species.id) &&
+        matchesBiome(species.id, affinity) &&
+        dex.some((entry) => entry.id === species.id),
     ),
     trainerLevel,
   );
-  const merged = new Map<number, BiomeSpecies>();
   for (const species of local) merged.set(species.id, species);
-  for (const entry of pool) if (!merged.has(entry.id)) merged.set(entry.id, toSpecies(entry));
+
+  // 2. Wszystkie pasujące typem gatunki z regionu.
+  for (const entry of dex) {
+    if (!entry.types.some((type) => affinity.includes(type))) continue;
+    if (!merged.has(entry.id)) merged.set(entry.id, toSpecies(entry));
+  }
+
+  // 3. Dopełnienie z pełnego dexu — nadal tylko pasujące typem.
+  if (merged.size < MIN_POOL) {
+    const global = gate(
+      FULL_DEX.filter(
+        (entry) => !isLegendary(entry.id) && entry.types.some((type) => affinity.includes(type)),
+      ),
+      trainerLevel,
+    );
+    for (const entry of global) {
+      if (merged.size >= MIN_POOL) break;
+      if (!merged.has(entry.id)) merged.set(entry.id, toSpecies(entry));
+    }
+  }
+
   return merged.size > 0 ? [...merged.values()] : dex.map(toSpecies);
 }
+
 
 /** Szeroka pula regionu — drużyny trenerów mieszają wszystkie typy. */
 export function regionWidePool(
