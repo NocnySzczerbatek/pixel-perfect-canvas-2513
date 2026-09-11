@@ -1,0 +1,1 @@
+ALTER TABLE public.player_pokemon ADD COLUMN IF NOT EXISTS mega_stone text;

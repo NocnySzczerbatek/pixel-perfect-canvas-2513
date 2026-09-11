@@ -19,7 +19,12 @@ import {
 } from "@/components/ui/dialog";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { HELD_ITEMS, catalogItem } from "@/lib/held-items";
-import { equipHeldItem, unequipHeldItem } from "@/lib/held.functions";
+import {
+  equipHeldItem,
+  equipMegaStone,
+  unequipHeldItem,
+  unequipMegaStone,
+} from "@/lib/held.functions";
 import { artworkUrl } from "@/lib/game-data";
 import {
   fetchEvolutionLine,
@@ -95,6 +100,9 @@ function PokemonDetailPage() {
   const equipFn = useServerFn(equipHeldItem);
   const unequipFn = useServerFn(unequipHeldItem);
   const [heldOpen, setHeldOpen] = useState(false);
+  const megaEquipFn = useServerFn(equipMegaStone);
+  const megaUnequipFn = useServerFn(unequipMegaStone);
+  const [megaOpen, setMegaOpen] = useState(false);
   const train = useServerFn(trainPokemon);
   const feed = useServerFn(useCandy);
   const evolve = useServerFn(evolvePokemon);
@@ -168,6 +176,7 @@ function PokemonDetailPage() {
       else {
         toast.success(success);
         setHeldOpen(false);
+        setMegaOpen(false);
         await refetch();
       }
     } catch (error) {
@@ -207,6 +216,11 @@ function PokemonDetailPage() {
 
   const type = speciesType(pokemon.species_id);
   const heldItem = pokemon.held_item ? catalogItem(pokemon.held_item) : null;
+  const megaStoneKey = `mega_stone_${pokemon.species_id}`;
+  const megaStoneLabel = `Kamień Mega · ${pokemon.species_name}`;
+  const megaOwned =
+    (data?.items ?? []).find((row) => row.item_key === megaStoneKey && row.quantity > 0)?.quantity ??
+    0;
   const toNextLevel = TRAINING_LEVEL_STEP - (pokemon.training_points % TRAINING_LEVEL_STEP || 0);
   const friendship = pokemon.friendship ?? 0;
   const friendshipPct = Math.round((friendship / MAX_FRIENDSHIP) * 100);
@@ -361,6 +375,48 @@ function PokemonDetailPage() {
             )}
             <Button size="sm" variant="outline" className="mt-3" disabled={busy} onClick={() => setHeldOpen(true)}>
               {heldItem ? "Zmień przedmiot" : "Założ przedmiot"}
+            </Button>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-border/60 bg-muted/20 p-3 text-left">
+            <p className="font-display text-sm tracking-wide">Kamień Mega Ewolucji</p>
+            {pokemon.mega_stone ? (
+              <div className="mt-2 flex items-center gap-3">
+                <img src={itemSprite("key-stone")} alt={megaStoneLabel} className="h-8 w-8" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm">{megaStoneLabel}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Wpięty w osobny slot — nie zajmuje Przedmiotu Trzymanego.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() =>
+                    void handleHeld(
+                      () => megaUnequipFn({ data: { pokemonId: id } }),
+                      "Kamień Mega wrócił do Ekwipunku.",
+                    )
+                  }
+                >
+                  Wyjmij
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Slot jest pusty. Pasuje tu wyłącznie Kamień Mega tego gatunku
+                {megaOwned > 0 ? ` — masz ${megaOwned} szt.` : " — jeszcze go nie masz."}
+              </p>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-3"
+              disabled={busy || (megaOwned === 0 && !pokemon.mega_stone)}
+              onClick={() => setMegaOpen(true)}
+            >
+              {pokemon.mega_stone ? "Zmień Kamień" : "Wepnij Kamień"}
             </Button>
           </div>
 
@@ -548,6 +604,47 @@ function PokemonDetailPage() {
                 </li>
               ))}
             </ul>
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={megaOpen} onOpenChange={setMegaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Kamień Mega Ewolucji</DialogTitle>
+            <DialogDescription>
+              Slot przyjmuje tylko Kamień Mega przypisany do tego gatunku. Wpięcie zabiera 1 sztukę,
+              a wyjęcie zwraca ją do plecaka.
+            </DialogDescription>
+          </DialogHeader>
+          {megaOwned === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nie masz Kamienia Mega dla {pokemon.species_name}. Zbierz 5 fragmentów tego gatunku w
+              Ekwipunku, aby go złożyć.
+            </p>
+          ) : (
+            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/20 p-2">
+              <img src={itemSprite("key-stone")} alt={megaStoneLabel} className="h-8 w-8" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm">
+                  {megaStoneLabel} <span className="text-muted-foreground">×{megaOwned}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Przydaje się w walkach z Liderami Sal.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                disabled={busy || pokemon.mega_stone === megaStoneKey}
+                onClick={() =>
+                  void handleHeld(
+                    () => megaEquipFn({ data: { pokemonId: id, itemKey: megaStoneKey } }),
+                    "Kamień Mega wpięty.",
+                  )
+                }
+              >
+                {pokemon.mega_stone === megaStoneKey ? "Wpięty" : "Wepnij"}
+              </Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>

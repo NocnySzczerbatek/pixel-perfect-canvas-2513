@@ -44,6 +44,7 @@ export type PokemonRow = {
   ability: string | null;
   training_points: number;
   held_item: string | null;
+  mega_stone: string | null;
   friendship: number;
   is_shiny: boolean;
   active_moves: string[] | null;
@@ -102,7 +103,7 @@ export type TrainerData = {
 };
 
 const POKEMON_COLUMNS =
-  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, nature, ability, training_points, friendship, is_shiny, active_moves, held_item";
+  "id, species_id, species_name, nickname, level, exp, hp_current, hp_max, fainted, in_party, is_starter, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, nature, ability, training_points, friendship, is_shiny, active_moves, held_item, mega_stone";
 
 
 function expThreshold(level: number) {
