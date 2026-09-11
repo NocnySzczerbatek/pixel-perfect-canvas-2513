@@ -189,6 +189,8 @@ function TrainerDashboard() {
         </button>
       </header>
 
+      <GameNav />
+
       <PlayerWindow
         open={playerOpen}
         onClose={() => setPlayerOpen(false)}
