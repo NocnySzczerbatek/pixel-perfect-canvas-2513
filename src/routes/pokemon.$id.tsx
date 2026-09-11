@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { HELD_ITEMS, catalogItem } from "@/lib/held-items";
 import { equipHeldItem, unequipHeldItem } from "@/lib/held.functions";
-import { itemSprite } from "@/lib/pokedex";
 import { artworkUrl } from "@/lib/game-data";
 import {
   fetchEvolutionLine,
