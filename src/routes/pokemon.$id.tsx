@@ -534,22 +534,42 @@ function PokemonDetailPage() {
             </p>
           ) : (
             <ul className="mt-3 space-y-2 text-sm">
-              {evolutions.map((evo) => (
-                <li key={evo.to} className="rounded-xl border border-border/60 p-3">
-                  <p className="font-medium">Ewoluuje w {evo.to}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {evo.minLevel
-                      ? `od poziomu ${evo.minLevel}`
-                      : evo.minHappiness
-                        ? `przy przyjaźni ${evo.minHappiness}+ (masz ${friendship})`
-                        : evo.item
-                          ? `przy użyciu ${evo.item}`
-                          : `warunek: ${evo.trigger}`}
-                  </p>
-                  <Button className="mt-3" size="sm" disabled={busy || Boolean(evo.minLevel && pokemon.level < evo.minLevel) || Boolean(evo.minHappiness && friendship < evo.minHappiness)} onClick={() => void handleEvolve()}>Ewoluuj w {evo.to}</Button>
-                </li>
-              ))}
+              {evolutions.map((evo) => {
+                const stone = evo.itemKey ? catalogItem(evo.itemKey) : null;
+                const stoneLabel = stone?.label ?? evo.item;
+                const owned = evo.itemKey
+                  ? (data?.items ?? []).find((row) => row.item_key === evo.itemKey)?.quantity ?? 0
+                  : 0;
+                const levelBlocked = Boolean(evo.minLevel && pokemon.level < evo.minLevel);
+                const friendshipBlocked = Boolean(evo.minHappiness && friendship < evo.minHappiness);
+                const stoneBlocked = Boolean(evo.itemKey && owned < 1);
+                return (
+                  <li key={evo.toId} className="rounded-xl border border-border/60 p-3">
+                    <p className="font-medium">Ewoluuje w {evo.to}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {evo.minLevel ? `Wymagany poziom ${evo.minLevel} (masz ${pokemon.level})` : null}
+                      {evo.minHappiness ? `${evo.minLevel ? " · " : ""}Wymagana przyjaźń ${evo.minHappiness}+ (masz ${friendship})` : null}
+                      {evo.itemKey ? `${evo.minLevel || evo.minHappiness ? " · " : ""}Wymagany przedmiot: ${stoneLabel} (masz ${owned})` : null}
+                      {!evo.minLevel && !evo.minHappiness && !evo.itemKey ? `Warunek: ${evo.trigger}` : null}
+                    </p>
+                    {stoneBlocked ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {stoneLabel} znajdziesz podczas eksploracji — sprawdź Ekwipunek w kategorii Ewolucja.
+                      </p>
+                    ) : null}
+                    <Button
+                      className="mt-3"
+                      size="sm"
+                      disabled={busy || levelBlocked || friendshipBlocked || stoneBlocked}
+                      onClick={() => void handleEvolve(evo.toId)}
+                    >
+                      Ewoluuj w {evo.to}
+                    </Button>
+                  </li>
+                );
+              })}
             </ul>
+
           )}
         </section>
 
