@@ -196,8 +196,9 @@ export function fetchEvolutions(speciesId: number) {
             toId: Number(next.species.url.split("/").filter(Boolean).pop() ?? 0),
             to: pretty(next.species.name),
             minLevel: detail?.min_level ?? null,
-            minHappiness: detail?.min_happiness ?? null,
             item: detail?.item ? pretty(detail.item.name) : null,
+            itemKey: detail?.item ? detail.item.name.replace(/-/g, "_") : null,
+
             trigger: detail?.trigger ? pretty(detail.trigger.name) : "Level Up",
           };
         }) as EvolutionInfo[];
