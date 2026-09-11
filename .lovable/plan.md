@@ -1,55 +1,31 @@
-# Dokończenie gry i System Podróży
+# Dzienne zadania 3×3 i czat graczy
 
 ## Cel
-Dodać czasowe podróże między regionami oraz domknąć wszystkie wcześniej wskazane braki tak, aby systemy współdzieliły ekwipunek, postęp, nagrody i eksplorację.
+Zastąpić obecny zestaw 30 zadań zestawem 9 zadań (3 łatwe, 3 średnie, 3 trudne), dodać bezpieczne rozpoczęcie dnia i jeden wspólny reroll, a także stały czat globalny/handlowy.
 
 ## Zakres
 
-### 1. System Podróży
-- Dodać kupowany za Catch Coins, jednorazowy **Bilet Podróży** i pokazać go w Sklepie oraz Ekwipunku.
-- Dodać kafelek **Podróże** z ikoną samolotu oraz osobny ekran z regionami.
-- Ustawić codzienne, niepokrywające się okna regionów według strefy `Europe/Warsaw`; region domowy będzie wyłączony.
-- Pokazywać stan otwarte/zamknięte i sekundowe odliczanie do najbliższego otwarcia.
-- Lot zużyje jeden bilet i zapisze region wycieczki oraz jej koniec. Eksploracja będzie używać puli wycieczki tylko do końca okna, po czym automatycznie wróci do regionu domowego.
+### 1. Zadania dzienne
+- Generator będzie tworzył dokładnie 9 zadań: po 3 dla każdego poziomu trudności.
+- Na ekranie Zadań pojawi się przycisk „Rozpocznij nowy dzień”. Pierwsze użycie danego dnia według czasu polskiego zastąpi bieżący zestaw nowymi 9 zadaniami.
+- Ponowne rozpoczęcie tego samego dnia zostanie zablokowane po stronie serwera, aby nie dało się bez końca losować korzystniejszego zestawu.
+- Jeden wspólny stan `reroll_used` będzie obowiązywał dla całego dnia. Po wymianie jednego aktywnego zadania wszystkie przyciski „Losuj ponownie” zostaną wyłączone.
+- Wymiana zachowa poziom trudności i wylosuje inne zadanie; wszystkie operacje będą sprawdzać właściciela, datę, stan zadania i limit na serwerze.
 
-### 2. Zadania i Profesor Oak
-- Dodać stronę **Zadania** z dwoma zadaniami dziennymi: łapanie i walki/eksploracja.
-- Gracz wybierze łatwy, średni lub trudny wariant przed rozpoczęciem; trudność ustali cel i nagrodę.
-- Dodać badania Profesora Oaka odblokowywane poziomem trenera, z pixel-artowym portretem, dialogiem, celami typu „złap gatunek” i „przynieś przedmiot” oraz odbiorem nagrody.
-- Postęp będzie naliczany przez istniejące łapanie, walki, eksplorację i oddawanie przedmiotów; zadania dzienne odświeżą się według polskiej daty.
+### 2. Czat graczy
+- Dodać tabelę wiadomości z identyfikatorem autora, utrwalonym nickiem, kanałem `global`/`trade`, treścią i czasem wysłania.
+- Odczyt będzie dostępny tylko zalogowanym graczom, a zapis wyłącznie przez chronioną funkcję serwerową.
+- Serwer pobierze nick z profilu — klient nie będzie mógł podszyć się pod innego gracza.
+- Walidacja ograniczy długość wiadomości, odrzuci pustą treść i zastosuje krótki limit częstotliwości wysyłania.
+- Widżet będzie stale przypięty w prawym dolnym rogu, z zakładkami „Czat Globalny” i „Czat Handlowy”, przewijaną historią, polem wiadomości oraz stanami ładowania/błędu.
+- Zwinięty czat będzie małą belką/dymkiem i nie zasłoni pozostałych elementów gry.
 
-### 3. Progresja i przedmioty
-- Przy każdym awansie trenera przyznać skalowane pakiety Balli i Flakonów Energii oraz pokazać zdobyte nagrody w logu.
-- Rozszerzyć ofertę o Premier, Net, Dive, Dusk, Quick, Timer, Repeat i Luxury Ball z odrębnymi premiami do łapania.
-- Dodać limit czasowy zakupu Master Balla i widoczny licznik do kolejnego zakupu.
-- Uporządkować ekwipunek tak, by nowe Balle, bilety i materiały miały własne liczniki i grafiki.
-
-### 4. Ewolucje i Mega Ewolucja
-- Eksploracja będzie losowo przyznawać materiały Mega powiązane z gatunkami, które mogą mieć Mega Ewolucję.
-- Dodać tworzenie gatunkowego Kamienia Mega z wymaganych materiałów oraz przechowywanie gotowych kamieni.
-- Zastąpić ogólny Kamień Mega wyborem kamienia pasującego do Pokémona; bonus +30% pozostanie aktywny tylko dla zgodnego gatunku.
-- Na ekranie Pokémona dodać wykonanie zwykłej ewolucji po spełnieniu poziomu, przyjaźni lub posiadaniu wymaganego przedmiotu.
-
-### 5. Walki i postacie
-- Niskopoziomowy Pokémon będzie miał tyle ruchów, ile faktycznie poznał, maksymalnie cztery — bez sztucznego dopełniania.
-- Dokończyć stronę **Trenerzy**: wybór przeciwnika, pixel-art klasy, pełny wynik walki, nagrody i log.
-- Dodać pixel-artowe wizerunki Profesora Oaka, Liderów Sal i zróżnicowanych klas trenerów z trwałego zestawu zasobów.
-- Uporządkować duże ekrany walk w rozwijane sekcje; wybór ruchu i leczenie zastosować również tam, gdzie obecnie wynik jest automatyczny, zachowując aktualny balans Sal i PvP.
-
-### 6. Skup i płatności
-- NPC-Kupiec nadal poda jedną niepodlegającą negocjacji ofertę przed sprzedażą; interfejs jasno pokaże wycenę i potwierdzenie.
-- Uruchomić płatności PLN dla istniejących pakietów, z bezpiecznym potwierdzeniem płatności i jednorazowym przyznaniem zakupów.
-
-## Dane i bezpieczeństwo
-- Dodać skalowalny ekwipunek przedmiotów, aktywną wycieczkę, cooldown Master Balla, zadania, postęp zadań, badania i gatunkowe materiały/kamienie Mega.
-- Każda nowa tabela otrzyma wymagane uprawnienia, RLS i reguły dostępu wyłącznie do własnych danych gracza; przyznawanie nagród i zużywanie przedmiotów odbędzie się po stronie serwera.
-- Płatności będą naliczane dopiero po zweryfikowanym potwierdzeniu operatora, odpornym na ponowne wysłanie.
-
-## Nawigacja i ekrany
-- Nowe kafelki: **Podróże** w części eksploracyjnej oraz **Zadania** w części postępu.
-- Nowe strony dostaną własne opisy udostępniania i będą dopasowane do obecnego ciemnego, kafelkowego wyglądu oraz telefonu.
+## Bezpieczeństwo i dane
+- Nowe tabele otrzymają jawne uprawnienia, włączone reguły dostępu i brak bezpośredniego zapisu z przeglądarki.
+- Rezerwacja rozpoczęcia dnia i darmowego rerollu będzie atomowa w bazie, odporna na podwójne kliknięcia i równoległe żądania.
+- Wiadomości będą pobierane w ograniczonej liczbie i bez danych prywatnych autora.
 
 ## Weryfikacja
-- Sprawdzić zakup i zużycie biletu, wszystkie stany okien czasu polskiego oraz automatyczny powrót.
-- Sprawdzić naliczanie i reset zadań, nagrody poziomowe, cooldown Master Balla, ewolucję i tworzenie kamieni.
-- Przejść pełne walki, Sklep, Ekwipunek, Podróże i Zadania na telefonie i komputerze oraz potwierdzić brak błędów kompilacji i działania.
+- Sprawdzić dokładnie 3/3/3 zadania, blokadę drugiego rozpoczęcia dnia i jeden wspólny reroll.
+- Sprawdzić oba kanały czatu, wysyłanie, odświeżanie historii, zwijanie oraz brak możliwości podania własnego nicku.
+- Sprawdzić widok desktopowy i mobilny, błędy konsoli oraz stan kompilacji.
