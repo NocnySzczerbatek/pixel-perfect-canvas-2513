@@ -235,7 +235,26 @@ export const BIOMES: Biome[] = [
       { id: 633, name: "Deino", type: "Smok" },
     ],
   },
+  {
+    slug: "ruiny",
+    types: ["Duch", "Psychiczny", "Skała"],
+    name: "Ruiny",
+    element: "Psychiczny",
+    tagline: "Zapomniane kolumny i runy — typy Duch, Psychiczny i Skała.",
+    image: biomeRuiny,
+    species: [
+      { id: 92, name: "Gastly", type: "Duch" },
+      { id: 177, name: "Natu", type: "Psychiczny" },
+      { id: 337, name: "Lunatone", type: "Skała" },
+      { id: 338, name: "Solrock", type: "Skała" },
+      { id: 343, name: "Baltoy", type: "Psychiczny" },
+      { id: 355, name: "Duskull", type: "Duch" },
+      { id: 562, name: "Yamask", type: "Duch" },
+      { id: 622, name: "Golett", type: "Duch" },
+    ],
+  },
 ];
+
 
 export function findBiome(slug: string | null | undefined) {
   return BIOMES.find((b) => b.slug === slug) ?? null;
