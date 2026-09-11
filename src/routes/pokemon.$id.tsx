@@ -19,7 +19,12 @@ import {
 } from "@/components/ui/dialog";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { HELD_ITEMS, catalogItem } from "@/lib/held-items";
-import { equipHeldItem, unequipHeldItem } from "@/lib/held.functions";
+import {
+  equipHeldItem,
+  equipMegaStone,
+  unequipHeldItem,
+  unequipMegaStone,
+} from "@/lib/held.functions";
 import { artworkUrl } from "@/lib/game-data";
 import {
   fetchEvolutionLine,
