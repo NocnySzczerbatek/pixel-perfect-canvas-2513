@@ -1,33 +1,8 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-  Backpack,
-  BookOpen,
-  Boxes,
-  CalendarDays,
-  Egg,
-  Compass,
-  Gem,
-  Heart,
-  HeartPulse,
-  Crown,
-  Flame,
-  Landmark,
-  Map as MapIcon,
-  Medal,
-  Plane,
-  Repeat,
-  Shield,
-  ShoppingBag,
-  Sparkles,
-  Swords,
-  Trophy,
-  ClipboardList,
-  UserRound,
-  Users,
-} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { BonusPanel } from "@/components/game/BonusPanel";
+import { GameNav } from "@/components/game/GameNav";
 import { GuidedTour, type TourStep } from "@/components/game/GuidedTour";
 import { PlayerWindow } from "@/components/game/PlayerWindow";
 import { ENERGY_TICK_MS, MAX_ENERGY } from "@/lib/energy";
