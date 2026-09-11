@@ -136,7 +136,7 @@ async function buildState(supabase: any, userId: string) {
   const [{ data: profile }, { data: quests }, { data: research }, { data: day }] = await Promise.all([
     supabase.from("profiles").select("trainer_level, catch_coins, oak_stage, candy_normal").eq("id", userId).maybeSingle(),
     supabase.from("daily_quests").select("*").eq("owner_id", userId).eq("quest_date", today).order("slot"),
-    supabase.from("oak_research").select("*").eq("owner_id", userId).order("stage", { ascending: false }).limit(1),
+    supabase.from("oak_research").select("*").eq("owner_id", userId).in("status", ["active", "completed"]).order("stage", { ascending: false }).limit(1),
     supabase.from("daily_quest_days").select("reroll_used").eq("owner_id", userId).eq("quest_date", today).maybeSingle(),
   ]);
   if (!profile) throw new Error("Nie znaleziono profilu trenera.");
