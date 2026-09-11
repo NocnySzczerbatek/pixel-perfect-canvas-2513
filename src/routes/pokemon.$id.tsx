@@ -216,6 +216,11 @@ function PokemonDetailPage() {
 
   const type = speciesType(pokemon.species_id);
   const heldItem = pokemon.held_item ? catalogItem(pokemon.held_item) : null;
+  const megaStoneKey = `mega_stone_${pokemon.species_id}`;
+  const megaStoneLabel = `Kamień Mega · ${pokemon.species_name}`;
+  const megaOwned =
+    (data?.items ?? []).find((row) => row.item_key === megaStoneKey && row.quantity > 0)?.quantity ??
+    0;
   const toNextLevel = TRAINING_LEVEL_STEP - (pokemon.training_points % TRAINING_LEVEL_STEP || 0);
   const friendship = pokemon.friendship ?? 0;
   const friendshipPct = Math.round((friendship / MAX_FRIENDSHIP) * 100);
