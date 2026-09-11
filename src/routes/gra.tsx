@@ -508,6 +508,7 @@ const NAV_GROUPS = [
       { to: "/odznaki", label: "Odznaki", Icon: Medal, desc: "Zdobyte odznaki" },
       { to: "/zadania", label: "Zadania", Icon: ClipboardList, desc: "Dzienne cele i badania Oaka" },
       { to: "/pokedex", label: "Pokédex", Icon: BookOpen, desc: "Spotkane gatunki i ich biomy" },
+      { to: "/hodowla", label: "Hodowla", Icon: Egg, desc: "Jajka i dziedziczone IV" },
     ],
   },
   {
