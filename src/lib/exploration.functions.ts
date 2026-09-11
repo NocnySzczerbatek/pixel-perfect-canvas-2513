@@ -30,6 +30,7 @@ import {
 } from "@/lib/battle";
 import { allyFighter, foeFighter, wildFighter } from "@/lib/fighters";
 import { FULL_DEX } from "@/lib/full-dex";
+import { rollBiomeDrop } from "@/lib/held-items";
 import {
   TMS,
   rollFind,
@@ -485,6 +486,21 @@ export const travel = createServerFn({ method: "POST" })
           "Uzupełnia Energię do pełnych 100 punktów po zużyciu w Ekwipunku. Energia napędza każdy krok eksploracji.",
         rarity: "Nieczęste",
       };
+    }
+
+    // Drop przedmiotów zależny od biomu (kamienie, przedmioty ewolucyjne, Held Items).
+    if (!find) {
+      const drop = rollBiomeDrop(biome.slug);
+      if (drop) {
+        await addItem(supabase, userId, drop.key, { kind: drop.category });
+        find = {
+          kind: "item",
+          label: drop.label,
+          sprite: drop.sprite,
+          description: drop.note,
+          rarity: drop.category === "held" ? "Rzadkie" : "Nieczęste",
+        };
+      }
     }
 
     await ((await writeDb()).from("profiles") as any)
