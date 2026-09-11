@@ -190,14 +190,46 @@ function QuestsPage() {
                 <>
                   <p className="text-sm">„{nextOak.intro}”</p>
                   <p className="mt-2 text-xs text-muted-foreground">Poziom badań: {nextOak.stage} · wymagany poziom trenera: {nextOak.level}</p>
-                  <Button className="mt-3" disabled={busy || state.trainer_level < nextOak.level} onClick={() => void run(() => startOak(), "Profesor Oak rozpoczął nowe badanie.")}>Rozpocznij badanie</Button>
+                  <Button className="mt-3" disabled={busy || state.trainer_level < nextOak.level} onClick={() => void run(() => startOak(), "Profesor Oak rozpoczął nowe badanie.")}>
+                    {state.trainer_level < nextOak.level ? `Zablokowane — poziom ${nextOak.level}` : "Rozpocznij badanie"}
+                  </Button>
                 </>
               ) : (
                 <p>Ukończyłeś wszystkie dostępne badania.</p>
               )}
             </div>
           </div>
+
+          <h3 className="mt-6 font-display text-lg">Wszystkie etapy badań ({OAK_STAGES.length})</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Etapy odblokowują się kolejno wraz z poziomem trenera (masz poziom {state.trainer_level}).
+          </p>
+          <ol className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {OAK_STAGES.map((stage) => {
+              const done = stage.stage < state.oak_stage;
+              const current = stage.stage === state.oak_stage;
+              const locked = current ? state.trainer_level < stage.level : !done;
+              return (
+                <li key={stage.stage} className={`rounded-2xl border p-3 text-sm ${done ? "border-aurora/50" : current && !locked ? "border-border" : "border-border/40 opacity-70"}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">Etap {stage.stage}</span>
+                    <span className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                      {done ? "Ukończone" : locked ? `Poziom ${stage.level}` : "Dostępne"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {stage.type === "catch_species" ? `Złap ${stage.target} Pokémonów` : stage.type === "win_battles" ? `Wygraj ${stage.target} walk` : `Dostarcz ${stage.target}× Cukierek`}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Nagroda: {stage.coins} CC + {stage.quantity}× {rewardItemLabel(stage.item)}
+                  </p>
+                  {!done && !locked ? <p className="mt-1 text-xs">„{stage.intro}”</p> : null}
+                </li>
+              );
+            })}
+          </ol>
         </section>
+
       </div>
     </GamePage>
   );

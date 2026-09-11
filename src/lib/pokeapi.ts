@@ -160,6 +160,8 @@ export type EvolutionInfo = {
   minLevel: number | null;
   minHappiness: number | null;
   item: string | null;
+  /** Klucz przedmiotu w ekwipunku (np. "water_stone"). */
+  itemKey: string | null;
   trigger: string;
 };
 
@@ -196,6 +198,9 @@ export function fetchEvolutions(speciesId: number) {
             minLevel: detail?.min_level ?? null,
             minHappiness: detail?.min_happiness ?? null,
             item: detail?.item ? pretty(detail.item.name) : null,
+            itemKey: detail?.item ? detail.item.name.replace(/-/g, "_") : null,
+
+
             trigger: detail?.trigger ? pretty(detail.trigger.name) : "Level Up",
           };
         }) as EvolutionInfo[];

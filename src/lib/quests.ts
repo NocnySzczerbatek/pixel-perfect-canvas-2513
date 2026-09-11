@@ -51,7 +51,22 @@ export const OAK_STAGES = [
   { stage: 4, level: 10, type: "catch_species", targetKey: "any", target: 12, coins: 1400, item: "energy_bottles", quantity: 3, intro: "Czas na szerszą próbę populacji — złap dwanaście Pokémonów.", complete: "Twoje dane wypełniły całą tablicę w laboratorium!" },
   { stage: 5, level: 15, type: "win_battles", targetKey: "any", target: 15, coins: 2200, item: "ultra_balls", quantity: 5, intro: "Sprawdźmy wytrzymałość drużyny w piętnastu walkach.", complete: "Imponująco. Twoja drużyna jest gotowa na Ligę." },
   { stage: 6, level: 22, type: "deliver_item", targetKey: "candy_normal", target: 10, coins: 3200, item: "energy_bottles", quantity: 4, intro: "Do badań nad przyjaźnią potrzebuję dziesięciu Cukierków.", complete: "Znakomicie! Publikuję wyniki z Twoim nazwiskiem." },
+  { stage: 7, level: 26, type: "catch_species", targetKey: "any", target: 20, coins: 4000, item: "great_balls", quantity: 8, intro: "Rozszerzam atlas gatunków — złap dwadzieścia Pokémonów.", complete: "Atlas rośnie w oczach. Świetna praca terenowa!" },
+  { stage: 8, level: 30, type: "win_battles", targetKey: "any", target: 22, coins: 4800, item: "ultra_balls", quantity: 6, intro: "Zbadajmy taktykę: wygraj dwadzieścia dwie walki.", complete: "Twoje strategie zapisałem jako materiał szkoleniowy." },
+  { stage: 9, level: 34, type: "deliver_item", targetKey: "candy_normal", target: 15, coins: 5600, item: "energy_bottles", quantity: 5, intro: "Potrzebuję piętnastu Cukierków do serii testów.", complete: "Seria testów zakończona sukcesem. Dziękuję!" },
+  { stage: 10, level: 38, type: "catch_species", targetKey: "any", target: 28, coins: 6500, item: "ultra_balls", quantity: 8, intro: "Populacja regionu wymaga większej próby — dwadzieścia osiem złapań.", complete: "To najbogatszy zbiór danych, jaki widziałem." },
+  { stage: 11, level: 42, type: "win_battles", targetKey: "any", target: 30, coins: 7400, item: "energy_bottles", quantity: 5, intro: "Trzydzieści zwycięstw pokaże realną siłę Twojej drużyny.", complete: "Trzydzieści zwycięstw — jesteś w elicie trenerów." },
+  { stage: 12, level: 46, type: "deliver_item", targetKey: "candy_normal", target: 20, coins: 8400, item: "ultra_balls", quantity: 10, intro: "Dwadzieścia Cukierków pozwoli zbadać granice przyjaźni.", complete: "Dane o przyjaźni są przełomowe. Brawo!" },
+  { stage: 13, level: 50, type: "catch_species", targetKey: "any", target: 36, coins: 9500, item: "energy_bottles", quantity: 6, intro: "Czas na wielki spis: trzydzieści sześć złapań.", complete: "Spis zamknięty. Twoje nazwisko trafia do publikacji." },
+  { stage: 14, level: 55, type: "win_battles", targetKey: "any", target: 40, coins: 11000, item: "ultra_balls", quantity: 10, intro: "Czterdzieści walk to prawdziwy test kondycji drużyny.", complete: "Kondycja drużyny wzorowa. Imponujesz mi." },
+  { stage: 15, level: 60, type: "deliver_item", targetKey: "candy_normal", target: 25, coins: 12500, item: "energy_bottles", quantity: 7, intro: "Dwadzieścia pięć Cukierków na finał badań nad więzią.", complete: "Finał badań nad więzią zakończony. Wielkie dzięki!" },
+  { stage: 16, level: 65, type: "catch_species", targetKey: "any", target: 45, coins: 14000, item: "ultra_balls", quantity: 12, intro: "Czterdzieści pięć złapań — potrzebuję danych z każdego bioma.", complete: "Twoje dane z biomów uzupełniły ostatnie luki." },
+  { stage: 17, level: 70, type: "win_battles", targetKey: "any", target: 50, coins: 16000, item: "energy_bottles", quantity: 8, intro: "Pięćdziesiąt zwycięstw. Wierzę, że dasz radę.", complete: "Pięćdziesiąt zwycięstw! Legendarny wynik." },
+  { stage: 18, level: 75, type: "deliver_item", targetKey: "candy_normal", target: 30, coins: 18000, item: "ultra_balls", quantity: 15, intro: "Trzydzieści Cukierków do ostatniej serii analiz.", complete: "Analizy domknięte. Laboratorium jest Ci wdzięczne." },
+  { stage: 19, level: 82, type: "catch_species", targetKey: "any", target: 60, coins: 21000, item: "energy_bottles", quantity: 10, intro: "Sześćdziesiąt złapań — to zadanie dla mistrza.", complete: "Mistrzowska robota. Nie mam nic więcej do dodania." },
+  { stage: 20, level: 90, type: "win_battles", targetKey: "any", target: 75, coins: 25000, item: "ultra_balls", quantity: 20, intro: "Ostatnie badanie: siedemdziesiąt pięć zwycięstw.", complete: "Ukończyłeś wszystkie moje badania. Jesteś legendą Catch Zone!" },
 ] as const;
+
 
 /** Czytelne nazwy przedmiotów przyznawanych w nagrodach. */
 export const REWARD_ITEM_LABELS: Record<string, string> = {

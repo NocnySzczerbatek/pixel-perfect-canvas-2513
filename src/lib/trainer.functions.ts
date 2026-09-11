@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { baseStats } from "@/lib/base-stats";
 import { hpValue } from "@/lib/battle";
 import { BOTTLE_ENERGY as BOTTLE_REFILL, MAX_ENERGY as ENERGY_CAP, consumeEnergyBottle } from "@/lib/energy";
+import { catalogItem } from "@/lib/held-items";
 import { learnedMoves } from "@/lib/pokedex";
 
 async function writeDb(): Promise<any> {
@@ -650,9 +651,10 @@ export const trainPokemon = createServerFn({ method: "POST" })
 /** Wykonuje dostępną ewolucję, ponownie sprawdzając warunki po stronie serwera. */
 export const evolvePokemon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { id: string }) => {
+  .inputValidator((input: { id: string; toId?: number }) => {
     if (!input?.id) throw new Error("Brak Pokémona.");
-    return { id: input.id };
+    const toId = Number(input?.toId ?? 0);
+    return { id: input.id, toId: Number.isFinite(toId) && toId > 0 ? Math.floor(toId) : 0 };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -666,26 +668,34 @@ export const evolvePokemon = createServerFn({ method: "POST" })
     if (!chainResponse.ok) throw new Error("Nie udało się sprawdzić łańcucha ewolucji.");
     type Node = { species: { name: string; url: string }; evolves_to: Node[]; evolution_details: { min_level: number | null; min_happiness: number | null; item: { name: string } | null }[] };
     const chain = await chainResponse.json() as { chain: Node };
-    const stack = [chain.chain]; let next: Node | null = null;
-    while (stack.length) { const node = stack.pop(); if (!node) break; if (node.species.name === species.name) { next = node.evolves_to[0] ?? null; break; } stack.push(...node.evolves_to); }
-    if (!next) return { ok: false as const, reason: "Ten Pokémon nie ma dalszej ewolucji.", data: await buildTrainerData(supabase, userId) };
+    const stack = [chain.chain]; let current: Node | null = null;
+    while (stack.length) { const node = stack.pop(); if (!node) break; if (node.species.name === species.name) { current = node; break; } stack.push(...node.evolves_to); }
+    const branches = current?.evolves_to ?? [];
+    if (branches.length === 0) return { ok: false as const, reason: "Ten Pokémon nie ma dalszej ewolucji.", data: await buildTrainerData(supabase, userId) };
+    const speciesIdOf = (node: Node) => Number(node.species.url.split("/").filter(Boolean).pop() ?? 0);
+    // Gatunki z wieloma gałęziami (np. Eevee) wymagają wskazania celu.
+    const next = data.toId ? branches.find((node) => speciesIdOf(node) === data.toId) : branches[0];
+    if (!next) return { ok: false as const, reason: "Ta ewolucja nie jest dostępna dla tego gatunku.", data: await buildTrainerData(supabase, userId) };
     const detail = next.evolution_details[0];
     if ((detail?.min_level ?? 0) > mon.level) return { ok: false as const, reason: `Wymagany poziom: ${detail?.min_level}.`, data: await buildTrainerData(supabase, userId) };
     if ((detail?.min_happiness ?? 0) > mon.friendship) return { ok: false as const, reason: `Wymagana przyjaźń: ${detail?.min_happiness}.`, data: await buildTrainerData(supabase, userId) };
     if (detail?.item) {
-      const itemKey = `evolution_${detail.item.name}`;
+      // PokéAPI używa nazw z dywizami ("water-stone"), ekwipunek kluczy z podkreśleniem.
+      const itemKey = detail.item.name.replace(/-/g, "_");
+      const { label } = catalogItem(itemKey) ?? { label: detail.item.name };
       const { data: item } = await supabase.from("player_items").select("id, quantity").eq("owner_id", userId).eq("item_key", itemKey).maybeSingle();
-      if (!item || item.quantity < 1) return { ok: false as const, reason: `Potrzebujesz przedmiotu: ${detail.item.name}.`, data: await buildTrainerData(supabase, userId) };
+      if (!item || item.quantity < 1) return { ok: false as const, reason: `Potrzebujesz przedmiotu: ${label}.`, data: await buildTrainerData(supabase, userId) };
       if (item.quantity === 1) await (await writeDb()).from("player_items").delete().eq("id", item.id).eq("owner_id", userId);
       else await (await writeDb()).from("player_items").update({ quantity: item.quantity - 1 }).eq("id", item.id).eq("owner_id", userId);
     }
-    const toId = Number(next.species.url.split("/").filter(Boolean).pop() ?? 0);
+    const toId = speciesIdOf(next);
     const name = next.species.name.charAt(0).toUpperCase() + next.species.name.slice(1);
     await (await writeDb()).from("player_pokemon").update({ species_id: toId, species_name: name }).eq("id", mon.id).eq("owner_id", userId);
     const { emitQuestEvent } = await import("@/lib/quests.functions");
     await emitQuestEvent(supabase, userId, "evolve");
     return { ok: true as const, name, data: await buildTrainerData(supabase, userId) };
   });
+
 
 export const craftMegaStone = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
