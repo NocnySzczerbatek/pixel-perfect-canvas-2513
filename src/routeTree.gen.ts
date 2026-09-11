@@ -17,8 +17,10 @@ import { Route as EksploracjaRouteImport } from './routes/eksploracja'
 import { Route as EkwipunekRouteImport } from './routes/ekwipunek'
 import { Route as GraRouteImport } from './routes/gra'
 import { Route as GtsRouteImport } from './routes/gts'
+import { Route as HodowlaRouteImport } from './routes/hodowla'
 import { Route as LigaRouteImport } from './routes/liga'
 import { Route as MapaRouteImport } from './routes/mapa'
+import { Route as MistrzostwoRouteImport } from './routes/mistrzostwo'
 import { Route as OdznakiRouteImport } from './routes/odznaki'
 import { Route as OsiagnieciaRouteImport } from './routes/osiagniecia'
 import { Route as PcBoxRouteImport } from './routes/pc-box'
@@ -32,6 +34,7 @@ import { Route as SaleRouteImport } from './routes/sale'
 import { Route as SklepRouteImport } from './routes/sklep'
 import { Route as TrenerzyRouteImport } from './routes/trenerzy'
 import { Route as TurniejeRouteImport } from './routes/turnieje'
+import { Route as WydarzeniaRouteImport } from './routes/wydarzenia'
 import { Route as ZadaniaRouteImport } from './routes/zadania'
 import { Route as PokemonIdRouteImport } from './routes/pokemon.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -76,6 +79,11 @@ const GtsRoute = GtsRouteImport.update({
   path: '/gts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HodowlaRoute = HodowlaRouteImport.update({
+  id: '/hodowla',
+  path: '/hodowla',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LigaRoute = LigaRouteImport.update({
   id: '/liga',
   path: '/liga',
@@ -84,6 +92,11 @@ const LigaRoute = LigaRouteImport.update({
 const MapaRoute = MapaRouteImport.update({
   id: '/mapa',
   path: '/mapa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MistrzostwoRoute = MistrzostwoRouteImport.update({
+  id: '/mistrzostwo',
+  path: '/mistrzostwo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OdznakiRoute = OdznakiRouteImport.update({
@@ -151,6 +164,11 @@ const TurniejeRoute = TurniejeRouteImport.update({
   path: '/turnieje',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WydarzeniaRoute = WydarzeniaRouteImport.update({
+  id: '/wydarzenia',
+  path: '/wydarzenia',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ZadaniaRoute = ZadaniaRouteImport.update({
   id: '/zadania',
   path: '/zadania',
@@ -177,8 +195,10 @@ export interface FileRoutesByFullPath {
   '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
   '/gts': typeof GtsRoute
+  '/hodowla': typeof HodowlaRoute
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
+  '/mistrzostwo': typeof MistrzostwoRoute
   '/odznaki': typeof OdznakiRoute
   '/osiagniecia': typeof OsiagnieciaRoute
   '/pc-box': typeof PcBoxRoute
@@ -192,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
   '/turnieje': typeof TurniejeRoute
+  '/wydarzenia': typeof WydarzeniaRoute
   '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -205,8 +226,10 @@ export interface FileRoutesByTo {
   '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
   '/gts': typeof GtsRoute
+  '/hodowla': typeof HodowlaRoute
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
+  '/mistrzostwo': typeof MistrzostwoRoute
   '/odznaki': typeof OdznakiRoute
   '/osiagniecia': typeof OsiagnieciaRoute
   '/pc-box': typeof PcBoxRoute
@@ -220,6 +243,7 @@ export interface FileRoutesByTo {
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
   '/turnieje': typeof TurniejeRoute
+  '/wydarzenia': typeof WydarzeniaRoute
   '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -234,8 +258,10 @@ export interface FileRoutesById {
   '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
   '/gts': typeof GtsRoute
+  '/hodowla': typeof HodowlaRoute
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
+  '/mistrzostwo': typeof MistrzostwoRoute
   '/odznaki': typeof OdznakiRoute
   '/osiagniecia': typeof OsiagnieciaRoute
   '/pc-box': typeof PcBoxRoute
@@ -249,6 +275,7 @@ export interface FileRoutesById {
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
   '/turnieje': typeof TurniejeRoute
+  '/wydarzenia': typeof WydarzeniaRoute
   '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -264,8 +291,10 @@ export interface FileRouteTypes {
     | '/ekwipunek'
     | '/gra'
     | '/gts'
+    | '/hodowla'
     | '/liga'
     | '/mapa'
+    | '/mistrzostwo'
     | '/odznaki'
     | '/osiagniecia'
     | '/pc-box'
@@ -279,6 +308,7 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/trenerzy'
     | '/turnieje'
+    | '/wydarzenia'
     | '/zadania'
     | '/pokemon/$id'
     | '/api/public/payments/webhook'
@@ -292,8 +322,10 @@ export interface FileRouteTypes {
     | '/ekwipunek'
     | '/gra'
     | '/gts'
+    | '/hodowla'
     | '/liga'
     | '/mapa'
+    | '/mistrzostwo'
     | '/odznaki'
     | '/osiagniecia'
     | '/pc-box'
@@ -307,6 +339,7 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/trenerzy'
     | '/turnieje'
+    | '/wydarzenia'
     | '/zadania'
     | '/pokemon/$id'
     | '/api/public/payments/webhook'
@@ -320,8 +353,10 @@ export interface FileRouteTypes {
     | '/ekwipunek'
     | '/gra'
     | '/gts'
+    | '/hodowla'
     | '/liga'
     | '/mapa'
+    | '/mistrzostwo'
     | '/odznaki'
     | '/osiagniecia'
     | '/pc-box'
@@ -335,6 +370,7 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/trenerzy'
     | '/turnieje'
+    | '/wydarzenia'
     | '/zadania'
     | '/pokemon/$id'
     | '/api/public/payments/webhook'
@@ -349,8 +385,10 @@ export interface RootRouteChildren {
   EkwipunekRoute: typeof EkwipunekRoute
   GraRoute: typeof GraRoute
   GtsRoute: typeof GtsRoute
+  HodowlaRoute: typeof HodowlaRoute
   LigaRoute: typeof LigaRoute
   MapaRoute: typeof MapaRoute
+  MistrzostwoRoute: typeof MistrzostwoRoute
   OdznakiRoute: typeof OdznakiRoute
   OsiagnieciaRoute: typeof OsiagnieciaRoute
   PcBoxRoute: typeof PcBoxRoute
@@ -364,6 +402,7 @@ export interface RootRouteChildren {
   SklepRoute: typeof SklepRoute
   TrenerzyRoute: typeof TrenerzyRoute
   TurniejeRoute: typeof TurniejeRoute
+  WydarzeniaRoute: typeof WydarzeniaRoute
   ZadaniaRoute: typeof ZadaniaRoute
   PokemonIdRoute: typeof PokemonIdRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -427,6 +466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GtsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hodowla': {
+      id: '/hodowla'
+      path: '/hodowla'
+      fullPath: '/hodowla'
+      preLoaderRoute: typeof HodowlaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/liga': {
       id: '/liga'
       path: '/liga'
@@ -439,6 +485,13 @@ declare module '@tanstack/react-router' {
       path: '/mapa'
       fullPath: '/mapa'
       preLoaderRoute: typeof MapaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mistrzostwo': {
+      id: '/mistrzostwo'
+      path: '/mistrzostwo'
+      fullPath: '/mistrzostwo'
+      preLoaderRoute: typeof MistrzostwoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/odznaki': {
@@ -532,6 +585,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TurniejeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wydarzenia': {
+      id: '/wydarzenia'
+      path: '/wydarzenia'
+      fullPath: '/wydarzenia'
+      preLoaderRoute: typeof WydarzeniaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zadania': {
       id: '/zadania'
       path: '/zadania'
@@ -565,8 +625,10 @@ const rootRouteChildren: RootRouteChildren = {
   EkwipunekRoute: EkwipunekRoute,
   GraRoute: GraRoute,
   GtsRoute: GtsRoute,
+  HodowlaRoute: HodowlaRoute,
   LigaRoute: LigaRoute,
   MapaRoute: MapaRoute,
+  MistrzostwoRoute: MistrzostwoRoute,
   OdznakiRoute: OdznakiRoute,
   OsiagnieciaRoute: OsiagnieciaRoute,
   PcBoxRoute: PcBoxRoute,
@@ -580,6 +642,7 @@ const rootRouteChildren: RootRouteChildren = {
   SklepRoute: SklepRoute,
   TrenerzyRoute: TrenerzyRoute,
   TurniejeRoute: TurniejeRoute,
+  WydarzeniaRoute: WydarzeniaRoute,
   ZadaniaRoute: ZadaniaRoute,
   PokemonIdRoute: PokemonIdRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
