@@ -378,6 +378,48 @@ function PokemonDetailPage() {
             </Button>
           </div>
 
+          <div className="mt-4 rounded-xl border border-border/60 bg-muted/20 p-3 text-left">
+            <p className="font-display text-sm tracking-wide">Kamień Mega Ewolucji</p>
+            {pokemon.mega_stone ? (
+              <div className="mt-2 flex items-center gap-3">
+                <img src={itemSprite("key-stone")} alt={megaStoneLabel} className="h-8 w-8" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm">{megaStoneLabel}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Wpięty w osobny slot — nie zajmuje Przedmiotu Trzymanego.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() =>
+                    void handleHeld(
+                      () => megaUnequipFn({ data: { pokemonId: id } }),
+                      "Kamień Mega wrócił do Ekwipunku.",
+                    )
+                  }
+                >
+                  Wyjmij
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Slot jest pusty. Pasuje tu wyłącznie Kamień Mega tego gatunku
+                {megaOwned > 0 ? ` — masz ${megaOwned} szt.` : " — jeszcze go nie masz."}
+              </p>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-3"
+              disabled={busy || (megaOwned === 0 && !pokemon.mega_stone)}
+              onClick={() => setMegaOpen(true)}
+            >
+              {pokemon.mega_stone ? "Zmień Kamień" : "Wepnij Kamień"}
+            </Button>
+          </div>
+
           <p className="mt-3 text-xs text-muted-foreground">
             Natura i umiejętność są losowane przy złapaniu i nie da się ich zmienić.
           </p>
