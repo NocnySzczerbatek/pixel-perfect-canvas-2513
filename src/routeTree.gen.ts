@@ -17,6 +17,7 @@ import { Route as EksploracjaRouteImport } from './routes/eksploracja'
 import { Route as EkwipunekRouteImport } from './routes/ekwipunek'
 import { Route as GraRouteImport } from './routes/gra'
 import { Route as GtsRouteImport } from './routes/gts'
+import { Route as HodowlaRouteImport } from './routes/hodowla'
 import { Route as LigaRouteImport } from './routes/liga'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as MistrzostwoRouteImport } from './routes/mistrzostwo'
@@ -76,6 +77,11 @@ const GraRoute = GraRouteImport.update({
 const GtsRoute = GtsRouteImport.update({
   id: '/gts',
   path: '/gts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HodowlaRoute = HodowlaRouteImport.update({
+  id: '/hodowla',
+  path: '/hodowla',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LigaRoute = LigaRouteImport.update({
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
   '/gts': typeof GtsRoute
+  '/hodowla': typeof HodowlaRoute
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
   '/mistrzostwo': typeof MistrzostwoRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
   '/gts': typeof GtsRoute
+  '/hodowla': typeof HodowlaRoute
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
   '/mistrzostwo': typeof MistrzostwoRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/ekwipunek': typeof EkwipunekRoute
   '/gra': typeof GraRoute
   '/gts': typeof GtsRoute
+  '/hodowla': typeof HodowlaRoute
   '/liga': typeof LigaRoute
   '/mapa': typeof MapaRoute
   '/mistrzostwo': typeof MistrzostwoRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/ekwipunek'
     | '/gra'
     | '/gts'
+    | '/hodowla'
     | '/liga'
     | '/mapa'
     | '/mistrzostwo'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/ekwipunek'
     | '/gra'
     | '/gts'
+    | '/hodowla'
     | '/liga'
     | '/mapa'
     | '/mistrzostwo'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/ekwipunek'
     | '/gra'
     | '/gts'
+    | '/hodowla'
     | '/liga'
     | '/mapa'
     | '/mistrzostwo'
@@ -373,6 +385,7 @@ export interface RootRouteChildren {
   EkwipunekRoute: typeof EkwipunekRoute
   GraRoute: typeof GraRoute
   GtsRoute: typeof GtsRoute
+  HodowlaRoute: typeof HodowlaRoute
   LigaRoute: typeof LigaRoute
   MapaRoute: typeof MapaRoute
   MistrzostwoRoute: typeof MistrzostwoRoute
@@ -451,6 +464,13 @@ declare module '@tanstack/react-router' {
       path: '/gts'
       fullPath: '/gts'
       preLoaderRoute: typeof GtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hodowla': {
+      id: '/hodowla'
+      path: '/hodowla'
+      fullPath: '/hodowla'
+      preLoaderRoute: typeof HodowlaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/liga': {
@@ -605,6 +625,7 @@ const rootRouteChildren: RootRouteChildren = {
   EkwipunekRoute: EkwipunekRoute,
   GraRoute: GraRoute,
   GtsRoute: GtsRoute,
+  HodowlaRoute: HodowlaRoute,
   LigaRoute: LigaRoute,
   MapaRoute: MapaRoute,
   MistrzostwoRoute: MistrzostwoRoute,
