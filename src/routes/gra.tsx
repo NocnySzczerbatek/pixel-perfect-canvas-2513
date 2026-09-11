@@ -518,6 +518,7 @@ const NAV_GROUPS = [
       { to: "/sklep", label: "Sklep", Icon: ShoppingBag, desc: "Balle, mikstury, pakiety" },
       { to: "/gts", label: "GTS", Icon: Repeat, desc: "Giełda i Kupiec" },
       { to: "/ranking", label: "Ranking", Icon: Trophy, desc: "Najlepsi trenerzy" },
+      { to: "/znajomi", label: "Znajomi", Icon: Heart, desc: "Zaproszenia i lista trenerów" },
       { to: "/profil", label: "Profil", Icon: UserRound, desc: "Twoje statystyki" },
     ],
   },
