@@ -490,10 +490,11 @@ export const travel = createServerFn({ method: "POST" })
     const findLine = find ? `Znalezisko: ${find.label} — trafiło do ekwipunku.` : null;
 
     // Silnik zadań: krok eksploracji, wizyta w lokacji i znaleziska.
-    await emitQuestEvent(supabase, userId, "steps", { biome: biome.slug });
-    await emitQuestEvent(supabase, userId, "visit", { biome: biome.slug });
+    const questsCompleted: string[] = [];
+    questsCompleted.push(...(await emitQuestEvent(supabase, userId, "steps", { biome: biome.slug })));
+    questsCompleted.push(...(await emitQuestEvent(supabase, userId, "visit", { biome: biome.slug })));
     if (find || foundCandy) {
-      await emitQuestEvent(supabase, userId, "find_item", { biome: biome.slug });
+      questsCompleted.push(...(await emitQuestEvent(supabase, userId, "find_item", { biome: biome.slug })));
     }
 
     const trainerLevel = profile.trainer_level;
@@ -520,7 +521,7 @@ export const travel = createServerFn({ method: "POST" })
       const hpMax = hpValue(level, baseStats(species.id)[0], 16);
       const shinyChance = SHINY_CHANCE * mult.shiny * world.shiny;
       const isShiny = Math.random() < shinyChance;
-      if (isShiny) await emitQuestEvent(supabase, userId, "shiny", { biome: biome.slug });
+      if (isShiny) questsCompleted.push(...(await emitQuestEvent(supabase, userId, "shiny", { biome: biome.slug })));
       const weatherLine = `${DAY_PHASES[world.phase].icon} ${DAY_PHASES[world.phase].label} · ${world.weather.icon} ${world.weather.label} — ${world.weather.note}`;
 
 
@@ -606,6 +607,7 @@ export const travel = createServerFn({ method: "POST" })
       ok: true as const,
       encounter: toView(created),
       find,
+      questsCompleted: [...new Set(questsCompleted)],
       state: await buildState(supabase, userId),
     };
   });
@@ -796,7 +798,7 @@ export const throwBall = createServerFn({ method: "POST" })
       );
       const gainedExp = 8 + row.level * 5;
       await applyTrainerReward(supabase, userId, gainedExp, 0);
-      await progressActivities(supabase, userId, "catch", 1, String(speciesId), {
+      const questsCompleted = await progressActivities(supabase, userId, "catch", 1, String(speciesId), {
         biome: row.biome ?? null,
         typeName: type,
       });
@@ -808,6 +810,7 @@ export const throwBall = createServerFn({ method: "POST" })
         ok: true as const,
         caught: true,
         chance,
+        questsCompleted: [...new Set(questsCompleted)],
         state: await buildState(supabase, userId),
       };
     }
@@ -889,7 +892,7 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
       report.trainer_exp = row.reward_exp;
       report.coins = row.reward_coins;
       report.extras.push(...(await applyTrainerReward(supabase, userId, row.reward_exp, row.reward_coins)));
-      await progressActivities(supabase, userId, "battle", 1, "bot");
+      botQuestsCompleted.push(...(await progressActivities(supabase, userId, "battle", 1, "bot")));
       const foeLevel = Math.max(1, ...team.map((f) => f.level));
       const gain = expForDefeat(foeLevel, "bot");
       for (const ally of allies) report.pokemon_exp.push({ name: ally.name, exp: gain });
@@ -914,6 +917,7 @@ export const resolveBotBattle = createServerFn({ method: "POST" })
       won: result.won,
       log,
       report,
+      questsCompleted: [...new Set(botQuestsCompleted)],
       state: await buildState(supabase, userId),
     };
   });
