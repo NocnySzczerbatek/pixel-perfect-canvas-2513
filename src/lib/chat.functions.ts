@@ -20,7 +20,8 @@ export const getChatMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { channel: ChatChannel }) => ({ channel: channelSchema.parse(input?.channel) }))
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
       .from("chat_messages")
       .select("id, author_id, trainer_name, channel, content, created_at")
       .eq("channel", data.channel)
@@ -39,21 +40,14 @@ export const sendChatMessage = createServerFn({ method: "POST" })
     content: z.string().trim().min(1).max(280).parse(input?.content),
   }))
   .handler(async ({ data, context }) => {
-    const [{ data: profile }, { data: recent }] = await Promise.all([
-      context.supabase.from("profiles").select("trainer_name").eq("id", context.userId).maybeSingle(),
-      context.supabase.from("chat_messages").select("created_at").eq("author_id", context.userId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    ]);
-    if (!profile?.trainer_name) throw new Error("Najpierw ustaw nick trenera.");
-    if (recent && Date.now() - new Date(recent.created_at).getTime() < 3000) {
-      throw new Error("Odczekaj 3 sekundy przed kolejną wiadomością.");
-    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("chat_messages").insert({
-      author_id: context.userId,
-      trainer_name: String(profile.trainer_name).slice(0, 40),
-      channel: data.channel,
-      content: data.content,
+    const { error } = await supabaseAdmin.rpc("send_chat_message", {
+      _author_id: context.userId,
+      _channel: data.channel,
+      _content: data.content,
     });
+    if (error?.message.includes("Rate limit")) throw new Error("Odczekaj 3 sekundy przed kolejną wiadomością.");
+    if (error?.message.includes("Trainer profile")) throw new Error("Najpierw ustaw nick trenera.");
     if (error) throw new Error("Nie udało się wysłać wiadomości.");
     return { ok: true as const };
   });
