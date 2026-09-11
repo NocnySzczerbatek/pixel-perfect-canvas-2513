@@ -13,7 +13,6 @@ import {
   cancelListing,
   createListing,
   getGtsState,
-  sellToNpc,
   type GtsState,
 } from "@/lib/gts.functions";
 
