@@ -80,7 +80,8 @@ export function rollFind(random: () => number = Math.random): FindKind | null {
 }
 
 export type FindView = {
-  kind: FindKind;
+  /** "item" to przedmiot z tabeli dropów danego biomu. */
+  kind: FindKind | "item";
   label: string;
   sprite: string;
   description: string;

@@ -13,7 +13,6 @@ import {
   cancelListing,
   createListing,
   getGtsState,
-  sellToNpc,
   type GtsState,
 } from "@/lib/gts.functions";
 
@@ -24,7 +23,7 @@ export const Route = createFileRoute("/gts")({
       {
         name: "description",
         content:
-          "Giełda Pokémonów Catch Zone: wystawiaj i kupuj okazy za Catch Coins albo sprzedaj NPC-Kupcowi od razu.",
+          "Giełda Pokémonów Catch Zone: wystawiaj i kupuj okazy za Catch Coins a szybką sprzedaż Hodowcy znajdziesz w PC Boxie.",
       },
       { property: "og:title", content: "GTS i NPC-Kupiec — Catch Zone" },
       {
@@ -43,13 +42,11 @@ function GtsPage() {
   const listFn = useServerFn(createListing);
   const cancelFn = useServerFn(cancelListing);
   const buyFn = useServerFn(buyListing);
-  const npcFn = useServerFn(sellToNpc);
 
   const [state, setState] = useState<GtsState | null>(null);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string>("");
   const [price, setPrice] = useState<string>("");
-  const [npcConfirm, setNpcConfirm] = useState(false);
 
   const { isLoading } = useQuery({
     queryKey: ["gts"],
@@ -80,7 +77,7 @@ function GtsPage() {
   return (
     <GamePage
       title="GTS i NPC-Kupiec"
-      subtitle="Wystaw Pokémona innym trenerom (giełda pobiera 5% prowizji) albo sprzedaj go NPC-Kupcowi od razu."
+      subtitle="Wystaw Pokémona innym trenerom (giełda pobiera 5% prowizji) a szybką sprzedaż Hodowcy znajdziesz w PC Boxie."
     >
       {isLoading || !state ? (
         <p className="text-sm text-muted-foreground">Wczytuję giełdę…</p>
@@ -224,8 +221,7 @@ function GtsPage() {
                   />
                   {mon ? (
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Sugerowana cena: {mon.suggested} CC · NPC-Kupiec zapłaci {mon.npc_price} CC od
-                      razu.
+                      Sugerowana cena: {mon.suggested} CC.
                     </p>
                   ) : null}
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -241,19 +237,6 @@ function GtsPage() {
                       }
                     >
                       Wystaw na GTS
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy || !mon}
-                      onClick={() =>
-                        npcConfirm ? void run(
-                          () => npcFn({ data: { pokemonId: selected } }),
-                          (r) => { setNpcConfirm(false); return `NPC-Kupiec zapłacił ${r.price} CC za ${r.name}.`; },
-                        ) : setNpcConfirm(true)
-                      }
-                    >
-                      {npcConfirm ? `Potwierdź sprzedaż za ${mon?.npc_price ?? 0} CC` : "Pokaż ofertę Kupca"}
                     </Button>
                   </div>
                 </>

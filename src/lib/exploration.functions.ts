@@ -30,6 +30,7 @@ import {
 } from "@/lib/battle";
 import { allyFighter, foeFighter, wildFighter } from "@/lib/fighters";
 import { FULL_DEX } from "@/lib/full-dex";
+import { rollBiomeDrop } from "@/lib/held-items";
 import {
   TMS,
   rollFind,
@@ -305,7 +306,7 @@ type PartyRow = {
 };
 
 const PARTY_COLUMNS =
-  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, active_moves, ability, is_shiny";
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, fainted, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, active_moves, ability, is_shiny, held_item";
 
 async function loadParty(supabase: any, userId: string): Promise<PartyRow[]> {
   const { data } = await supabase
@@ -485,6 +486,21 @@ export const travel = createServerFn({ method: "POST" })
           "Uzupełnia Energię do pełnych 100 punktów po zużyciu w Ekwipunku. Energia napędza każdy krok eksploracji.",
         rarity: "Nieczęste",
       };
+    }
+
+    // Drop przedmiotów zależny od biomu (kamienie, przedmioty ewolucyjne, Held Items).
+    if (!find) {
+      const drop = rollBiomeDrop(biome.slug);
+      if (drop) {
+        await addItem(supabase, userId, drop.key, { kind: drop.category });
+        find = {
+          kind: "item",
+          label: drop.label,
+          sprite: drop.sprite,
+          description: drop.note,
+          rarity: drop.category === "held" ? "Rzadkie" : "Nieczęste",
+        };
+      }
     }
 
     await ((await writeDb()).from("profiles") as any)

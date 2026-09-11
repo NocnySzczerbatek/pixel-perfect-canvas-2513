@@ -9,7 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTrainerData } from "@/hooks/useTrainerData";
 import { ivPercent } from "@/lib/iv";
+import { npcPrice, sellToNpc } from "@/lib/gts.functions";
 import { releasePokemon, setInParty } from "@/lib/trainer.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/pc-box")({
   head: () => ({
@@ -32,9 +43,11 @@ export const Route = createFileRoute("/pc-box")({
 });
 
 function PcBoxPage() {
-  const { data, isLoading, setData } = useTrainerData();
+  const { data, isLoading, setData, refetch } = useTrainerData();
   const move = useServerFn(setInParty);
   const release = useServerFn(releasePokemon);
+  const sell = useServerFn(sellToNpc);
+  const [sellId, setSellId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [quality, setQuality] = useState<"all" | "50" | "75" | "90" | "100" | "shiny">("all");
@@ -63,6 +76,28 @@ function PcBoxPage() {
     });
   const partyCount = (data?.pokemon ?? []).filter((p) => p.in_party).length;
 
+  const sellTarget = (data?.pokemon ?? []).find((p) => p.id === sellId) ?? null;
+  const sellOffer = sellTarget ? npcPrice(sellTarget) : 0;
+
+  /** Sprzedaż Hodowcy: gotówka od razu, Pokémon opuszcza kolekcję. */
+  const confirmSell = async () => {
+    if (!sellTarget) return;
+    setBusy(true);
+    try {
+      const result = await sell({ data: { pokemonId: sellTarget.id } });
+      if (result?.ok === false) toast.error(result.reason);
+      else {
+        toast.success(`Hodowca zapłacił ${sellOffer} CC za ${sellTarget.nickname ?? sellTarget.species_name}.`);
+        await refetch();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sprzedaż się nie udała.");
+    } finally {
+      setBusy(false);
+      setSellId(null);
+    }
+  };
+
   const run = async (action: () => Promise<any>, success: string) => {
     setBusy(true);
     try {
@@ -80,7 +115,7 @@ function PcBoxPage() {
   return (
     <GamePage
       title="PC Box"
-      subtitle="Twoja kolekcja poza drużyną. Możesz zamienić skład albo wypuścić Pokémona."
+      subtitle="Twoja kolekcja poza drużyną. Możesz zamienić skład albo sprzedać Pokémona Hodowcy."
     >
       <p className="text-sm text-muted-foreground">
         W boxie: {all.length} · pokazane: {stored.length} · w drużynie: {partyCount}/6
@@ -147,16 +182,31 @@ function PcBoxPage() {
                 variant="ghost"
                 size="sm"
                 disabled={busy || pokemon.is_starter}
-                onClick={() =>
-                  void run(() => release({ data: { id: pokemon.id } }), "Pokémon wypuszczony.")
-                }
+                onClick={() => setSellId(pokemon.id)}
               >
-                Wypuść
+                Sprzedaj Hodowcy
               </Button>
             </PokemonCard>
           ))}
         </div>
       )}
+      <AlertDialog open={Boolean(sellId)} onOpenChange={(open) => !open && setSellId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Oferta Hodowcy</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hodowca kupi {sellTarget?.nickname ?? sellTarget?.species_name} (Lvl {sellTarget?.level}) za{" "}
+              <strong>{sellOffer} CC</strong>. Pokémon na zawsze opuści Twoją kolekcję.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Anuluj</AlertDialogCancel>
+            <AlertDialogAction disabled={busy} onClick={(event) => { event.preventDefault(); void confirmSell(); }}>
+              Sprzedaj za {sellOffer} CC
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </GamePage>
   );
 }

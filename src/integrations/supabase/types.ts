@@ -811,6 +811,7 @@ export type Database = {
           exp: number
           fainted: boolean
           friendship: number
+          held_item: string | null
           hp_current: number
           hp_max: number
           id: string
@@ -844,6 +845,7 @@ export type Database = {
           exp?: number
           fainted?: boolean
           friendship?: number
+          held_item?: string | null
           hp_current?: number
           hp_max?: number
           id?: string
@@ -877,6 +879,7 @@ export type Database = {
           exp?: number
           fainted?: boolean
           friendship?: number
+          held_item?: string | null
           hp_current?: number
           hp_max?: number
           id?: string

@@ -10,7 +10,16 @@ import { IV_MAX_PER_STAT, IV_MAX_TOTAL, ivPercent, ivRating, ivTotal } from "@/l
 import { GamePage } from "@/components/game/GamePage";
 import { TypeBadges } from "@/components/game/TypeBadges";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useTrainerData } from "@/hooks/useTrainerData";
+import { HELD_ITEMS, catalogItem } from "@/lib/held-items";
+import { equipHeldItem, unequipHeldItem } from "@/lib/held.functions";
 import { artworkUrl } from "@/lib/game-data";
 import {
   fetchEvolutionLine,
@@ -82,7 +91,10 @@ const TRAIN_OF: Record<StatKey, keyof PokemonRow> = {
 
 function PokemonDetailPage() {
   const { id } = Route.useParams();
-  const { data, isLoading, setData } = useTrainerData();
+  const { data, isLoading, setData, refetch } = useTrainerData();
+  const equipFn = useServerFn(equipHeldItem);
+  const unequipFn = useServerFn(unequipHeldItem);
+  const [heldOpen, setHeldOpen] = useState(false);
   const train = useServerFn(trainPokemon);
   const feed = useServerFn(useCandy);
   const evolve = useServerFn(evolvePokemon);
@@ -143,6 +155,28 @@ function PokemonDetailPage() {
     }
   };
 
+  /** Przedmioty Trzymane, które gracz faktycznie posiada (ilość > 0). */
+  const ownedHeld = (data?.items ?? [])
+    .filter((row) => row.quantity > 0 && HELD_ITEMS.some((item) => item.key === row.item_key))
+    .map((row) => ({ ...catalogItem(row.item_key)!, count: row.quantity }));
+
+  const handleHeld = async (action: () => Promise<any>, success: string) => {
+    setBusy(true);
+    try {
+      const result = await action();
+      if (result?.ok === false) toast.error(result.reason);
+      else {
+        toast.success(success);
+        setHeldOpen(false);
+        await refetch();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Nie udało się zmienić przedmiotu.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleEvolve = async () => {
     setBusy(true);
     try {
@@ -172,6 +206,7 @@ function PokemonDetailPage() {
   }
 
   const type = speciesType(pokemon.species_id);
+  const heldItem = pokemon.held_item ? catalogItem(pokemon.held_item) : null;
   const toNextLevel = TRAINING_LEVEL_STEP - (pokemon.training_points % TRAINING_LEVEL_STEP || 0);
   const friendship = pokemon.friendship ?? 0;
   const friendshipPct = Math.round((friendship / MAX_FRIENDSHIP) * 100);
@@ -299,6 +334,34 @@ function PokemonDetailPage() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-border/60 bg-muted/20 p-3 text-left">
+            <p className="font-display text-sm tracking-wide">Przedmiot Trzymany</p>
+            {heldItem ? (
+              <div className="mt-2 flex items-center gap-3">
+                <img src={itemSprite(heldItem.sprite)} alt={heldItem.label} className="h-8 w-8" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm">{heldItem.label}</p>
+                  <p className="text-xs text-muted-foreground">{heldItem.note}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void handleHeld(() => unequipFn({ data: { pokemonId: id } }), "Przedmiot wrócił do Ekwipunku.")}
+                >
+                  Zdejmij
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Slot jest pusty. Przedmiot Trzymany wzmacnia ataki wybranego typu albo leczy co turę.
+              </p>
+            )}
+            <Button size="sm" variant="outline" className="mt-3" disabled={busy} onClick={() => setHeldOpen(true)}>
+              {heldItem ? "Zmień przedmiot" : "Założ przedmiot"}
+            </Button>
           </div>
 
           <p className="mt-3 text-xs text-muted-foreground">
@@ -443,6 +506,51 @@ function PokemonDetailPage() {
 
 
       </div>
+      <Dialog open={heldOpen} onOpenChange={setHeldOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Wybierz Przedmiot Trzymany</DialogTitle>
+            <DialogDescription>
+              Pokazujemy tylko przedmioty, które masz w Ekwipunku. Założenie zabiera 1 sztukę, a
+              zdjęcie zwraca ją do plecaka.
+            </DialogDescription>
+          </DialogHeader>
+          {ownedHeld.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nie masz jeszcze Przedmiotów Trzymanych — znajdziesz je podczas eksploracji biomów.
+            </p>
+          ) : (
+            <ul className="max-h-72 space-y-2 overflow-y-auto">
+              {ownedHeld.map((item) => (
+                <li
+                  key={item.key}
+                  className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/20 p-2"
+                >
+                  <img src={itemSprite(item.sprite)} alt={item.label} className="h-8 w-8" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm">
+                      {item.label} <span className="text-muted-foreground">×{item.count}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">{item.note}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={busy || pokemon.held_item === item.key}
+                    onClick={() =>
+                      void handleHeld(
+                        () => equipFn({ data: { pokemonId: id, itemKey: item.key } }),
+                        `${item.label} założony.`,
+                      )
+                    }
+                  >
+                    {pokemon.held_item === item.key ? "Trzyma" : "Załóż"}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </GamePage>
   );
 }
