@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { baseStats } from "@/lib/base-stats";
 import { hpValue } from "@/lib/battle";
 import { BOTTLE_ENERGY as BOTTLE_REFILL, MAX_ENERGY as ENERGY_CAP, consumeEnergyBottle } from "@/lib/energy";
+import { catalogItem } from "@/lib/held-items";
 import { learnedMoves } from "@/lib/pokedex";
 
 async function writeDb(): Promise<any> {
