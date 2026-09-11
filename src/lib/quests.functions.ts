@@ -161,23 +161,14 @@ export const startDailyQuestDay = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const today = warsawClock().dateKey;
     const db = await writeDb();
-    const { data: reserved, error: reserveError } = await db
-      .from("daily_quest_days")
-      .insert({ owner_id: context.userId, quest_date: today })
-      .select("id")
-      .maybeSingle();
-    if (reserveError || !reserved) {
-      return { ok: false as const, reason: "Dzisiejszy zestaw został już rozpoczęty.", state: await buildState(context.supabase, context.userId) };
-    }
     const quests = generateDailyQuests(`${context.userId}:${today}`);
-    const { error: deleteError } = await db.from("daily_quests").delete().eq("owner_id", context.userId).eq("quest_date", today);
-    const { error: insertError } = deleteError
-      ? { error: deleteError }
-      : await db.from("daily_quests").insert(quests.map((quest) => questRow(context.userId, today, quest)));
-    if (insertError) {
-      await db.from("daily_quest_days").delete().eq("id", reserved.id).eq("owner_id", context.userId);
-      throw new Error("Nie udało się utworzyć dzisiejszych zadań.");
-    }
+    const { data: started, error } = await db.rpc("start_daily_quest_day", {
+      _owner_id: context.userId,
+      _quest_date: today,
+      _quests: quests,
+    });
+    if (error) throw new Error("Nie udało się utworzyć dzisiejszych zadań.");
+    if (!started) return { ok: false as const, reason: "Dzisiejszy zestaw został już rozpoczęty.", state: await buildState(context.supabase, context.userId) };
     return { ok: true as const, state: await buildState(context.supabase, context.userId) };
   });
 
@@ -197,27 +188,21 @@ export const rerollDailyQuest = createServerFn({ method: "POST" })
     if (row.status !== "active") return { ok: false as const, reason: "Ukończonego zadania nie można przelosować.", state: await buildState(supabase, userId) };
     const today = warsawClock().dateKey;
     if (row.quest_date !== today) return { ok: false as const, reason: "Można przelosować tylko dzisiejsze zadanie.", state: await buildState(supabase, userId) };
-    const db = await writeDb();
-    const { data: claimedReroll } = await db
-      .from("daily_quest_days")
-      .update({ reroll_used: true })
-      .eq("owner_id", userId)
-      .eq("quest_date", today)
-      .eq("reroll_used", false)
-      .select("id")
-      .maybeSingle();
-    if (!claimedReroll) return { ok: false as const, reason: "Dzisiejsze darmowe przelosowanie zostało już wykorzystane.", state: await buildState(supabase, userId) };
     const replacement = generateReplacementQuest(
       `${userId}:${row.quest_date}`,
       row.slot ?? 0,
       row.difficulty as QuestDifficulty,
       `${row.quest_type}:${row.biome ?? ""}:${row.target_key ?? ""}`,
     );
-    await db
-      .from("daily_quests")
-      .update({ ...questRow(userId, row.quest_date, replacement), progress: 0, status: "active", rerolled: true })
-      .eq("id", row.id)
-      .eq("owner_id", userId);
+    const db = await writeDb();
+    const { data: changed, error } = await db.rpc("reroll_daily_quest", {
+      _owner_id: userId,
+      _quest_date: today,
+      _quest_id: row.id,
+      _replacement: replacement,
+    });
+    if (error) throw new Error("Nie udało się przelosować zadania.");
+    if (!changed) return { ok: false as const, reason: "Dzisiejsze darmowe przelosowanie zostało już wykorzystane.", state: await buildState(supabase, userId) };
     return { ok: true as const, state: await buildState(supabase, userId) };
   });
 
