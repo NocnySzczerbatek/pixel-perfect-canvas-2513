@@ -493,6 +493,8 @@ const NAV_GROUPS = [
       { to: "/pvp", label: "PvP", Icon: Swords, desc: "Napady na innych trenerów" },
       { to: "/turnieje", label: "Turnieje", Icon: Crown, desc: "Tygodniowa liga o puchar" },
       { to: "/trenerzy", label: "Trenerzy", Icon: Users, desc: "Przeciwnicy i klasy" },
+      { to: "/wydarzenia", label: "Wydarzenia", Icon: CalendarDays, desc: "Bonus tygodnia i nagroda" },
+      { to: "/mistrzostwo", label: "Mistrzostwo", Icon: Gem, desc: "Postęp regionów i progi" },
     ],
   },
   {
