@@ -13,6 +13,8 @@ import { lovable } from "@/integrations/lovable/index";
 import { useSession } from "@/hooks/useSession";
 import { REGIONS, artworkUrl, findRegion, type Region, type Starter } from "@/lib/game-data";
 import { completeTutorial, createTrainer as createTrainerServerFn } from "@/lib/onboarding.functions";
+import { LandingSections, ScrollHint } from "@/components/landing/LandingSections";
+
 
 
 export const Route = createFileRoute("/")({
@@ -151,23 +153,25 @@ function StartScreen() {
   const signedIn = Boolean(session);
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      <video
-        className="absolute inset-0 h-full w-full object-cover"
-        src={introVideo.url}
-        poster={loginBg}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        aria-hidden
-      />
-      <div className="absolute inset-0 bg-background/70" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+    <main className="relative min-h-screen">
+      <div className="pointer-events-none fixed inset-0">
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          src={introVideo.url}
+          poster={loginBg}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden
+        />
+        <div className="absolute inset-0 bg-background/70" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+      </div>
 
       <div className="relative z-10 flex min-h-screen flex-col px-5 py-6 md:px-10">
-        <header className="flex flex-wrap items-start justify-between gap-4">
+        <header className="sticky top-0 z-30 -mx-5 flex flex-wrap items-start justify-between gap-4 bg-background/40 px-5 py-3 backdrop-blur-md md:-mx-10 md:px-10">
           <div className="flex items-center gap-3">
             <Link to="/" className="block h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-white/20 drop-shadow-[0_0_12px_rgba(255,255,255,0.55)]">
               <img
@@ -243,14 +247,23 @@ function StartScreen() {
           ) : null}
         </section>
 
+        {!signedIn ? <ScrollHint /> : null}
+
         <footer className="text-center text-xs text-muted-foreground">
           Wydarzenie tygodnia: Zimowa Aurora — +10% szansy na rzadkie spotkania na Śnieżnej
           Polanie.
         </footer>
       </div>
+
+      {!signedIn ? (
+        <div className="relative z-10 px-5 pt-16 md:px-10">
+          <LandingSections busy={busy} onSignIn={signIn} />
+        </div>
+      ) : null}
     </main>
   );
 }
+
 
 function AuthPanel({
   signedIn,
