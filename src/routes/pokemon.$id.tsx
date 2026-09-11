@@ -100,6 +100,9 @@ function PokemonDetailPage() {
   const equipFn = useServerFn(equipHeldItem);
   const unequipFn = useServerFn(unequipHeldItem);
   const [heldOpen, setHeldOpen] = useState(false);
+  const megaEquipFn = useServerFn(equipMegaStone);
+  const megaUnequipFn = useServerFn(unequipMegaStone);
+  const [megaOpen, setMegaOpen] = useState(false);
   const train = useServerFn(trainPokemon);
   const feed = useServerFn(useCandy);
   const evolve = useServerFn(evolvePokemon);
