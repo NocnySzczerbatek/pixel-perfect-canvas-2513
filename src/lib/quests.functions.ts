@@ -78,7 +78,7 @@ export async function emitQuestEvent(
   }
 
 
-  if (event !== "catch" && event !== "battle") return;
+  if (event !== "catch" && event !== "battle") return completed;
   const researchType = event === "catch" ? "catch_species" : "win_battles";
   const { data: research } = await supabase
     .from("oak_research")
@@ -89,12 +89,15 @@ export async function emitQuestEvent(
   for (const row of research ?? []) {
     if (row.target_key !== "any" && row.target_key !== (ctx.targetKey ?? "any")) continue;
     const progress = Math.min(row.target, row.progress + amount);
+    const done = progress >= row.target;
+    if (done) completed.push("Badanie Profesora Oaka");
     await db
       .from("oak_research")
-      .update({ progress, status: progress >= row.target ? "completed" : "active" })
+      .update({ progress, status: done ? "completed" : "active" })
       .eq("id", row.id)
       .eq("owner_id", userId);
   }
+  return completed;
 }
 
 /** Zgodność ze starymi wywołaniami (łapanie i walki). */
@@ -105,9 +108,10 @@ export async function progressActivities(
   amount = 1,
   targetKey = "any",
   extra: { biome?: string | null; typeName?: string | null } = {},
-) {
-  await emitQuestEvent(supabase, userId, event, { amount, targetKey, ...extra });
+): Promise<string[]> {
+  return emitQuestEvent(supabase, userId, event, { amount, targetKey, ...extra });
 }
+
 
 function questRow(userId: string, date: string, quest: GeneratedQuest) {
   return {
