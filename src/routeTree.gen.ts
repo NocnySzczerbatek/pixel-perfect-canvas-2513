@@ -33,6 +33,7 @@ import { Route as SaleRouteImport } from './routes/sale'
 import { Route as SklepRouteImport } from './routes/sklep'
 import { Route as TrenerzyRouteImport } from './routes/trenerzy'
 import { Route as TurniejeRouteImport } from './routes/turnieje'
+import { Route as WydarzeniaRouteImport } from './routes/wydarzenia'
 import { Route as ZadaniaRouteImport } from './routes/zadania'
 import { Route as PokemonIdRouteImport } from './routes/pokemon.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -157,6 +158,11 @@ const TurniejeRoute = TurniejeRouteImport.update({
   path: '/turnieje',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WydarzeniaRoute = WydarzeniaRouteImport.update({
+  id: '/wydarzenia',
+  path: '/wydarzenia',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ZadaniaRoute = ZadaniaRouteImport.update({
   id: '/zadania',
   path: '/zadania',
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
   '/turnieje': typeof TurniejeRoute
+  '/wydarzenia': typeof WydarzeniaRoute
   '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
   '/turnieje': typeof TurniejeRoute
+  '/wydarzenia': typeof WydarzeniaRoute
   '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/sklep': typeof SklepRoute
   '/trenerzy': typeof TrenerzyRoute
   '/turnieje': typeof TurniejeRoute
+  '/wydarzenia': typeof WydarzeniaRoute
   '/zadania': typeof ZadaniaRoute
   '/pokemon/$id': typeof PokemonIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -289,6 +298,7 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/trenerzy'
     | '/turnieje'
+    | '/wydarzenia'
     | '/zadania'
     | '/pokemon/$id'
     | '/api/public/payments/webhook'
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/trenerzy'
     | '/turnieje'
+    | '/wydarzenia'
     | '/zadania'
     | '/pokemon/$id'
     | '/api/public/payments/webhook'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/sklep'
     | '/trenerzy'
     | '/turnieje'
+    | '/wydarzenia'
     | '/zadania'
     | '/pokemon/$id'
     | '/api/public/payments/webhook'
@@ -377,6 +389,7 @@ export interface RootRouteChildren {
   SklepRoute: typeof SklepRoute
   TrenerzyRoute: typeof TrenerzyRoute
   TurniejeRoute: typeof TurniejeRoute
+  WydarzeniaRoute: typeof WydarzeniaRoute
   ZadaniaRoute: typeof ZadaniaRoute
   PokemonIdRoute: typeof PokemonIdRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -552,6 +565,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TurniejeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wydarzenia': {
+      id: '/wydarzenia'
+      path: '/wydarzenia'
+      fullPath: '/wydarzenia'
+      preLoaderRoute: typeof WydarzeniaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zadania': {
       id: '/zadania'
       path: '/zadania'
@@ -601,6 +621,7 @@ const rootRouteChildren: RootRouteChildren = {
   SklepRoute: SklepRoute,
   TrenerzyRoute: TrenerzyRoute,
   TurniejeRoute: TurniejeRoute,
+  WydarzeniaRoute: WydarzeniaRoute,
   ZadaniaRoute: ZadaniaRoute,
   PokemonIdRoute: PokemonIdRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
