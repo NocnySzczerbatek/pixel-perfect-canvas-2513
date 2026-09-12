@@ -1003,7 +1003,9 @@ function HpBar({ current, max, className }: { current: number; max: number; clas
       </div>
       <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-secondary">
         <div
-          className="h-full rounded-full bg-destructive transition-all duration-500"
+          className={`h-full rounded-full transition-all duration-500 ${
+            pct > 50 ? "bg-primary" : pct > 20 ? "bg-accent" : "bg-destructive"
+          }`}
           style={{ width: `${pct}%` }}
         />
       </div>
