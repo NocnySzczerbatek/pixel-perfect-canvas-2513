@@ -1471,6 +1471,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      public_trainer_rankings: {
+        Args: never
+        Returns: {
+          catch_coins: number
+          caught_pokemon: number
+          featured_badge: string
+          id: string
+          pvp_losses: number
+          pvp_wins: number
+          region: string
+          shield_until: string
+          trainer_exp: number
+          trainer_level: number
+          trainer_name: string
+        }[]
+      }
       public_trainers: {
         Args: never
         Returns: {
