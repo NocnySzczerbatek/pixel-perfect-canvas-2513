@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Flame, Skull, Swords, Zap } from "lucide-react";
+import { Flame, HeartPulse, Skull, Swords, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -81,6 +81,16 @@ function RaidsPage() {
         <span>Pozostałe próby dziś: {state?.attempts_left ?? 0}/3</span>
       </div>
 
+      {state && !state.party_ready ? (
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-destructive/50 bg-destructive/10 p-4 text-sm">
+          <HeartPulse className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <p>
+            Twoja drużyna nie może teraz walczyć — wszystkie Pokémony są zemdlone. Ulecz je
+            bezpłatnie w Centrum Pokémon, aby rozpocząć Raid.
+          </p>
+        </div>
+      ) : null}
+
       <div className="grid gap-4 lg:grid-cols-3">
         {(state?.bosses ?? []).map((boss) => (
           <article
@@ -127,6 +137,7 @@ function RaidsPage() {
               disabled={
                 boss.defeated_today ||
                 busy === boss.key ||
+                state?.party_ready === false ||
                 (state?.attempts_left ?? 0) <= 0 ||
                 (state?.energy ?? 0) < (state?.raid_energy ?? 8)
               }

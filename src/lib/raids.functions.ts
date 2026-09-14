@@ -44,6 +44,7 @@ export type RaidsState = {
   raid_energy: number;
   attempts_used: number;
   attempts_left: number;
+  party_ready: boolean;
   bosses: RaidBossView[];
   history: {
     id: string;
@@ -57,20 +58,28 @@ export type RaidsState = {
 
 async function buildState(supabase: any, userId: string): Promise<RaidsState> {
   const date = warsawDate();
-  const [{ data: profile }, { data: today }, { data: history }] = await Promise.all([
-    supabase.from("profiles").select("energy").eq("id", userId).maybeSingle(),
-    supabase
-      .from("raid_runs")
-      .select("boss_key, won")
-      .eq("owner_id", userId)
-      .eq("raid_date", date),
-    supabase
-      .from("raid_runs")
-      .select("id, boss_name, tier, won, reward_coins, created_at")
-      .eq("owner_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(12),
-  ]);
+  const [{ data: profile }, { data: today }, { data: history }, { count: aliveCount }] =
+    await Promise.all([
+      supabase.from("profiles").select("energy").eq("id", userId).maybeSingle(),
+      supabase
+        .from("raid_runs")
+        .select("boss_key, won")
+        .eq("owner_id", userId)
+        .eq("raid_date", date),
+      supabase
+        .from("raid_runs")
+        .select("id, boss_name, tier, won, reward_coins, created_at")
+        .eq("owner_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(12),
+      supabase
+        .from("player_pokemon")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", userId)
+        .eq("in_party", true)
+        .eq("fainted", false)
+        .gt("hp_current", 0),
+    ]);
 
   const runs = (today ?? []) as { boss_key: string; won: boolean }[];
   const beaten = new Set(runs.filter((r) => r.won).map((r) => r.boss_key));
@@ -81,6 +90,7 @@ async function buildState(supabase: any, userId: string): Promise<RaidsState> {
     raid_energy: RAID_ENERGY,
     attempts_used: runs.length,
     attempts_left: Math.max(0, RAID_ATTEMPTS_PER_DAY - runs.length),
+    party_ready: (aliveCount ?? 0) > 0,
     bosses: raidsForDay(date).map((boss) => {
       const scale = raidScaling(boss.tier);
       const foe = foeFighter({ ...boss, species_name: boss.name }, 31, scale.power);
