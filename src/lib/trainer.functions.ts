@@ -424,7 +424,7 @@ export const buyPokeBalls = createServerFn({ method: "POST" })
     return { ok: true as const, cost, data: await buildTrainerData(supabase, userId) };
   });
 
-/** Ranking trenerów: poziom, EXP, monety. */
+/** Ranking trenerów: poziom, złapane Pokémony, monety, PvP. */
 export type RankingRow = {
   id: string;
   trainer_name: string;
@@ -432,19 +432,47 @@ export type RankingRow = {
   trainer_exp: number;
   catch_coins: number;
   featured_badge: string | null;
+  pvp_wins: number;
+  caught_pokemon: number;
 };
+
+export type RankingBoard = "level" | "caught" | "wealth" | "pvp";
+export type RankingData = { boards: Record<RankingBoard, RankingRow[]>; me: string };
 
 export const getRanking = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<RankingData> => {
     // Ranking pokazuje tylko dane publiczne — pełne profile są prywatne (RLS).
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await (supabaseAdmin as any).rpc("public_trainers");
-    const rows = ((data ?? []) as RankingRow[])
-      .sort((a, b) => b.trainer_level - a.trainer_level || b.trainer_exp - a.trainer_exp)
-      .slice(0, 25);
+    const { data } = await (supabaseAdmin as any).rpc("public_trainer_rankings");
+    const all = ((data ?? []) as any[]).map((row) => ({
+      id: row.id,
+      trainer_name: row.trainer_name,
+      trainer_level: row.trainer_level ?? 1,
+      trainer_exp: row.trainer_exp ?? 0,
+      catch_coins: row.catch_coins ?? 0,
+      featured_badge: row.featured_badge ?? null,
+      pvp_wins: row.pvp_wins ?? 0,
+      caught_pokemon: Number(row.caught_pokemon ?? 0),
+    })) as RankingRow[];
+
+    const top = (value: (row: RankingRow) => number) =>
+      [...all]
+        .sort(
+          (a, b) =>
+            value(b) - value(a) ||
+            b.trainer_level - a.trainer_level ||
+            a.trainer_name.localeCompare(b.trainer_name, "pl"),
+        )
+        .slice(0, 10);
+
     return {
-      rows,
+      boards: {
+        level: top((row) => row.trainer_level * 1_000_000 + row.trainer_exp),
+        caught: top((row) => row.caught_pokemon),
+        wealth: top((row) => row.catch_coins),
+        pvp: top((row) => row.pvp_wins),
+      },
       me: context.userId,
     };
   });
