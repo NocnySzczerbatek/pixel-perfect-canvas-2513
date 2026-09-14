@@ -44,6 +44,7 @@ export type RaidsState = {
   raid_energy: number;
   attempts_used: number;
   attempts_left: number;
+  party_ready: boolean;
   bosses: RaidBossView[];
   history: {
     id: string;
