@@ -137,6 +137,7 @@ function RaidsPage() {
               disabled={
                 boss.defeated_today ||
                 busy === boss.key ||
+                state?.party_ready === false ||
                 (state?.attempts_left ?? 0) <= 0 ||
                 (state?.energy ?? 0) < (state?.raid_energy ?? 8)
               }
