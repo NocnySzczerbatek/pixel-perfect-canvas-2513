@@ -50,7 +50,6 @@ import {
   MAX_FRIENDSHIP,
   MAX_TRAIN,
   TRAINING_DISPLAY_MAX,
-  TRAINING_LEVEL_STEP,
   trainPokemon,
   evolvePokemon,
   setActiveMoves,
@@ -136,11 +135,7 @@ function PokemonDetailPage() {
       if (!result.ok) {
         toast.error(result.reason);
       } else {
-        toast.success(
-          result.leveledUp
-            ? `Trening zaliczony (−${result.cost} CC). Awans na Lvl ${result.level}!`
-            : `Trening zaliczony (−${result.cost} CC).`,
-        );
+        toast.success(`Trening zaliczony (−${result.cost} CC).`);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Trening się nie udał.");
@@ -222,7 +217,6 @@ function PokemonDetailPage() {
   const megaOwned =
     (data?.items ?? []).find((row) => row.item_key === megaStoneKey && row.quantity > 0)?.quantity ??
     0;
-  const toNextLevel = TRAINING_LEVEL_STEP - (pokemon.training_points % TRAINING_LEVEL_STEP || 0);
   const friendship = pokemon.friendship ?? 0;
   const friendshipPct = Math.round((friendship / MAX_FRIENDSHIP) * 100);
 
@@ -303,10 +297,6 @@ function PokemonDetailPage() {
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Kupione punkty treningu</dt>
               <dd>{pokemon.training_points}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-muted-foreground">Do awansu</dt>
-              <dd>{toNextLevel} pkt</dd>
             </div>
           </dl>
           <div className="mt-4 rounded-xl border border-border/60 bg-muted/20 p-3 text-left">
@@ -432,8 +422,7 @@ function PokemonDetailPage() {
             Skala 0–{TRAINING_DISPLAY_MAX} pokazuje wyłącznie punkty, które sam kupiłeś za Catch
             Coins — świeżo złapany Pokémon startuje z 0/{TRAINING_DISPLAY_MAX} na każdej statystyce.
             Wrodzona moc gatunku liczy się osobno i wpływa na walkę, ale nie na ten pasek. Kolejne
-            punkty są coraz droższe, a co {TRAINING_LEVEL_STEP} punkty treningu Pokémon zyskuje
-            poziom.
+            punkty są coraz droższe. Trening nie zmienia poziomu ani doświadczenia Pokémona.
           </p>
           <ul className="mt-4 space-y-3">
             {STAT_KEYS.map((stat) => {

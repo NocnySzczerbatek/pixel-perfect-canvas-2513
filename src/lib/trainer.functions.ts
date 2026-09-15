@@ -491,7 +491,6 @@ export const deleteAccount = createServerFn({ method: "POST" })
   });
 
 /** Koszt jednego punktu treningu danego staty (rośnie wykładniczo z poziomem treningu). */
-export const TRAINING_LEVEL_STEP = 5; // co 5 punktów treningu = +1 poziom
 export const MAX_IV = 31;
 /** Maksymalna liczba kupionych punktów treningu na jedną statystykę. */
 export const MAX_TRAIN = 31;
@@ -594,7 +593,7 @@ export const TRAIN_FIELDS = {
   spe: "train_spe",
 } as const;
 
-/** Trening: 1 kupiony punkt = +1 do statystyki; co 5 punktów Pokémon zyskuje poziom. */
+/** Trening aktualizuje wyłącznie trening i HP, nigdy poziom ani EXP. */
 export const trainPokemon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string; stat: keyof typeof TRAIN_FIELDS }) => {
@@ -625,7 +624,7 @@ export const trainPokemon = createServerFn({ method: "POST" })
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("catch_coins, trainer_level")
+      .select("catch_coins")
       .eq("id", userId)
       .maybeSingle();
     if (!profile) throw new Error("Nie znaleziono profilu trenera.");
@@ -639,26 +638,37 @@ export const trainPokemon = createServerFn({ method: "POST" })
     }
 
     const points = pokemon.training_points + 1;
-    const gainedLevels =
-      Math.floor(points / TRAINING_LEVEL_STEP) -
-      Math.floor(pokemon.training_points / TRAINING_LEVEL_STEP);
-    const maxLevel = (profile.trainer_level as number) + 5;
-    const level = Math.min(maxLevel, pokemon.level + gainedLevels);
     // HP liczone tą samą formułą co w walce: baza gatunku + poziom + wrodzone HP + trening HP.
     const trainHp = data.stat === "hp" ? currentTrain + 1 : (pokemon.train_hp ?? 0);
-    const hpMax = hpValue(level, baseStats(pokemon.species_id)[0], pokemon.iv_hp, trainHp);
+    const hpMax = hpValue(pokemon.level, baseStats(pokemon.species_id)[0], pokemon.iv_hp, trainHp);
 
-    await ((await writeDb()).from("player_pokemon") as any)
+    const { data: trained, error: trainingError } = await ((await writeDb()).from("player_pokemon") as any)
       .update({
-        // Trening zmienia WYŁĄCZNIE punkty treningu — wrodzone IV pozostają nietknięte.
         [trainField]: currentTrain + 1,
         training_points: points,
-        level,
         hp_max: hpMax,
         hp_current: Math.min(hpMax, pokemon.hp_current + Math.max(0, hpMax - pokemon.hp_max)),
       })
       .eq("id", data.id)
-      .eq("owner_id", userId);
+      .eq("owner_id", userId)
+      // Optimistic concurrency: never apply HP computed before a battle/level-up.
+      // Level and EXP are filters only, never fields in the update payload.
+      .eq("level", pokemon.level)
+      .eq("exp", pokemon.exp)
+      .eq("hp_current", pokemon.hp_current)
+      .eq("hp_max", pokemon.hp_max)
+      .eq("training_points", pokemon.training_points)
+      .eq(trainField, currentTrain)
+      .select("id")
+      .maybeSingle();
+    if (trainingError) throw trainingError;
+    if (!trained) {
+      return {
+        ok: false as const,
+        reason: "Stan Pokémona zmienił się. Dane odświeżono — spróbuj ponownie. Nie pobrano monet.",
+        data: await buildTrainerData(supabase, userId),
+      };
+    }
 
 
     await (await writeDb())
@@ -669,9 +679,6 @@ export const trainPokemon = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       cost,
-      leveledUp: level > pokemon.level,
-      level,
-      cappedByTrainer: level === maxLevel && pokemon.level + gainedLevels > maxLevel,
       data: await buildTrainerData(supabase, userId),
     };
   });
