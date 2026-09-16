@@ -417,29 +417,47 @@ function PokemonDetailPage() {
         </section>
 
         <section className="glass-panel rounded-2xl p-5 lg:col-span-2">
-          <h2 className="text-2xl">Poziom Treningu statystyk</h2>
+          <h2 className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
+            <span className="truncate text-2xl">Poziom Treningu statystyk</span>
+            <span className="shrink-0 rounded-full bg-secondary/60 px-3 py-1 text-xs tabular-nums">
+              {coins} CC
+            </span>
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Skala 0–{TRAINING_DISPLAY_MAX} pokazuje wyłącznie punkty, które sam kupiłeś za Catch
             Coins — świeżo złapany Pokémon startuje z 0/{TRAINING_DISPLAY_MAX} na każdej statystyce.
             Wrodzona moc gatunku liczy się osobno i wpływa na walkę, ale nie na ten pasek. Kolejne
             punkty są coraz droższe. Trening nie zmienia poziomu ani doświadczenia Pokémona.
           </p>
-          <ul className="mt-4 space-y-3">
+          <p className="mt-2 text-xs text-muted-foreground">
+            Wykupione punkty treningu: {pokemon.training_points}
+          </p>
+          <ul className="mt-4 space-y-4">
             {STAT_KEYS.map((stat) => {
               const points = (pokemon[TRAIN_OF[stat]] as number) ?? 0;
               const shown = trainingLevel(points);
               const cost = trainingCost(points);
               const invested = trainingInvested(points);
               const maxed = points >= MAX_TRAIN;
+              const tooPoor = !maxed && coins < cost;
               const hint =
                 points === 0
                   ? `${STAT_LABELS[stat]}: 0/${TRAINING_DISPLAY_MAX} — jeszcze nie trenowano`
                   : `${STAT_LABELS[stat]}: ${shown}/${TRAINING_DISPLAY_MAX} — zainwestowano ${invested} CC łącznie (${points} pkt)`;
               return (
-                <li key={stat} className="flex items-center gap-3" title={hint}>
-                  <span className="w-24 shrink-0 text-sm">{STAT_LABELS[stat]}</span>
+                <li
+                  key={stat}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 sm:flex"
+                  title={hint}
+                >
+                  <span className="text-sm font-semibold sm:w-24 sm:shrink-0">
+                    {STAT_LABELS[stat]}
+                  </span>
+                  <span className="shrink-0 text-right text-sm tabular-nums sm:order-3 sm:w-20">
+                    {shown}/{TRAINING_DISPLAY_MAX}
+                  </span>
                   <div
-                    className="h-2 flex-1 overflow-hidden rounded-full bg-secondary"
+                    className="col-span-2 h-2 overflow-hidden rounded-full bg-secondary sm:order-2 sm:flex-1"
                     role="progressbar"
                     aria-label={hint}
                     aria-valuemin={0}
@@ -451,23 +469,32 @@ function PokemonDetailPage() {
                       style={{ width: `${(shown / TRAINING_DISPLAY_MAX) * 100}%` }}
                     />
                   </div>
-                  <span className="w-20 shrink-0 text-right text-sm tabular-nums">
-                    {shown}/{TRAINING_DISPLAY_MAX}
-                  </span>
                   <Button
                     size="sm"
                     variant={maxed ? "ghost" : "default"}
-                    disabled={busy || maxed || coins < cost}
+                    className="col-span-2 sm:order-4 sm:col-span-1"
+                    disabled={busy || maxed || tooPoor}
+                    aria-label={
+                      maxed
+                        ? `${STAT_LABELS[stat]}: maksymalny trening`
+                        : `Trenuj ${STAT_LABELS[stat]} za ${cost} CC`
+                    }
                     onClick={() => void handleTrain(stat)}
                   >
-                    <Dumbbell className="h-4 w-4" aria-hidden />
-                    {maxed ? "Max" : `${cost} CC`}
+                    <Dumbbell className="h-4 w-4 shrink-0" aria-hidden />
+                    {maxed ? "Max" : `Trenuj · ${cost} CC`}
                   </Button>
+                  {tooPoor ? (
+                    <span className="col-span-2 text-xs text-muted-foreground sm:order-5 sm:col-span-1">
+                      Brakuje {cost - coins} CC
+                    </span>
+                  ) : null}
                 </li>
               );
             })}
           </ul>
         </section>
+
 
         <section className="glass-panel rounded-2xl p-5">
           <h2 className="flex items-center gap-2 text-2xl">
