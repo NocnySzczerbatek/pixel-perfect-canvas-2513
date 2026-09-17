@@ -77,12 +77,25 @@ function EksploracjaPage() {
   const [outcome, setOutcome] = useState<BattleOutcome | null>(null);
   const [activeMonId, setActiveMonId] = useState<string | null>(null);
   const [find, setFind] = useState<FindView | null>(null);
+  const spotkanieRef = useRef<HTMLDivElement>(null);
+  const hadActiveRef = useRef(false);
 
   useEffect(() => {
     if (!loading && !session) {
       void navigate({ to: "/" });
     }
   }, [loading, session, navigate]);
+
+  useEffect(() => {
+    const active = !!state?.active;
+    if (active) {
+      spotkanieRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      hadActiveRef.current = true;
+    } else if (hadActiveRef.current) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      hadActiveRef.current = false;
+    }
+  }, [state?.active]);
 
   const fetchState = useServerFn(getExplorationState);
   const travelFn = useServerFn(travel);
