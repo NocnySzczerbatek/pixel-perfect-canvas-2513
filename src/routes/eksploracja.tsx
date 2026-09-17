@@ -288,52 +288,53 @@ function EksploracjaPage() {
           <ResourcesPanel state={state} />
 
           {find ? <FindCard find={find} onClose={() => setFind(null)} /> : null}
-          {state?.active ? (
-            <EncounterCard
-              encounter={state.active}
-              balls={{
-                poke: state.poke_balls,
-                great: state.great_balls,
-                ultra: state.ultra_balls,
-                master: state.master_balls,
-                premier: state.premier_balls,
-                net: state.net_balls,
-                dive: state.dive_balls,
-                dusk: state.dusk_balls,
-                quick: state.quick_balls,
-                timer: state.timer_balls,
-                repeat: state.repeat_balls,
-                luxury: state.luxury_balls,
-              }}
-              razzBerries={state.razz_berries}
-              heals={{
-                potion: state.potions,
-                super_potion: state.super_potions,
-                revive: state.revives,
-              }}
-              onHeal={handleHeal}
-              party={state.party}
-              activeMonId={activeMonId}
-              onSelectMon={setActiveMonId}
-              onThrowBall={handleThrowBall}
-              report={report}
-              onFight={handleAutoFight}
-              onCloseReport={() => setReport(null)}
-              onBattle={handleBattle}
-              onDismiss={handleDismiss}
-              onNext={handleNext}
-              busy={busy}
-            />
-
-
-          ) : outcome ? (
-            <OutcomePanel
-              outcome={outcome}
-              busy={busy}
-              onContinue={() => void handleTravel(outcome.biome)}
-              onBack={() => setOutcome(null)}
-            />
-          ) : (
+          <div ref={spotkanieRef}>
+            {state?.active ? (
+              <EncounterCard
+                encounter={state.active}
+                balls={{
+                  poke: state.poke_balls,
+                  great: state.great_balls,
+                  ultra: state.ultra_balls,
+                  master: state.master_balls,
+                  premier: state.premier_balls,
+                  net: state.net_balls,
+                  dive: state.dive_balls,
+                  dusk: state.dusk_balls,
+                  quick: state.quick_balls,
+                  timer: state.timer_balls,
+                  repeat: state.repeat_balls,
+                  luxury: state.luxury_balls,
+                }}
+                razzBerries={state.razz_berries}
+                heals={{
+                  potion: state.potions,
+                  super_potion: state.super_potions,
+                  revive: state.revives,
+                }}
+                onHeal={handleHeal}
+                party={state.party}
+                activeMonId={activeMonId}
+                onSelectMon={setActiveMonId}
+                onThrowBall={handleThrowBall}
+                report={report}
+                onFight={handleAutoFight}
+                onCloseReport={() => setReport(null)}
+                onBattle={handleBattle}
+                onDismiss={handleDismiss}
+                onNext={handleNext}
+                busy={busy}
+              />
+            ) : outcome ? (
+              <OutcomePanel
+                outcome={outcome}
+                busy={busy}
+                onContinue={() => void handleTravel(outcome.biome)}
+                onBack={() => setOutcome(null)}
+              />
+            ) : null}
+          </div>
+          {!state?.active && !outcome && (
             <BiomeGrid
               onTravel={handleTravel}
               energy={state?.energy ?? 0}
