@@ -108,6 +108,17 @@ function EksploracjaPage() {
     queryClient.setQueryData([EXPLORATION_QUERY_KEY, userId], next);
   };
 
+  useEffect(() => {
+    const active = !!state?.active;
+    if (active) {
+      spotkanieRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      hadActiveRef.current = true;
+    } else if (hadActiveRef.current) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      hadActiveRef.current = false;
+    }
+  }, [state?.active]);
+
   /** Zadania kończą się w trakcie wyprawy — informujemy o tym od razu. */
   const notifyQuests = (titles?: string[]) => {
     for (const title of titles ?? []) toast.success(`Zadanie ukończone: ${title}`);
