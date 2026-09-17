@@ -86,16 +86,6 @@ function EksploracjaPage() {
     }
   }, [loading, session, navigate]);
 
-  useEffect(() => {
-    const active = !!state?.active;
-    if (active) {
-      spotkanieRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      hadActiveRef.current = true;
-    } else if (hadActiveRef.current) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      hadActiveRef.current = false;
-    }
-  }, [state?.active]);
 
   const fetchState = useServerFn(getExplorationState);
   const travelFn = useServerFn(travel);
