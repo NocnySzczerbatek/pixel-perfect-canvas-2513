@@ -32,6 +32,7 @@ import { Route as RaidyRouteImport } from './routes/raidy'
 import { Route as RankingRouteImport } from './routes/ranking'
 import { Route as SaleRouteImport } from './routes/sale'
 import { Route as SklepRouteImport } from './routes/sklep'
+import { Route as StatystykiRouteImport } from './routes/statystyki'
 import { Route as SwiatRouteImport } from './routes/swiat'
 import { Route as TrenerzyRouteImport } from './routes/trenerzy'
 import { Route as TurniejeRouteImport } from './routes/turnieje'
@@ -156,6 +157,11 @@ const SklepRoute = SklepRouteImport.update({
   path: '/sklep',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StatystykiRoute = StatystykiRouteImport.update({
+  id: '/statystyki',
+  path: '/statystyki',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SwiatRoute = SwiatRouteImport.update({
   id: '/swiat',
   path: '/swiat',
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/ranking': typeof RankingRoute
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
+  '/statystyki': typeof StatystykiRoute
   '/swiat': typeof SwiatRoute
   '/trenerzy': typeof TrenerzyRoute
   '/turnieje': typeof TurniejeRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/ranking': typeof RankingRoute
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
+  '/statystyki': typeof StatystykiRoute
   '/swiat': typeof SwiatRoute
   '/trenerzy': typeof TrenerzyRoute
   '/turnieje': typeof TurniejeRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/ranking': typeof RankingRoute
   '/sale': typeof SaleRoute
   '/sklep': typeof SklepRoute
+  '/statystyki': typeof StatystykiRoute
   '/swiat': typeof SwiatRoute
   '/trenerzy': typeof TrenerzyRoute
   '/turnieje': typeof TurniejeRoute
@@ -324,6 +333,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/sale'
     | '/sklep'
+    | '/statystyki'
     | '/swiat'
     | '/trenerzy'
     | '/turnieje'
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/sale'
     | '/sklep'
+    | '/statystyki'
     | '/swiat'
     | '/trenerzy'
     | '/turnieje'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/sale'
     | '/sklep'
+    | '/statystyki'
     | '/swiat'
     | '/trenerzy'
     | '/turnieje'
@@ -424,6 +436,7 @@ export interface RootRouteChildren {
   RankingRoute: typeof RankingRoute
   SaleRoute: typeof SaleRoute
   SklepRoute: typeof SklepRoute
+  StatystykiRoute: typeof StatystykiRoute
   SwiatRoute: typeof SwiatRoute
   TrenerzyRoute: typeof TrenerzyRoute
   TurniejeRoute: typeof TurniejeRoute
@@ -597,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SklepRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/statystyki': {
+      id: '/statystyki'
+      path: '/statystyki'
+      fullPath: '/statystyki'
+      preLoaderRoute: typeof StatystykiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/swiat': {
       id: '/swiat'
       path: '/swiat'
@@ -680,6 +700,7 @@ const rootRouteChildren: RootRouteChildren = {
   RankingRoute: RankingRoute,
   SaleRoute: SaleRoute,
   SklepRoute: SklepRoute,
+  StatystykiRoute: StatystykiRoute,
   SwiatRoute: SwiatRoute,
   TrenerzyRoute: TrenerzyRoute,
   TurniejeRoute: TurniejeRoute,

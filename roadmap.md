@@ -63,3 +63,6 @@ Trening: 1 punkt = +1 IV, co 5 punktów = +1 poziom, cena 10 CC × obecna warto�
 - [x] Sprzedaż Hodowcy przeniesiona z GTS do PC Boxa (z potwierdzeniem ceny)
 - [x] Zadania dzienne 3/3/3: ręczne rozpoczęcie dnia i jeden wspólny reroll
 - [x] Czat graczy: kanał globalny i handlowy, zwijany widżet
+
+## Statystyki gracza
+- [x] Strona statystyk: wykresy aktywności (7/30/90 dni), historia łapań i walk eksploracja/Trenerzy/PvP, menu; test konta na komputerze i telefonie bez błędów. Poziom/CC tylko obecne — brak historycznych zapisów salda i poziomu.
