@@ -599,6 +599,115 @@ export type Database = {
           },
         ]
       }
+      item_bids: {
+        Row: {
+          amount: number
+          bidder_id: string
+          created_at: string
+          id: string
+          listing_id: string
+        }
+        Insert: {
+          amount: number
+          bidder_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+        }
+        Update: {
+          amount?: number
+          bidder_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_bids_bidder_id_fkey"
+            columns: ["bidder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_bids_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "item_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_listings: {
+        Row: {
+          buyer_id: string | null
+          created_at: string
+          current_bid: number | null
+          current_bidder_id: string | null
+          ends_at: string | null
+          id: string
+          item_key: string
+          kind: string
+          price: number
+          quantity: number
+          seller_id: string
+          settled_at: string | null
+          status: string
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string
+          current_bid?: number | null
+          current_bidder_id?: string | null
+          ends_at?: string | null
+          id?: string
+          item_key: string
+          kind: string
+          price: number
+          quantity?: number
+          seller_id: string
+          settled_at?: string | null
+          status?: string
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string
+          current_bid?: number | null
+          current_bidder_id?: string | null
+          ends_at?: string | null
+          id?: string
+          item_key?: string
+          kind?: string
+          price?: number
+          quantity?: number
+          seller_id?: string
+          settled_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_listings_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_listings_current_bidder_id_fkey"
+            columns: ["current_bidder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "item_listings_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       league_runs: {
         Row: {
           attempts: number
