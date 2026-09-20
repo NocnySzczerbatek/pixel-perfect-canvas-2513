@@ -8,6 +8,7 @@ import {
   Crown,
   Egg,
   Flame,
+  Gavel,
   Gem,
   Heart,
   HeartPulse,
@@ -70,6 +71,7 @@ export const NAV_GROUPS = [
     tiles: [
       { to: "/sklep", label: "Sklep", Icon: ShoppingBag, desc: "Balle, mikstury, pakiety" },
       { to: "/gts", label: "GTS", Icon: Repeat, desc: "Giełda i Kupiec" },
+      { to: "/bazar", label: "Bazar", Icon: Gavel, desc: "Wymiana i aukcje przedmiotów" },
       { to: "/statystyki", label: "Statystyki", Icon: Medal, desc: "Postęp, walki i łapania" },
       { to: "/ranking", label: "Ranking", Icon: Trophy, desc: "Najlepsi trenerzy" },
       { to: "/znajomi", label: "Znajomi", Icon: Heart, desc: "Zaproszenia i lista trenerów" },
