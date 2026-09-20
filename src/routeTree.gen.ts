@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BazarRouteImport } from './routes/bazar'
 import { Route as BonusyRouteImport } from './routes/bonusy'
 import { Route as CentrumRouteImport } from './routes/centrum'
 import { Route as DruzynaRouteImport } from './routes/druzyna'
@@ -45,6 +46,11 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BazarRoute = BazarRouteImport.update({
+  id: '/bazar',
+  path: '/bazar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BonusyRoute = BonusyRouteImport.update({
@@ -206,6 +212,7 @@ const ApiPublicPaymentsWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bazar': typeof BazarRoute
   '/bonusy': typeof BonusyRoute
   '/centrum': typeof CentrumRoute
   '/druzyna': typeof DruzynaRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bazar': typeof BazarRoute
   '/bonusy': typeof BonusyRoute
   '/centrum': typeof CentrumRoute
   '/druzyna': typeof DruzynaRoute
@@ -275,6 +283,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bazar': typeof BazarRoute
   '/bonusy': typeof BonusyRoute
   '/centrum': typeof CentrumRoute
   '/druzyna': typeof DruzynaRoute
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bazar'
     | '/bonusy'
     | '/centrum'
     | '/druzyna'
@@ -345,6 +355,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bazar'
     | '/bonusy'
     | '/centrum'
     | '/druzyna'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/bazar'
     | '/bonusy'
     | '/centrum'
     | '/druzyna'
@@ -414,6 +426,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BazarRoute: typeof BazarRoute
   BonusyRoute: typeof BonusyRoute
   CentrumRoute: typeof CentrumRoute
   DruzynaRoute: typeof DruzynaRoute
@@ -454,6 +467,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bazar': {
+      id: '/bazar'
+      path: '/bazar'
+      fullPath: '/bazar'
+      preLoaderRoute: typeof BazarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bonusy': {
@@ -678,6 +698,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BazarRoute: BazarRoute,
   BonusyRoute: BonusyRoute,
   CentrumRoute: CentrumRoute,
   DruzynaRoute: DruzynaRoute,
