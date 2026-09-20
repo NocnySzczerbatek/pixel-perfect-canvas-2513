@@ -108,16 +108,17 @@ function EksploracjaPage() {
     queryClient.setQueryData([EXPLORATION_QUERY_KEY, userId], next);
   };
 
+  // Scroll only when the encounter changes, not when its HP or battle log updates.
+  const activeEncounterId = state?.active?.id;
   useEffect(() => {
-    const active = !!state?.active;
-    if (active) {
+    if (activeEncounterId) {
       spotkanieRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       hadActiveRef.current = true;
     } else if (hadActiveRef.current) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       hadActiveRef.current = false;
     }
-  }, [state?.active]);
+  }, [activeEncounterId]);
 
   /** Zadania kończą się w trakcie wyprawy — informujemy o tym od razu. */
   const notifyQuests = (titles?: string[]) => {
