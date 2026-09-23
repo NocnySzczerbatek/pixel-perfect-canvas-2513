@@ -113,6 +113,15 @@ function GtsPage() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string>("");
   const [price, setPrice] = useState<string>("");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const { isLoading } = useQuery({
     queryKey: ["gts"],
