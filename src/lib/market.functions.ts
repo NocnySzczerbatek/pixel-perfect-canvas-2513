@@ -473,13 +473,18 @@ export const placeBid = createServerFn({ method: "POST" })
       };
     }
 
-    const { data: updated } = await db
+    // Optimistyczna kontrola współbieżności: `is` przyjmuje tylko null/true/false,
+    // więc przy istniejącej ofercie numerycznej używamy `eq`.
+    let bidQuery = db
       .from("item_listings")
       .update({ current_bid: data.amount, current_bidder_id: userId })
       .eq("id", listing.id)
-      .eq("status", "active")
-      .is("current_bid", listing.current_bid === null ? null : listing.current_bid)
-      .select("id");
+      .eq("status", "active");
+    bidQuery =
+      listing.current_bid === null
+        ? bidQuery.is("current_bid", null)
+        : bidQuery.eq("current_bid", listing.current_bid);
+    const { data: updated } = await bidQuery.select("id");
     if (!updated || updated.length === 0) {
       return {
         ok: false as const,
