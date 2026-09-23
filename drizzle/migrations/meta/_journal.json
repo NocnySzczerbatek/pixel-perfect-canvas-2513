@@ -8,6 +8,13 @@
       "when": 1789828517337,
       "tag": "0000_create_item_market",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790181271409,
+      "tag": "0001_restrict_tournament_select_policies",
+      "breakpoints": true
     }
   ]
 }
