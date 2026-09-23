@@ -61,7 +61,7 @@ export function npcPrice(row: {
 }
 
 const MON_COLUMNS =
-  "id, species_id, species_name, nickname, level, hp_current, hp_max, is_starter, in_party, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, nature, ability, training_points, friendship";
+  "id, species_id, species_name, nickname, level, hp_current, hp_max, is_starter, in_party, iv_hp, iv_atk, iv_def, iv_spa, iv_spd, iv_spe, nature, ability, training_points, friendship, train_hp, train_atk, train_def, train_spa, train_spd, train_spe, active_moves";
 
 async function buildState(supabase: any, userId: string): Promise<GtsState> {
   // Nicki sprzedających pochodzą z listy publicznej — pełne profile są prywatne (RLS).
