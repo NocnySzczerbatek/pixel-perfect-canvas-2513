@@ -16,6 +16,72 @@ import {
   type GtsState,
 } from "@/lib/gts.functions";
 
+const IV_STATS: { key: string; label: string }[] = [
+  { key: "iv_hp", label: "HP" },
+  { key: "iv_atk", label: "Atak" },
+  { key: "iv_def", label: "Obrona" },
+  { key: "iv_spa", label: "Sp. Atak" },
+  { key: "iv_spd", label: "Sp. Obrona" },
+  { key: "iv_spe", label: "Szybkość" },
+];
+
+const TRAIN_STATS: { key: string; label: string }[] = [
+  { key: "train_hp", label: "HP" },
+  { key: "train_atk", label: "Atak" },
+  { key: "train_def", label: "Obrona" },
+  { key: "train_spa", label: "Sp. Atak" },
+  { key: "train_spd", label: "Sp. Obrona" },
+  { key: "train_spe", label: "Szybkość" },
+];
+
+/** Rozwijane szczegóły Pokémona z oferty — kupujący widzi, co kupuje. */
+function ListingStats({ snapshot }: { snapshot: Record<string, unknown> | null }) {
+  if (!snapshot) return null;
+  const num = (v: unknown) => (typeof v === "number" ? v : 0);
+  const ivSum = IV_STATS.reduce((sum, s) => sum + num(snapshot[s.key]), 0);
+  const trainSum = TRAIN_STATS.reduce((sum, s) => sum + num(snapshot[s.key]), 0);
+  return (
+    <div className="mt-3 space-y-2 rounded-xl border border-border/50 bg-background/40 p-3 text-xs">
+      <div>
+        <p className="mb-1 uppercase tracking-wider text-muted-foreground">
+          IV (suma {ivSum}/186)
+        </p>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+          {IV_STATS.map((s) => (
+            <p key={s.key} className="flex justify-between">
+              <span className="text-muted-foreground">{s.label}</span>
+              <span>{num(snapshot[s.key])}/31</span>
+            </p>
+          ))}
+        </div>
+      </div>
+      {trainSum > 0 ? (
+        <div>
+          <p className="mb-1 uppercase tracking-wider text-muted-foreground">
+            Trening (suma {trainSum})
+          </p>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+            {TRAIN_STATS.map((s) =>
+              num(snapshot[s.key]) > 0 ? (
+                <p key={s.key} className="flex justify-between">
+                  <span className="text-muted-foreground">{s.label}</span>
+                  <span>+{num(snapshot[s.key])}</span>
+                </p>
+              ) : null,
+            )}
+          </div>
+        </div>
+      ) : null}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+        {snapshot["nature"] ? <p>Natura: {String(snapshot["nature"])}</p> : null}
+        {snapshot["ability"] ? <p>Zdolność: {String(snapshot["ability"])}</p> : null}
+        {snapshot["nickname"] ? <p>Ksywka: {String(snapshot["nickname"])}</p> : null}
+        <p>Przyjaźń: {num(snapshot["friendship"])}</p>
+      </div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/gts")({
   head: () => ({
     meta: [
@@ -47,6 +113,15 @@ function GtsPage() {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string>("");
   const [price, setPrice] = useState<string>("");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const { isLoading } = useQuery({
     queryKey: ["gts"],
@@ -111,19 +186,31 @@ function GtsPage() {
                       </div>
                     </div>
                     <p className="mt-3 font-display text-xl text-aurora">{listing.price} CC</p>
-                    <Button
-                      className="mt-3"
-                      size="sm"
-                      disabled={busy || state.catch_coins < listing.price}
-                      onClick={() =>
-                        void run(
-                          () => buyFn({ data: { listingId: listing.id } }),
-                          (r) => `Kupiono ${r.name} za ${r.price} CC.`,
-                        )
-                      }
-                    >
-                      Kup
-                    </Button>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={busy || state.catch_coins < listing.price}
+                        onClick={() =>
+                          void run(
+                            () => buyFn({ data: { listingId: listing.id } }),
+                            (r) => `Kupiono ${r.name} za ${r.price} CC.`,
+                          )
+                        }
+                      >
+                        Kup
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        aria-expanded={expanded.has(listing.id)}
+                        onClick={() => toggleExpanded(listing.id)}
+                      >
+                        {expanded.has(listing.id) ? "Ukryj statystyki" : "Statystyki"}
+                      </Button>
+                    </div>
+                    {expanded.has(listing.id) ? (
+                      <ListingStats snapshot={listing.snapshot} />
+                    ) : null}
                   </div>
                 ))}
               </div>
