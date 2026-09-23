@@ -73,10 +73,10 @@ function ListingStats({ snapshot }: { snapshot: Record<string, unknown> | null }
         </div>
       ) : null}
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-        {snapshot.nature ? <p>Natura: {String(snapshot.nature)}</p> : null}
-        {snapshot.ability ? <p>Zdolność: {String(snapshot.ability)}</p> : null}
-        {snapshot.nickname ? <p>Ksywka: {String(snapshot.nickname)}</p> : null}
-        <p>Przyjaźń: {num(snapshot.friendship)}</p>
+        {snapshot["nature"] ? <p>Natura: {String(snapshot["nature"])}</p> : null}
+        {snapshot["ability"] ? <p>Zdolność: {String(snapshot["ability"])}</p> : null}
+        {snapshot["nickname"] ? <p>Ksywka: {String(snapshot["nickname"])}</p> : null}
+        <p>Przyjaźń: {num(snapshot["friendship"])}</p>
       </div>
     </div>
   );
