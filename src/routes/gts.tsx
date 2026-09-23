@@ -186,19 +186,31 @@ function GtsPage() {
                       </div>
                     </div>
                     <p className="mt-3 font-display text-xl text-aurora">{listing.price} CC</p>
-                    <Button
-                      className="mt-3"
-                      size="sm"
-                      disabled={busy || state.catch_coins < listing.price}
-                      onClick={() =>
-                        void run(
-                          () => buyFn({ data: { listingId: listing.id } }),
-                          (r) => `Kupiono ${r.name} za ${r.price} CC.`,
-                        )
-                      }
-                    >
-                      Kup
-                    </Button>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={busy || state.catch_coins < listing.price}
+                        onClick={() =>
+                          void run(
+                            () => buyFn({ data: { listingId: listing.id } }),
+                            (r) => `Kupiono ${r.name} za ${r.price} CC.`,
+                          )
+                        }
+                      >
+                        Kup
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        aria-expanded={expanded.has(listing.id)}
+                        onClick={() => toggleExpanded(listing.id)}
+                      >
+                        {expanded.has(listing.id) ? "Ukryj statystyki" : "Statystyki"}
+                      </Button>
+                    </div>
+                    {expanded.has(listing.id) ? (
+                      <ListingStats snapshot={listing.snapshot} />
+                    ) : null}
                   </div>
                 ))}
               </div>
